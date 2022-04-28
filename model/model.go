@@ -9902,8 +9902,6 @@ func _bfegc(_bbccg *PdfPage) {
 	_bgcfg = append(_bgcfg, _bg.Sprintf("\u002f%\u0073\u0020\u0031\u0034\u0020\u0054f", _abcag.String()))
 	_bgcfg = append(_bgcfg, "\u0031\u0020\u0030\u0020\u0030\u0020\u0072\u0067")
 	_bgcfg = append(_bgcfg, "\u0031\u0030\u0020\u0031\u0030\u0020\u0054\u0064")
-	_agae := "\u0055\u006e\u006c\u0069\u0063\u0065\u006e\u0073\u0065\u0064\u0020\u0055\u006e\u0069\u0044o\u0063\u0020\u002d\u0020\u0047\u0065\u0074\u0020\u0061\u0020\u006c\u0069\u0063e\u006e\u0073\u0065\u0020\u006f\u006e\u0020\u0068\u0074\u0074\u0070\u0073:/\u002f\u0075\u006e\u0069\u0064\u006f\u0063\u002e\u0069\u006f"
-	_bgcfg = append(_bgcfg, _bg.Sprintf("\u0028%\u0073\u0029\u0020\u0054\u006a", _agae))
 	_bgcfg = append(_bgcfg, "\u0045\u0054")
 	_bgcfg = append(_bgcfg, "\u0051")
 	_bedbe := _ee.Join(_bgcfg, "\u000a")
