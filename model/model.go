@@ -284,7 +284,7 @@ func _feaae() string {
 	if len(_afedf) > 0 {
 		return _afedf
 	}
-	return "Go Office"
+	return "Go PDF"
 }
 func (_dadec *PdfReader) newPdfOutlineItemFromIndirectObject(_ccgee *_ebb.PdfIndirectObject) (*PdfOutlineItem, error) {
 	_agffa, _ebed := _ccgee.PdfObject.(*_ebb.PdfObjectDictionary)
@@ -15966,7 +15966,7 @@ func _gagfgf() string {
 	if len(_aaaae) > 0 {
 		return _aaaae
 	}
-	return "Go Office"
+	return "Go PDF"
 }
 func _bede(_agfe *fontCommon) *pdfFontSimple { return &pdfFontSimple{fontCommon: *_agfe} }
 
