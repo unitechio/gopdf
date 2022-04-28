@@ -317,7 +317,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 
 	// Example paragraphs:
 	loremTxt := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-	alignments := []creator.TextAlignment{creator.TextAlignmentLeft, creator.TextAlignmentCenter,creator.TextAlignmentRight, creator.TextAlignmentJustify}
+	alignments := []creator.TextAlignment{creator.TextAlignmentLeft, creator.TextAlignmentCenter, creator.TextAlignmentRight, creator.TextAlignmentJustify}
 	for j := 0; j < 4; j++ {
 		p = c.NewParagraph(loremTxt)
 		p.SetFont(normalFont)
