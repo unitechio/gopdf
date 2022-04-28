@@ -55,7 +55,6 @@ func RunPdfReport(outputPath string) error {
 	logoImg.SetPos(58, 20)
 
 	DoDocumentControl(c, helvetica, helveticaBold)
-
 	DoFeatureOverview(c, helvetica, helveticaBold)
 
 	// Setup a front page (always placed first).
@@ -88,12 +87,7 @@ func RunPdfReport(outputPath string) error {
 		block.Draw(p)
 	})
 
-	err = c.WriteToFile(outputPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.WriteToFile(outputPath)
 }
 
 // Generates the front page.
@@ -273,8 +267,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 
 	sc.Add(histTable)
 
-	err := c.Draw(ch)
-	if err != nil {
+	if err := c.Draw(ch); err != nil {
 		panic(err)
 	}
 }
@@ -315,9 +308,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.GetHeading().SetFontSize(chapterFontSize)
 	sc.GetHeading().SetColor(chapterFontColor)
 
-	p = c.NewParagraph("Paragraphs are used to represent text, as little as a single character, a word or " +
-		"multiple words forming multiple sentences. GoPDF handles automatically wrapping those across lines and pages, making " +
-		"it relatively easy to work with. They can also be left, center, right aligned or justified as illustrated below:")
+	p = c.NewParagraph("Paragraphs are used to represent text, as little as a single character, a word or multiple words forming multiple sentences GoPDF handles automatically wrapping those across lines and pages, making it relatively easy to work with. They can also be left, center, right aligned or justified as illustrated below:")
 	p.SetFont(normalFont)
 	p.SetFontSize(normalFontSize)
 	p.SetColor(normalFontColor)
@@ -325,13 +316,8 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.Add(p)
 
 	// Example paragraphs:
-	loremTxt := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt" +
-		"ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut " +
-		"aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore" +
-		"eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt " +
-		"mollit anim id est laborum."
-	alignments := []creator.TextAlignment{creator.TextAlignmentLeft, creator.TextAlignmentCenter,
-		creator.TextAlignmentRight, creator.TextAlignmentJustify}
+	loremTxt := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	alignments := []creator.TextAlignment{creator.TextAlignmentLeft, creator.TextAlignmentCenter,creator.TextAlignmentRight, creator.TextAlignmentJustify}
 	for j := 0; j < 4; j++ {
 		p = c.NewParagraph(loremTxt)
 		p.SetFont(normalFont)
@@ -404,10 +390,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.GetHeading().SetFontSize(chapterFontSize)
 	sc.GetHeading().SetColor(chapterFontColor)
 
-	p = c.NewParagraph("Convenience functions are provided to generate headers and footers, see: Creator.DrawHeader and Creator.DrawFooter " +
-		"They both set a function that accepts a block which the header/footer is drawn on for each page. " +
-		"More information is provided in the arguments, allowing to skip header/footer on specific pages and " +
-		"showing page number and count.")
+	p = c.NewParagraph("Convenience functions are provided to generate headers and footers, see: Creator.DrawHeader and Creator.DrawFooter They both set a function that accepts a block which the header/footer is drawn on for each page. More information is provided in the arguments, allowing to skip header/footer on specific pages and showing page number and count.")
 	p.SetFont(normalFont)
 	p.SetFontSize(normalFontSize)
 	p.SetColor(normalFontColor)
