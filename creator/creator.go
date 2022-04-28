@@ -2,6 +2,7 @@ package creator
 
 import (
 	_fa "bytes"
+	"context"
 	_f "errors"
 	_ad "fmt"
 	_fg "image"
@@ -4730,6 +4731,21 @@ func (_bagd *Creator) Width() float64 { return _bagd._cgb }
 
 // NewImageFromFile creates an Image from a file.
 func (_fadb *Creator) NewImageFromFile(path string) (*Image, error) { return _gedg(path) }
+
+// NewImageFromURL creates an Image from a url.
+func (_fadb *Creator) NewImageFromURL(url string) (*Image, error) {
+	resp, err := _da.HTTPGet(context.Background(), url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	_eegg, _bac := _g.ImageHandling.Read(resp.Body)
+	if _bac != nil {
+		_da.Log.Error("\u0045\u0072\u0072or\u0020\u006c\u006f\u0061\u0064\u0069\u006e\u0067\u0020\u0069\u006d\u0061\u0067\u0065\u003a\u0020\u0025\u0073", _bac)
+		return nil, _bac
+	}
+	return _ageb(_eegg)
+}
 
 // Width is not used. The list component is designed to fill into the available
 // width depending on the context. Returns 0.
