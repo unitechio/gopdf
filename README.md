@@ -8,18 +8,10 @@ Golang PDF library for creating and processing PDF files (pure go)
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image"
-	"math"
-	"os"
 	"time"
 
-	"github.com/wcharczuk/go-chart/v2"
-	"github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/qr"
 	"bitbucket.org/shenghui0779/gopdf/common"
-	"bitbucket.org/shenghui0779/gopdf/common/license"
 	"bitbucket.org/shenghui0779/gopdf/creator"
 	"bitbucket.org/shenghui0779/gopdf/model"
 )
@@ -32,15 +24,8 @@ func main() {
 }
 
 func RunPdfReport(outputPath string) error {
-	robotoFontRegular, err := model.NewPdfFontFromTTFFile("./Roboto-Regular.ttf")
-	if err != nil {
-		return err
-	}
-
-	robotoFontPro, err := model.NewPdfFontFromTTFFile("./Roboto-Bold.ttf")
-	if err != nil {
-		return err
-	}
+	helvetica, _ := model.NewStandard14Font("Helvetica")
+	helveticaBold, _ := model.NewStandard14Font("Helvetica-Bold")
 
 	c := creator.New()
 	c.SetPageMargins(50, 50, 100, 70)
@@ -56,7 +41,7 @@ func RunPdfReport(outputPath string) error {
 	lstyle.FontSize = 14
 	toc.SetLineStyle(lstyle)
 
-	logoImg, err := c.NewImageFromFile("./unidoc-logo.png")
+	logoImg, err := c.NewImageFromURL("https://golang.google.cn/doc/gopher/pkg.png")
 	if err != nil {
 		return err
 	}
@@ -64,13 +49,13 @@ func RunPdfReport(outputPath string) error {
 	logoImg.ScaleToHeight(25)
 	logoImg.SetPos(58, 20)
 
-	DoDocumentControl(c, robotoFontRegular, robotoFontPro)
+	DoDocumentControl(c, helvetica, helveticaBold)
 
-	DoFeatureOverview(c, robotoFontRegular, robotoFontPro)
+	DoFeatureOverview(c, helvetica, helveticaBold)
 
 	// Setup a front page (always placed first).
 	c.CreateFrontPage(func(args creator.FrontpageFunctionArgs) {
-		DoFirstPage(c, robotoFontRegular, robotoFontPro)
+		DoFirstPage(c, helvetica, helveticaBold)
 	})
 
 	// Draw a header on each page.
@@ -82,8 +67,8 @@ func RunPdfReport(outputPath string) error {
 	// Draw footer on each page.
 	c.DrawFooter(func(block *creator.Block, args creator.FooterFunctionArgs) {
 		// Draw the on a block for each page.
-		p := c.NewParagraph("unidoc.io")
-		p.SetFont(robotoFontRegular)
+		p := c.NewParagraph("gopdf")
+		p.SetFont(helvetica)
 		p.SetFontSize(8)
 		p.SetPos(50, 20)
 		p.SetColor(creator.ColorRGBFrom8bit(63, 68, 76))
@@ -91,7 +76,7 @@ func RunPdfReport(outputPath string) error {
 
 		strPage := fmt.Sprintf("Page %d of %d", args.PageNum, args.TotalPages)
 		p = c.NewParagraph(strPage)
-		p.SetFont(robotoFontRegular)
+		p.SetFont(helvetica)
 		p.SetFontSize(8)
 		p.SetPos(300, 20)
 		p.SetColor(creator.ColorRGBFrom8bit(63, 68, 76))
@@ -111,7 +96,7 @@ func DoFirstPage(c *creator.Creator, fontRegular *model.PdfFont, fontBold *model
 	helvetica, _ := model.NewStandard14Font("Helvetica")
 	helveticaBold, _ := model.NewStandard14Font("Helvetica-Bold")
 
-	p := c.NewParagraph("UniDoc")
+	p := c.NewParagraph("GoPDF")
 	p.SetFont(helvetica)
 	p.SetFontSize(48)
 	p.SetMargins(85, 0, 150, 0)
@@ -126,7 +111,7 @@ func DoFirstPage(c *creator.Creator, fontRegular *model.PdfFont, fontBold *model
 	c.Draw(p)
 
 	t := time.Now().UTC()
-	dateStr := t.Format("1 Jan, 2006 15:04")
+	dateStr := t.Format("2006-01-02 15:04:05")
 
 	p = c.NewParagraph(dateStr)
 	p.SetFont(helveticaBold)
@@ -164,7 +149,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	cell.SetBackgroundColor(bgColor)
 	cell.SetContent(p)
 
-	p = c.NewParagraph("UniDoc")
+	p = c.NewParagraph("GoPDF")
 	p.SetFont(fontRegular)
 	p.SetFontSize(10)
 	p.SetColor(pColor)
@@ -181,7 +166,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	cell.SetBackgroundColor(bgColor)
 	cell.SetContent(p)
 
-	p = c.NewParagraph("Klapparstig 16, 101 Reykjavik, Iceland")
+	p = c.NewParagraph("Nanjing, China")
 	p.SetFont(fontRegular)
 	p.SetFontSize(10)
 	p.SetColor(pColor)
@@ -198,7 +183,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	cell.SetBorder(creator.CellBorderSideAll, creator.CellBorderStyleSingle, 1)
 	cell.SetContent(p)
 
-	p = c.NewParagraph("sales@unidoc.io")
+	p = c.NewParagraph("example@xxx.io")
 	p.SetFont(fontRegular)
 	p.SetFontSize(10)
 	p.SetColor(pColor)
@@ -215,7 +200,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	cell.SetBackgroundColor(bgColor)
 	cell.SetContent(p)
 
-	p = c.NewParagraph("unidoc.io")
+	p = c.NewParagraph("example.io")
 	p.SetFont(fontRegular)
 	p.SetFontSize(10)
 	p.SetColor(pColor)
@@ -232,7 +217,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	cell.SetBackgroundColor(bgColor)
 	cell.SetContent(p)
 
-	p = c.NewParagraph("UniDoc report generator")
+	p = c.NewParagraph("GoPDF report generator")
 	p.SetFont(fontRegular)
 	p.SetFontSize(10)
 	p.SetColor(pColor)
@@ -252,7 +237,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	histTable := c.NewTable(3)
 	histTable.SetMargins(0, 0, 30, 50)
 
-	histCols := []string{"Date Issued", "UniDoc Version", "Type/Change"}
+	histCols := []string{"Date Issued", "GoPDF Version", "Type/Change"}
 	for _, histCol := range histCols {
 		p = c.NewParagraph(histCol)
 		p.SetFont(fontBold)
@@ -266,7 +251,7 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 		cell.SetContent(p)
 	}
 
-	dateStr := common.ReleasedAt.Format("1 Jan, 2006 15:04")
+	dateStr := common.ReleasedAt.Format("2006-01-02 15:04:05")
 
 	histVals := []string{dateStr, common.Version, "First issue"}
 	for _, histVal := range histVals {
@@ -311,7 +296,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	ch.GetHeading().SetFontSize(chapterFontSize)
 	ch.GetHeading().SetColor(chapterFontColor)
 
-	p := c.NewParagraph("This chapter demonstrates a few of the features of UniDoc that can be used for report generation.")
+	p := c.NewParagraph("This chapter demonstrates a few of the features of GoPDF that can be used for report generation.")
 	p.SetFont(normalFont)
 	p.SetFontSize(normalFontSize)
 	p.SetColor(normalFontColor)
@@ -326,7 +311,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.GetHeading().SetColor(chapterFontColor)
 
 	p = c.NewParagraph("Paragraphs are used to represent text, as little as a single character, a word or " +
-		"multiple words forming multiple sentences. UniDoc handles automatically wrapping those across lines and pages, making " +
+		"multiple words forming multiple sentences. GoPDF handles automatically wrapping those across lines and pages, making " +
 		"it relatively easy to work with. They can also be left, center, right aligned or justified as illustrated below:")
 	p.SetFont(normalFont)
 	p.SetFontSize(normalFontSize)
@@ -370,9 +355,9 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 		cell.SetContent(p)
 	}
 	items := [][]string{
-		[]string{"High", "52/80"},
-		[]string{"Medium", "32/100"},
-		[]string{"Low", "10/90"},
+		{"High", "52/80"},
+		{"Medium", "32/100"},
+		{"Low", "10/90"},
 	}
 	for _, lineItems := range items {
 		for _, item := range lineItems {
@@ -401,69 +386,11 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	p.SetMargins(0, 0, 5, 5)
 	sc.Add(p)
 
-	// Show logo.
-	img, err := c.NewImageFromFile("./unidoc-logo.png")
+	img, err := c.NewImageFromURL("https://golang.google.cn/blog/gopher/header.jpg")
 	if err != nil {
 		panic(err)
 	}
 	img.ScaleToHeight(50)
-	sc.Add(img)
-
-	sc = ch.NewSubchapter("QR Codes / Barcodes")
-	sc.GetHeading().SetMargins(0, 0, 20, 0)
-	sc.GetHeading().SetFont(chapterFont)
-	sc.GetHeading().SetFontSize(chapterFontSize)
-	sc.GetHeading().SetColor(chapterFontColor)
-
-	p = c.NewParagraph("Example of a QR code generated with package github.com/boombuler/barcode:")
-	p.SetFont(normalFont)
-	p.SetFontSize(normalFontSize)
-	p.SetColor(normalFontColor)
-	p.SetMargins(0, 0, 5, 5)
-	sc.Add(p)
-
-	qrCode, _ := makeQrCodeImage("HELLO", 40, 5)
-	img, err = c.NewImageFromGoImage(qrCode)
-	if err != nil {
-		panic(err)
-	}
-	img.SetWidth(40)
-	img.SetHeight(40)
-	sc.Add(img)
-
-	sc = ch.NewSubchapter("Graphing / Charts")
-	sc.GetHeading().SetMargins(0, 0, 20, 0)
-	sc.GetHeading().SetFont(chapterFont)
-	sc.GetHeading().SetFontSize(chapterFontSize)
-	sc.GetHeading().SetColor(chapterFontColor)
-
-	p = c.NewParagraph("Graphs can be generated via packages such as github.com/wcharczuk/go-chart as illustrated " +
-		"in the following plot:")
-	p.SetFont(normalFont)
-	p.SetFontSize(normalFontSize)
-	p.SetColor(normalFontColor)
-	p.SetMargins(0, 0, 5, 0)
-	sc.Add(p)
-
-	graph := chart.PieChart{
-		Width:  200,
-		Height: 200,
-		Values: []chart.Value{
-			{Value: 70, Label: "Compliant"},
-			{Value: 30, Label: "Non-Compliant"},
-		},
-	}
-
-	buffer := bytes.NewBuffer([]byte{})
-	err = graph.Render(chart.PNG, buffer)
-	if err != nil {
-		panic(err)
-	}
-	img, err = c.NewImageFromData(buffer.Bytes())
-	if err != nil {
-		panic(err)
-	}
-	img.SetMargins(0, 0, 10, 0)
 	sc.Add(img)
 
 	sc = ch.NewSubchapter("Headers and footers")
@@ -472,9 +399,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.GetHeading().SetFontSize(chapterFontSize)
 	sc.GetHeading().SetColor(chapterFontColor)
 
-	p = c.NewParagraph("Convenience functions are provided to generate headers and footers, see: " +
-		"https://godoc.org/github.com/unidoc/unipdf/creator#Creator.DrawHeader and " +
-		"https://godoc.org/github.com/unidoc/unipdf/creator#Creator.DrawFooter " +
+	p = c.NewParagraph("Convenience functions are provided to generate headers and footers, see: Creator.DrawHeader and Creator.DrawFooter " +
 		"They both set a function that accepts a block which the header/footer is drawn on for each page. " +
 		"More information is provided in the arguments, allowing to skip header/footer on specific pages and " +
 		"showing page number and count.")
@@ -490,9 +415,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.GetHeading().SetFontSize(chapterFontSize)
 	sc.GetHeading().SetColor(chapterFontColor)
 
-	p = c.NewParagraph("A convenience function is provided to generate table of contents " +
-		"as can be seen on https://godoc.org/github.com/unidoc/unipdf/creator#Creator.CreateTableOfContents and " +
-		"in our example code on unidoc.io.")
+	p = c.NewParagraph("A convenience function is provided to generate table of contents as can be seen on Creator.CreateTableOfContents and in our example code on unidoc.io.")
 	p.SetFont(normalFont)
 	p.SetFontSize(normalFontSize)
 	p.SetColor(normalFontColor)
@@ -500,22 +423,5 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	sc.Add(p)
 
 	c.Draw(ch)
-}
-
-// Helper function to make the QR code image with a specified oversampling factor.
-// The oversampling specifies how many pixels/point. Standard PDF resolution is 72 points/inch.
-func makeQrCodeImage(text string, width float64, oversampling int) (image.Image, error) {
-	qrCode, err := qr.Encode(text, qr.M, qr.Auto)
-	if err != nil {
-		return nil, err
-	}
-
-	pixelWidth := oversampling * int(math.Ceil(width))
-	qrCode, err = barcode.Scale(qrCode, pixelWidth, pixelWidth)
-	if err != nil {
-		return nil, err
-	}
-
-	return qrCode, nil
 }
 ```
