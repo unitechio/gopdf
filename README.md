@@ -13,7 +13,7 @@ Golang PDF library for creating and processing PDF files (pure go)
 go get -u bitbucket.org/shenghui0779/gopdf
 ```
 
-### usage
+### Usage
 
 ```go
 package main
