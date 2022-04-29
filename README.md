@@ -7,6 +7,12 @@ Golang PDF library for creating and processing PDF files (pure go)
 > 1. No `init` Required
 > 2. No `LICENSE_API_KEY` Required
 
+### Installation
+
+```shell
+go get -u bitbucket.org/shenghui0779/gopdf
+```
+
 ### usage
 
 ```go
