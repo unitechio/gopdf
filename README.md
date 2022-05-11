@@ -2,10 +2,10 @@
 
 Golang PDF library for creating and processing PDF files (pure go)
 
-[Examples](https://unidoc.io/unipdf-examples)
-
 > 1. No `init` Required
 > 2. No `LICENSE_API_KEY` Required
+
+👉 [Examples](https://unidoc.io/unipdf-examples)
 
 ### Installation
 
