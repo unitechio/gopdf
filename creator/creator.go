@@ -9,6 +9,8 @@ import (
 	_de "io"
 	_dg "math"
 	_c "os"
+	_p "path"
+	_d "path/filepath"
 	_e "sort"
 	_cf "strconv"
 	_db "strings"
@@ -4848,12 +4850,25 @@ func (_cccf *TableCell) SetContent(vd VectorDrawable) error {
 }
 
 // WriteToFile writes the Creator output to file specified by path.
-func (_gaaf *Creator) WriteToFile(outputPath string) error {
-	_bgc, _cagd := _c.Create(outputPath)
+func (_gaaf *Creator) WriteToFile(filename string) error {
+	abspath, _cagd := _d.Abs(filename)
+
 	if _cagd != nil {
 		return _cagd
 	}
+
+	if _cagd = _c.MkdirAll(_p.Dir(abspath), 0775); _cagd != nil {
+		return _cagd
+	}
+
+	_bgc, _cagd := _c.OpenFile(abspath, _c.O_RDWR|_c.O_CREATE|_c.O_TRUNC, 0775)
+
+	if _cagd != nil {
+		return _cagd
+	}
+
 	defer _bgc.Close()
+
 	return _gaaf.Write(_bgc)
 }
 
