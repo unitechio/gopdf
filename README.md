@@ -52,7 +52,7 @@ func RunPdfReport(outputPath string) error {
 	lstyle.FontSize = 14
 	toc.SetLineStyle(lstyle)
 
-	logoImg, err := c.NewImageFromURL("https://golang.google.cn/doc/gopher/pkg.png")
+	logoImg, err := c.NewImageFromFile("go-travel.jpg")
 	if err != nil {
 		return err
 	}
@@ -383,7 +383,7 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 	p.SetMargins(0, 0, 5, 5)
 	sc.Add(p)
 
-	img, err := c.NewImageFromURL("https://golang.google.cn/blog/gopher/header.jpg")
+	img, err := c.NewImageFromFile("go-travel.jpg")
 	if err != nil {
 		panic(err)
 	}

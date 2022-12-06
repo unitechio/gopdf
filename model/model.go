@@ -4266,8 +4266,6 @@ func _fdcef(_bebcg *PdfPage) {
 	_acdac = append(_acdac, _ee.Sprintf("\u002f%\u0073\u0020\u0031\u0034\u0020\u0054f", _gggcd.String()))
 	_acdac = append(_acdac, "\u0031\u0020\u0030\u0020\u0030\u0020\u0072\u0067")
 	_acdac = append(_acdac, "\u0031\u0030\u0020\u0031\u0030\u0020\u0054\u0064")
-	_dfgdee := "\u0055\u006e\u006c\u0069\u0063\u0065\u006e\u0073\u0065\u0064\u0020\u0055\u006e\u0069\u0044o\u0063\u0020\u002d\u0020\u0047\u0065\u0074\u0020\u0061\u0020\u006c\u0069\u0063e\u006e\u0073\u0065\u0020\u006f\u006e\u0020\u0068\u0074\u0074\u0070\u0073:/\u002f\u0075\u006e\u0069\u0064\u006f\u0063\u002e\u0069\u006f"
-	_acdac = append(_acdac, _ee.Sprintf("\u0028%\u0073\u0029\u0020\u0054\u006a", _dfgdee))
 	_acdac = append(_acdac, "\u0045\u0054")
 	_acdac = append(_acdac, "\u0051")
 	_dbddb := _dac.Join(_acdac, "\u000a")
@@ -10286,7 +10284,9 @@ func NewPdfOutputIntentFromPdfObject(object _cde.PdfObject) (*PdfOutputIntent, e
 	return _aebga, nil
 }
 func _gfdbd() string {
-	return "GoPDF"
+	_dccfe.Lock()
+	defer _dccfe.Unlock()
+	return _adcff
 }
 
 // NewXObjectImage returns a new XObjectImage.
@@ -14973,7 +14973,9 @@ func (_gbbg *PdfReader) newPdfAnnotationMovieFromDict(_efda *_cde.PdfObjectDicti
 	return &_defd, nil
 }
 func _ffbc() string {
-	return "GoPDF"
+	_dccfe.Lock()
+	defer _dccfe.Unlock()
+	return _dbbgaa
 }
 
 // PdfPageResources is a Page resources model.
