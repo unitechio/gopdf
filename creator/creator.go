@@ -9,6 +9,8 @@ import (
 	_ef "io"
 	_a "math"
 	_e "os"
+	_p "path"
+	_pf "path/filepath"
 	_ca "regexp"
 	_ce "sort"
 	_ae "strconv"
@@ -130,13 +132,26 @@ func (_acg *Creator) NewRectangle(x, y, width, height float64) *Rectangle {
 }
 
 // WriteToFile writes the Creator output to file specified by path.
-func (_gggfa *Creator) WriteToFile(outputPath string) error {
-	_becc, _aedf := _e.Create(outputPath)
-	if _aedf != nil {
-		return _aedf
+func (_gggfa *Creator) WriteToFile(filename string) error {
+	abspath, _cagd := _pf.Abs(filename)
+
+	if _cagd != nil {
+		return _cagd
 	}
-	defer _becc.Close()
-	return _gggfa.Write(_becc)
+
+	if _cagd = _e.MkdirAll(_p.Dir(abspath), 0775); _cagd != nil {
+		return _cagd
+	}
+
+	_bgc, _cagd := _e.OpenFile(abspath, _e.O_RDWR|_e.O_CREATE|_e.O_TRUNC, 0775)
+
+	if _cagd != nil {
+		return _cagd
+	}
+
+	defer _bgc.Close()
+
+	return _gggfa.Write(_bgc)
 }
 
 // NewPageBreak create a new page break.
