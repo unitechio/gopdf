@@ -1,520 +1,350 @@
 package segments
 
 import (
-	_bc "encoding/binary"
-	_ag "errors"
-	_be "fmt"
-	_b "image"
-	_de "io"
+	_fe "encoding/binary"
+	_ge "errors"
+	_e "fmt"
+	_c "image"
+	_gc "io"
 	_f "math"
-	_bb "strings"
+	_cc "strings"
 	_a "time"
 
-	_gb "bitbucket.org/shenghui0779/gopdf/common"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_cb "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
-	_c "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
-	_aa "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder/arithmetic"
-	_aag "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder/huffman"
-	_ae "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder/mmr"
-	_cg "bitbucket.org/shenghui0779/gopdf/internal/jbig2/encoder/arithmetic"
-	_ac "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
-	_bca "bitbucket.org/shenghui0779/gopdf/internal/jbig2/internal"
-	_fc "golang.org/x/xerrors"
+	_da "bitbucket.org/shenghui0779/gopdf/common"
+	_fg "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_ca "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
+	_d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
+	_b "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder/arithmetic"
+	_ba "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder/huffman"
+	_ad "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder/mmr"
+	_ga "bitbucket.org/shenghui0779/gopdf/internal/jbig2/encoder/arithmetic"
+	_fd "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_gd "bitbucket.org/shenghui0779/gopdf/internal/jbig2/internal"
+	_cd "golang.org/x/xerrors"
 )
 
-func (_fcgc *Header) readHeaderLength(_aeac _g.StreamReader, _gfcdda int64) {
-	_fcgc.HeaderLength = _aeac.StreamPosition() - _gfcdda
-}
-func (_egbb *Header) readHeaderFlags() error {
-	const _bgc = "\u0072e\u0061d\u0048\u0065\u0061\u0064\u0065\u0072\u0046\u006c\u0061\u0067\u0073"
-	_abdb, _gecg := _egbb.Reader.ReadBit()
-	if _gecg != nil {
-		return _ac.Wrap(_gecg, _bgc, "r\u0065\u0074\u0061\u0069\u006e\u0020\u0066\u006c\u0061\u0067")
-	}
-	if _abdb != 0 {
-		_egbb.RetainFlag = true
-	}
-	_abdb, _gecg = _egbb.Reader.ReadBit()
-	if _gecg != nil {
-		return _ac.Wrap(_gecg, _bgc, "\u0070\u0061g\u0065\u0020\u0061s\u0073\u006f\u0063\u0069\u0061\u0074\u0069\u006f\u006e")
-	}
-	if _abdb != 0 {
-		_egbb.PageAssociationFieldSize = true
-	}
-	_acc, _gecg := _egbb.Reader.ReadBits(6)
-	if _gecg != nil {
-		return _ac.Wrap(_gecg, _bgc, "\u0073\u0065\u0067m\u0065\u006e\u0074\u0020\u0074\u0079\u0070\u0065")
-	}
-	_egbb.Type = Type(int(_acc))
-	return nil
-}
-func (_gccg *Header) String() string {
-	_eafg := &_bb.Builder{}
-	_eafg.WriteString("\u000a[\u0053E\u0047\u004d\u0045\u004e\u0054-\u0048\u0045A\u0044\u0045\u0052\u005d\u000a")
-	_eafg.WriteString(_be.Sprintf("\t\u002d\u0020\u0053\u0065gm\u0065n\u0074\u004e\u0075\u006d\u0062e\u0072\u003a\u0020\u0025\u0076\u000a", _gccg.SegmentNumber))
-	_eafg.WriteString(_be.Sprintf("\u0009\u002d\u0020T\u0079\u0070\u0065\u003a\u0020\u0025\u0076\u000a", _gccg.Type))
-	_eafg.WriteString(_be.Sprintf("\u0009-\u0020R\u0065\u0074\u0061\u0069\u006eF\u006c\u0061g\u003a\u0020\u0025\u0076\u000a", _gccg.RetainFlag))
-	_eafg.WriteString(_be.Sprintf("\u0009\u002d\u0020Pa\u0067\u0065\u0041\u0073\u0073\u006f\u0063\u0069\u0061\u0074\u0069\u006f\u006e\u003a\u0020\u0025\u0076\u000a", _gccg.PageAssociation))
-	_eafg.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0050\u0061\u0067\u0065\u0041\u0073\u0073\u006f\u0063\u0069\u0061\u0074i\u006fn\u0046\u0069\u0065\u006c\u0064\u0053\u0069\u007a\u0065\u003a\u0020\u0025\u0076\u000a", _gccg.PageAssociationFieldSize))
-	_eafg.WriteString("\u0009-\u0020R\u0054\u0053\u0045\u0047\u004d\u0045\u004e\u0054\u0053\u003a\u000a")
-	for _, _bcf := range _gccg.RTSNumbers {
-		_eafg.WriteString(_be.Sprintf("\u0009\t\u002d\u0020\u0025\u0064\u000a", _bcf))
-	}
-	_eafg.WriteString(_be.Sprintf("\t\u002d \u0048\u0065\u0061\u0064\u0065\u0072\u004c\u0065n\u0067\u0074\u0068\u003a %\u0076\u000a", _gccg.HeaderLength))
-	_eafg.WriteString(_be.Sprintf("\u0009-\u0020\u0053\u0065\u0067m\u0065\u006e\u0074\u0044\u0061t\u0061L\u0065n\u0067\u0074\u0068\u003a\u0020\u0025\u0076\n", _gccg.SegmentDataLength))
-	_eafg.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074D\u0061\u0074\u0061\u0053\u0074\u0061\u0072t\u004f\u0066\u0066\u0073\u0065\u0074\u003a\u0020\u0025\u0076\u000a", _gccg.SegmentDataStartOffset))
-	return _eafg.String()
-}
-func (_def *PageInformationSegment) readResolution() error {
-	_fcca, _fdbce := _def._fabba.ReadBits(32)
-	if _fdbce != nil {
-		return _fdbce
-	}
-	_def.ResolutionX = int(_fcca & _f.MaxInt32)
-	_fcca, _fdbce = _def._fabba.ReadBits(32)
-	if _fdbce != nil {
-		return _fdbce
-	}
-	_def.ResolutionY = int(_fcca & _f.MaxInt32)
-	return nil
-}
-func (_bfgd *TextRegion) encodeSymbols(_egacb _g.BinaryWriter) (_acf int, _bfbe error) {
-	const _eabeb = "\u0065\u006e\u0063\u006f\u0064\u0065\u0053\u0079\u006d\u0062\u006f\u006c\u0073"
-	_cefbf := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_cefbf, _bfgd.NumberOfSymbols)
-	if _acf, _bfbe = _egacb.Write(_cefbf); _bfbe != nil {
-		return _acf, _ac.Wrap(_bfbe, _eabeb, "\u004e\u0075\u006dbe\u0072\u004f\u0066\u0053\u0079\u006d\u0062\u006f\u006c\u0049\u006e\u0073\u0074\u0061\u006e\u0063\u0065\u0073")
-	}
-	_ebefg, _bfbe := _c.NewClassedPoints(_bfgd._edded, _bfgd._babe)
-	if _bfbe != nil {
-		return 0, _ac.Wrap(_bfbe, _eabeb, "")
-	}
-	var _gccc, _bgbe int
-	_dgbc := _cg.New()
-	_dgbc.Init()
-	if _bfbe = _dgbc.EncodeInteger(_cg.IADT, 0); _bfbe != nil {
-		return _acf, _ac.Wrap(_bfbe, _eabeb, "\u0069\u006e\u0069\u0074\u0069\u0061\u006c\u0020\u0044\u0054")
-	}
-	_bfda, _bfbe := _ebefg.GroupByY()
-	if _bfbe != nil {
-		return 0, _ac.Wrap(_bfbe, _eabeb, "")
-	}
-	for _, _acff := range _bfda {
-		_gdbb := int(_acff.YAtIndex(0))
-		_fgee := _gdbb - _gccc
-		if _bfbe = _dgbc.EncodeInteger(_cg.IADT, _fgee); _bfbe != nil {
-			return _acf, _ac.Wrap(_bfbe, _eabeb, "")
-		}
-		var _ddeb int
-		for _fcdb, _ecdd := range _acff.IntSlice {
-			switch _fcdb {
-			case 0:
-				_aadbgf := int(_acff.XAtIndex(_fcdb)) - _bgbe
-				if _bfbe = _dgbc.EncodeInteger(_cg.IAFS, _aadbgf); _bfbe != nil {
-					return _acf, _ac.Wrap(_bfbe, _eabeb, "")
-				}
-				_bgbe += _aadbgf
-				_ddeb = _bgbe
-			default:
-				_efgaf := int(_acff.XAtIndex(_fcdb)) - _ddeb
-				if _bfbe = _dgbc.EncodeInteger(_cg.IADS, _efgaf); _bfbe != nil {
-					return _acf, _ac.Wrap(_bfbe, _eabeb, "")
-				}
-				_ddeb += _efgaf
-			}
-			_fdbd, _dfaa := _bfgd._dcfb.Get(_ecdd)
-			if _dfaa != nil {
-				return _acf, _ac.Wrap(_dfaa, _eabeb, "")
-			}
-			_afbb, _ebfg := _bfgd._afcf[_fdbd]
-			if !_ebfg {
-				_afbb, _ebfg = _bfgd._dbe[_fdbd]
-				if !_ebfg {
-					return _acf, _ac.Errorf(_eabeb, "\u0053\u0079\u006d\u0062\u006f\u006c:\u0020\u0027\u0025d\u0027\u0020\u0069s\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064 \u0069\u006e\u0020\u0067\u006cob\u0061\u006c\u0020\u0061\u006e\u0064\u0020\u006c\u006f\u0063\u0061\u006c\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0020\u006d\u0061\u0070", _fdbd)
-				}
-			}
-			if _dfaa = _dgbc.EncodeIAID(_bfgd._fadfc, _afbb); _dfaa != nil {
-				return _acf, _ac.Wrap(_dfaa, _eabeb, "")
-			}
-		}
-		if _bfbe = _dgbc.EncodeOOB(_cg.IADS); _bfbe != nil {
-			return _acf, _ac.Wrap(_bfbe, _eabeb, "")
-		}
-	}
-	_dgbc.Final()
-	_ddgf, _bfbe := _dgbc.WriteTo(_egacb)
-	if _bfbe != nil {
-		return _acf, _ac.Wrap(_bfbe, _eabeb, "")
-	}
-	_acf += int(_ddgf)
-	return _acf, nil
-}
-func (_ffdd *SymbolDictionary) decodeHeightClassDeltaHeight() (int64, error) {
-	if _ffdd.IsHuffmanEncoded {
-		return _ffdd.decodeHeightClassDeltaHeightWithHuffman()
-	}
-	_eafe, _dgca := _ffdd._caaa.DecodeInt(_ffdd._fcbe)
-	if _dgca != nil {
-		return 0, _dgca
-	}
-	return int64(_eafe), nil
+type TableSegment struct {
+	_defgf _fg.StreamReader
+	_eaed  int32
+	_fbdc  int32
+	_cgeg  int32
+	_cccb  int32
+	_efgd  int32
 }
 
-type Regioner interface {
-	GetRegionBitmap() (*_c.Bitmap, error)
-	GetRegionInfo() *RegionSegment
-}
-
-func (_eeaf *SymbolDictionary) readNumberOfExportedSymbols() error {
-	_edac, _cgcc := _eeaf._aege.ReadBits(32)
-	if _cgcc != nil {
-		return _cgcc
-	}
-	_eeaf.NumberOfExportedSymbols = uint32(_edac & _f.MaxUint32)
-	return nil
-}
-func (_edd *GenericRegion) copyLineAbove(_aba int) error {
-	_acbc := _aba * _edd.Bitmap.RowStride
-	_gfcd := _acbc - _edd.Bitmap.RowStride
-	for _feac := 0; _feac < _edd.Bitmap.RowStride; _feac++ {
-		_cbcg, _gdd := _edd.Bitmap.GetByte(_gfcd)
-		if _gdd != nil {
-			return _gdd
-		}
-		_gfcd++
-		if _gdd = _edd.Bitmap.SetByte(_acbc, _cbcg); _gdd != nil {
-			return _gdd
-		}
-		_acbc++
-	}
-	return nil
-}
-func (_eegc *PageInformationSegment) readContainsRefinement() error {
-	_ffaf, _dcfc := _eegc._fabba.ReadBit()
-	if _dcfc != nil {
-		return _dcfc
-	}
-	if _ffaf == 1 {
-		_eegc._adfb = true
-	}
-	return nil
-}
-func (_eddf *PageInformationSegment) readMaxStripeSize() error {
-	_gbfc, _dcg := _eddf._fabba.ReadBits(15)
-	if _dcg != nil {
-		return _dcg
-	}
-	_eddf.MaxStripeSize = uint16(_gbfc & _f.MaxUint16)
-	return nil
-}
-func (_ebe *GenericRefinementRegion) setParameters(_fec *_aa.DecoderStats, _aaab *_aa.Decoder, _fcbd int8, _dca, _cgb uint32, _bbec *_c.Bitmap, _bfde, _gff int32, _aeee bool, _aagc []int8, _dac []int8) {
-	_gb.Log.Trace("\u005b\u0047\u0045NE\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052E\u0047I\u004fN\u005d \u0073\u0065\u0074\u0050\u0061\u0072\u0061\u006d\u0065\u0074\u0065\u0072\u0073")
-	if _fec != nil {
-		_ebe._ef = _fec
-	}
-	if _aaab != nil {
-		_ebe._fb = _aaab
-	}
-	_ebe.TemplateID = _fcbd
-	_ebe.RegionInfo.BitmapWidth = _dca
-	_ebe.RegionInfo.BitmapHeight = _cgb
-	_ebe.ReferenceBitmap = _bbec
-	_ebe.ReferenceDX = _bfde
-	_ebe.ReferenceDY = _gff
-	_ebe.IsTPGROn = _aeee
-	_ebe.GrAtX = _aagc
-	_ebe.GrAtY = _dac
-	_ebe.RegionBitmap = nil
-	_gb.Log.Trace("[\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052E\u0046\u002d\u0052\u0045\u0047\u0049\u004fN]\u0020\u0073\u0065\u0074P\u0061\u0072\u0061\u006d\u0065\u0074\u0065\u0072\u0073 f\u0069\u006ei\u0073\u0068\u0065\u0064\u002e\u0020\u0025\u0073", _ebe)
-}
-func (_cgbe *SymbolDictionary) readAtPixels(_acdg int) error {
-	_cgbe.SdATX = make([]int8, _acdg)
-	_cgbe.SdATY = make([]int8, _acdg)
+func (_cad *GenericRegion) decodeTemplate0b(_cadb, _cdeg, _dade int, _gbbf, _fcd int) (_cge error) {
+	const _gefg = "\u0064\u0065c\u006f\u0064\u0065T\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0030\u0062"
 	var (
-		_efe   byte
-		_cebab error
+		_gfg, _egga  int
+		_aac, _eebba int
+		_dadec       byte
+		_agd         int
 	)
-	for _dffg := 0; _dffg < _acdg; _dffg++ {
-		_efe, _cebab = _cgbe._aege.ReadByte()
-		if _cebab != nil {
-			return _cebab
+	if _cadb >= 1 {
+		_dadec, _cge = _cad.Bitmap.GetByte(_fcd)
+		if _cge != nil {
+			return _fd.Wrap(_cge, _gefg, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
 		}
-		_cgbe.SdATX[_dffg] = int8(_efe)
-		_efe, _cebab = _cgbe._aege.ReadByte()
-		if _cebab != nil {
-			return _cebab
+		_aac = int(_dadec)
+	}
+	if _cadb >= 2 {
+		_dadec, _cge = _cad.Bitmap.GetByte(_fcd - _cad.Bitmap.RowStride)
+		if _cge != nil {
+			return _fd.Wrap(_cge, _gefg, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00202")
 		}
-		_cgbe.SdATY[_dffg] = int8(_efe)
+		_eebba = int(_dadec) << 6
 	}
-	return nil
-}
-func (_gabf *PatternDictionary) setGbAtPixels() {
-	if _gabf.HDTemplate == 0 {
-		_gabf.GBAtX = make([]int8, 4)
-		_gabf.GBAtY = make([]int8, 4)
-		_gabf.GBAtX[0] = -int8(_gabf.HdpWidth)
-		_gabf.GBAtY[0] = 0
-		_gabf.GBAtX[1] = -3
-		_gabf.GBAtY[1] = -1
-		_gabf.GBAtX[2] = 2
-		_gabf.GBAtY[2] = -2
-		_gabf.GBAtX[3] = -2
-		_gabf.GBAtY[3] = -2
-	} else {
-		_gabf.GBAtX = []int8{-int8(_gabf.HdpWidth)}
-		_gabf.GBAtY = []int8{0}
-	}
-}
-func (_begd *HalftoneRegion) GetRegionBitmap() (*_c.Bitmap, error) {
-	if _begd.HalftoneRegionBitmap != nil {
-		return _begd.HalftoneRegionBitmap, nil
-	}
-	var _bgae error
-	_begd.HalftoneRegionBitmap = _c.New(int(_begd.RegionSegment.BitmapWidth), int(_begd.RegionSegment.BitmapHeight))
-	if _begd.Patterns == nil || len(_begd.Patterns) == 0 {
-		_begd.Patterns, _bgae = _begd.GetPatterns()
-		if _bgae != nil {
-			return nil, _bgae
+	_gfg = (_aac & 0xf0) | (_eebba & 0x3800)
+	for _afg := 0; _afg < _dade; _afg = _agd {
+		var (
+			_agg byte
+			_gfe int
+		)
+		_agd = _afg + 8
+		if _fdgb := _cdeg - _afg; _fdgb > 8 {
+			_gfe = 8
+		} else {
+			_gfe = _fdgb
 		}
-	}
-	if _begd.HDefaultPixel == 1 {
-		_begd.HalftoneRegionBitmap.SetDefaultPixel()
-	}
-	_egb := _f.Ceil(_f.Log(float64(len(_begd.Patterns))) / _f.Log(2))
-	_gbaf := int(_egb)
-	var _afe [][]int
-	_afe, _bgae = _begd.grayScaleDecoding(_gbaf)
-	if _bgae != nil {
-		return nil, _bgae
-	}
-	if _bgae = _begd.renderPattern(_afe); _bgae != nil {
-		return nil, _bgae
-	}
-	return _begd.HalftoneRegionBitmap, nil
-}
-func (_gabb *TextRegion) decodeRdx() (int64, error) {
-	const _faeb = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064x"
-	if _gabb.IsHuffmanEncoded {
-		if _gabb.SbHuffRDX == 3 {
-			if _gabb._aafb == nil {
-				var (
-					_bbeca int
-					_cfaf  error
-				)
-				if _gabb.SbHuffFS == 3 {
-					_bbeca++
+		if _cadb > 0 {
+			_aac <<= 8
+			if _agd < _cdeg {
+				_dadec, _cge = _cad.Bitmap.GetByte(_fcd + 1)
+				if _cge != nil {
+					return _fd.Wrap(_cge, _gefg, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0030")
 				}
-				if _gabb.SbHuffDS == 3 {
-					_bbeca++
-				}
-				if _gabb.SbHuffDT == 3 {
-					_bbeca++
-				}
-				if _gabb.SbHuffRDWidth == 3 {
-					_bbeca++
-				}
-				if _gabb.SbHuffRDHeight == 3 {
-					_bbeca++
-				}
-				_gabb._aafb, _cfaf = _gabb.getUserTable(_bbeca)
-				if _cfaf != nil {
-					return 0, _ac.Wrap(_cfaf, _faeb, "")
-				}
+				_aac |= int(_dadec)
 			}
-			return _gabb._aafb.Decode(_gabb._ceegd)
 		}
-		_aeca, _abff := _aag.GetStandardTable(14 + int(_gabb.SbHuffRDX))
-		if _abff != nil {
-			return 0, _ac.Wrap(_abff, _faeb, "")
+		if _cadb > 1 {
+			_eebba <<= 8
+			if _agd < _cdeg {
+				_dadec, _cge = _cad.Bitmap.GetByte(_fcd - _cad.Bitmap.RowStride + 1)
+				if _cge != nil {
+					return _fd.Wrap(_cge, _gefg, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0031")
+				}
+				_eebba |= int(_dadec) << 6
+			}
 		}
-		return _aeca.Decode(_gabb._ceegd)
-	}
-	_cceag, _gcgg := _gabb._bbcea.DecodeInt(_gabb._bfce)
-	if _gcgg != nil {
-		return 0, _ac.Wrap(_gcgg, _faeb, "")
-	}
-	return int64(_cceag), nil
-}
-func (_dedf *TextRegion) encodeFlags(_abcc _g.BinaryWriter) (_egfg int, _gcgec error) {
-	const _bggdd = "e\u006e\u0063\u006f\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
-	if _gcgec = _abcc.WriteBit(int(_dedf.SbrTemplate)); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "s\u0062\u0072\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
-	}
-	if _, _gcgec = _abcc.WriteBits(uint64(_dedf.SbDsOffset), 5); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "\u0073\u0062\u0044\u0073\u004f\u0066\u0066\u0073\u0065\u0074")
-	}
-	if _gcgec = _abcc.WriteBit(int(_dedf.DefaultPixel)); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "\u0044\u0065\u0066a\u0075\u006c\u0074\u0050\u0069\u0078\u0065\u006c")
-	}
-	if _, _gcgec = _abcc.WriteBits(uint64(_dedf.CombinationOperator), 2); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "\u0043\u006f\u006d\u0062in\u0061\u0074\u0069\u006f\u006e\u004f\u0070\u0065\u0072\u0061\u0074\u006f\u0072")
-	}
-	if _gcgec = _abcc.WriteBit(int(_dedf.IsTransposed)); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "\u0069\u0073\u0020\u0074\u0072\u0061\u006e\u0073\u0070\u006f\u0073\u0065\u0064")
-	}
-	if _, _gcgec = _abcc.WriteBits(uint64(_dedf.ReferenceCorner), 2); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "\u0072\u0065f\u0065\u0072\u0065n\u0063\u0065\u0020\u0063\u006f\u0072\u006e\u0065\u0072")
-	}
-	if _, _gcgec = _abcc.WriteBits(uint64(_dedf.LogSBStrips), 2); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "L\u006f\u0067\u0053\u0042\u0053\u0074\u0072\u0069\u0070\u0073")
-	}
-	var _gffe int
-	if _dedf.UseRefinement {
-		_gffe = 1
-	}
-	if _gcgec = _abcc.WriteBit(_gffe); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "\u0075\u0073\u0065\u0020\u0072\u0065\u0066\u0069\u006ee\u006d\u0065\u006e\u0074")
-	}
-	_gffe = 0
-	if _dedf.IsHuffmanEncoded {
-		_gffe = 1
-	}
-	if _gcgec = _abcc.WriteBit(_gffe); _gcgec != nil {
-		return _egfg, _ac.Wrap(_gcgec, _bggdd, "u\u0073\u0065\u0020\u0068\u0075\u0066\u0066\u006d\u0061\u006e")
-	}
-	_egfg = 2
-	return _egfg, nil
-}
-func (_eeaeg *TextRegion) setParameters(_dcbdb *_aa.Decoder, _ada, _eadda bool, _gedbb, _fccdd uint32, _cgff uint32, _daaef int8, _deda uint32, _gdge int8, _gedg _c.CombinationOperator, _cafd int8, _gfcc int16, _efed, _bdfc, _gdgf, _ade, _abcb, _dcaef, _cfba, _cgcce, _agdc, _acffg int8, _cfad, _faad []int8, _dedcc []*_c.Bitmap, _eebd int8) {
-	_eeaeg._bbcea = _dcbdb
-	_eeaeg.IsHuffmanEncoded = _ada
-	_eeaeg.UseRefinement = _eadda
-	_eeaeg.RegionInfo.BitmapWidth = _gedbb
-	_eeaeg.RegionInfo.BitmapHeight = _fccdd
-	_eeaeg.NumberOfSymbolInstances = _cgff
-	_eeaeg.SbStrips = _daaef
-	_eeaeg.NumberOfSymbols = _deda
-	_eeaeg.DefaultPixel = _gdge
-	_eeaeg.CombinationOperator = _gedg
-	_eeaeg.IsTransposed = _cafd
-	_eeaeg.ReferenceCorner = _gfcc
-	_eeaeg.SbDsOffset = _efed
-	_eeaeg.SbHuffFS = _bdfc
-	_eeaeg.SbHuffDS = _gdgf
-	_eeaeg.SbHuffDT = _ade
-	_eeaeg.SbHuffRDWidth = _abcb
-	_eeaeg.SbHuffRDHeight = _dcaef
-	_eeaeg.SbHuffRSize = _agdc
-	_eeaeg.SbHuffRDX = _cfba
-	_eeaeg.SbHuffRDY = _cgcce
-	_eeaeg.SbrTemplate = _acffg
-	_eeaeg.SbrATX = _cfad
-	_eeaeg.SbrATY = _faad
-	_eeaeg.Symbols = _dedcc
-	_eeaeg._bfa = _eebd
-}
-func (_bgfb *TextRegion) blit(_afcce *_c.Bitmap, _bbdb int64) error {
-	if _bgfb.IsTransposed == 0 && (_bgfb.ReferenceCorner == 2 || _bgfb.ReferenceCorner == 3) {
-		_bgfb._dgee += int64(_afcce.Width - 1)
-	} else if _bgfb.IsTransposed == 1 && (_bgfb.ReferenceCorner == 0 || _bgfb.ReferenceCorner == 2) {
-		_bgfb._dgee += int64(_afcce.Height - 1)
-	}
-	_daea := _bgfb._dgee
-	if _bgfb.IsTransposed == 1 {
-		_daea, _bbdb = _bbdb, _daea
-	}
-	switch _bgfb.ReferenceCorner {
-	case 0:
-		_bbdb -= int64(_afcce.Height - 1)
-	case 2:
-		_bbdb -= int64(_afcce.Height - 1)
-		_daea -= int64(_afcce.Width - 1)
-	case 3:
-		_daea -= int64(_afcce.Width - 1)
-	}
-	_bbcf := _c.Blit(_afcce, _bgfb.RegionBitmap, int(_daea), int(_bbdb), _bgfb.CombinationOperator)
-	if _bbcf != nil {
-		return _bbcf
-	}
-	if _bgfb.IsTransposed == 0 && (_bgfb.ReferenceCorner == 0 || _bgfb.ReferenceCorner == 1) {
-		_bgfb._dgee += int64(_afcce.Width - 1)
-	}
-	if _bgfb.IsTransposed == 1 && (_bgfb.ReferenceCorner == 1 || _bgfb.ReferenceCorner == 3) {
-		_bgfb._dgee += int64(_afcce.Height - 1)
+		for _fabc := 0; _fabc < _gfe; _fabc++ {
+			_fgca := uint(7 - _fabc)
+			if _cad._fgf {
+				_egga = _cad.overrideAtTemplate0b(_gfg, _afg+_fabc, _cadb, int(_agg), _fabc, int(_fgca))
+				_cad._aae.SetIndex(int32(_egga))
+			} else {
+				_cad._aae.SetIndex(int32(_gfg))
+			}
+			var _bbbge int
+			_bbbge, _cge = _cad._acb.DecodeBit(_cad._aae)
+			if _cge != nil {
+				return _fd.Wrap(_cge, _gefg, "")
+			}
+			_agg |= byte(_bbbge << _fgca)
+			_gfg = ((_gfg & 0x7bf7) << 1) | _bbbge | ((_aac >> _fgca) & 0x10) | ((_eebba >> _fgca) & 0x800)
+		}
+		if _gbfg := _cad.Bitmap.SetByte(_gbbf, _agg); _gbfg != nil {
+			return _fd.Wrap(_gbfg, _gefg, "")
+		}
+		_gbbf++
+		_fcd++
 	}
 	return nil
 }
-func (_dedc *HalftoneRegion) parseHeader() error {
-	if _egfd := _dedc.RegionSegment.parseHeader(); _egfd != nil {
-		return _egfd
+
+var _ templater = &template0{}
+
+func (_eabb *TextRegion) createRegionBitmap() error {
+	_eabb.RegionBitmap = _d.New(int(_eabb.RegionInfo.BitmapWidth), int(_eabb.RegionInfo.BitmapHeight))
+	if _eabb.DefaultPixel != 0 {
+		_eabb.RegionBitmap.SetDefaultPixel()
 	}
-	_abdf, _ecbe := _dedc._ebf.ReadBit()
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HDefaultPixel = int8(_abdf)
-	_abg, _ecbe := _dedc._ebf.ReadBits(3)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.CombinationOperator = _c.CombinationOperator(_abg & 0xf)
-	_abdf, _ecbe = _dedc._ebf.ReadBit()
-	if _ecbe != nil {
-		return _ecbe
-	}
-	if _abdf == 1 {
-		_dedc.HSkipEnabled = true
-	}
-	_abg, _ecbe = _dedc._ebf.ReadBits(2)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HTemplate = byte(_abg & 0xf)
-	_abdf, _ecbe = _dedc._ebf.ReadBit()
-	if _ecbe != nil {
-		return _ecbe
-	}
-	if _abdf == 1 {
-		_dedc.IsMMREncoded = true
-	}
-	_abg, _ecbe = _dedc._ebf.ReadBits(32)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HGridWidth = uint32(_abg & _f.MaxUint32)
-	_abg, _ecbe = _dedc._ebf.ReadBits(32)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HGridHeight = uint32(_abg & _f.MaxUint32)
-	_abg, _ecbe = _dedc._ebf.ReadBits(32)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HGridX = int32(_abg & _f.MaxInt32)
-	_abg, _ecbe = _dedc._ebf.ReadBits(32)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HGridY = int32(_abg & _f.MaxInt32)
-	_abg, _ecbe = _dedc._ebf.ReadBits(16)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HRegionX = uint16(_abg & _f.MaxUint16)
-	_abg, _ecbe = _dedc._ebf.ReadBits(16)
-	if _ecbe != nil {
-		return _ecbe
-	}
-	_dedc.HRegionY = uint16(_abg & _f.MaxUint16)
-	if _ecbe = _dedc.computeSegmentDataStructure(); _ecbe != nil {
-		return _ecbe
-	}
-	return _dedc.checkInput()
+	return nil
 }
-func (_dgffb *TextRegion) GetRegionInfo() *RegionSegment { return _dgffb.RegionInfo }
+func (_fede *GenericRegion) decodeTemplate0a(_dbbc, _aab, _egaa int, _gafff, _acfb int) (_gggg error) {
+	const _badf = "\u0064\u0065c\u006f\u0064\u0065T\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0030\u0061"
+	var (
+		_ebfg, _egd int
+		_deea, _gec int
+		_gafc       byte
+		_fdgc       int
+	)
+	if _dbbc >= 1 {
+		_gafc, _gggg = _fede.Bitmap.GetByte(_acfb)
+		if _gggg != nil {
+			return _fd.Wrap(_gggg, _badf, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
+		}
+		_deea = int(_gafc)
+	}
+	if _dbbc >= 2 {
+		_gafc, _gggg = _fede.Bitmap.GetByte(_acfb - _fede.Bitmap.RowStride)
+		if _gggg != nil {
+			return _fd.Wrap(_gggg, _badf, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00202")
+		}
+		_gec = int(_gafc) << 6
+	}
+	_ebfg = (_deea & 0xf0) | (_gec & 0x3800)
+	for _dgc := 0; _dgc < _egaa; _dgc = _fdgc {
+		var (
+			_ecfeg byte
+			_bdb   int
+		)
+		_fdgc = _dgc + 8
+		if _fba := _aab - _dgc; _fba > 8 {
+			_bdb = 8
+		} else {
+			_bdb = _fba
+		}
+		if _dbbc > 0 {
+			_deea <<= 8
+			if _fdgc < _aab {
+				_gafc, _gggg = _fede.Bitmap.GetByte(_acfb + 1)
+				if _gggg != nil {
+					return _fd.Wrap(_gggg, _badf, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0030")
+				}
+				_deea |= int(_gafc)
+			}
+		}
+		if _dbbc > 1 {
+			_dab := _acfb - _fede.Bitmap.RowStride + 1
+			_gec <<= 8
+			if _fdgc < _aab {
+				_gafc, _gggg = _fede.Bitmap.GetByte(_dab)
+				if _gggg != nil {
+					return _fd.Wrap(_gggg, _badf, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0031")
+				}
+				_gec |= int(_gafc) << 6
+			} else {
+				_gec |= 0
+			}
+		}
+		for _eagfg := 0; _eagfg < _bdb; _eagfg++ {
+			_dcba := uint(7 - _eagfg)
+			if _fede._fgf {
+				_egd = _fede.overrideAtTemplate0a(_ebfg, _dgc+_eagfg, _dbbc, int(_ecfeg), _eagfg, int(_dcba))
+				_fede._aae.SetIndex(int32(_egd))
+			} else {
+				_fede._aae.SetIndex(int32(_ebfg))
+			}
+			var _bbbg int
+			_bbbg, _gggg = _fede._acb.DecodeBit(_fede._aae)
+			if _gggg != nil {
+				return _fd.Wrap(_gggg, _badf, "")
+			}
+			_ecfeg |= byte(_bbbg) << _dcba
+			_ebfg = ((_ebfg & 0x7bf7) << 1) | _bbbg | ((_deea >> _dcba) & 0x10) | ((_gec >> _dcba) & 0x800)
+		}
+		if _fea := _fede.Bitmap.SetByte(_gafff, _ecfeg); _fea != nil {
+			return _fd.Wrap(_fea, _badf, "")
+		}
+		_gafff++
+		_acfb++
+	}
+	return nil
+}
+func (_agcdc *TableSegment) HtPS() int32 { return _agcdc._fbdc }
+func (_acge *PatternDictionary) readIsMMREncoded() error {
+	_cebf, _eefd := _acge._fbdd.ReadBit()
+	if _eefd != nil {
+		return _eefd
+	}
+	if _cebf != 0 {
+		_acge.IsMMREncoded = true
+	}
+	return nil
+}
+func (_bbdf *RegionSegment) parseHeader() error {
+	const _dbaf = "p\u0061\u0072\u0073\u0065\u0048\u0065\u0061\u0064\u0065\u0072"
+	_da.Log.Trace("\u005b\u0052\u0045\u0047I\u004f\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002dH\u0045A\u0044\u0045\u0052\u005d\u0020\u0042\u0065g\u0069\u006e")
+	defer func() {
+		_da.Log.Trace("\u005b\u0052\u0045G\u0049\u004f\u004e\u005d[\u0050\u0041\u0052\u0053\u0045\u002d\u0048E\u0041\u0044\u0045\u0052\u005d\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
+	}()
+	_fccb, _ggdg := _bbdf._dbge.ReadBits(32)
+	if _ggdg != nil {
+		return _fd.Wrap(_ggdg, _dbaf, "\u0077\u0069\u0064t\u0068")
+	}
+	_bbdf.BitmapWidth = uint32(_fccb & _f.MaxUint32)
+	_fccb, _ggdg = _bbdf._dbge.ReadBits(32)
+	if _ggdg != nil {
+		return _fd.Wrap(_ggdg, _dbaf, "\u0068\u0065\u0069\u0067\u0068\u0074")
+	}
+	_bbdf.BitmapHeight = uint32(_fccb & _f.MaxUint32)
+	_fccb, _ggdg = _bbdf._dbge.ReadBits(32)
+	if _ggdg != nil {
+		return _fd.Wrap(_ggdg, _dbaf, "\u0078\u0020\u006c\u006f\u0063\u0061\u0074\u0069\u006f\u006e")
+	}
+	_bbdf.XLocation = uint32(_fccb & _f.MaxUint32)
+	_fccb, _ggdg = _bbdf._dbge.ReadBits(32)
+	if _ggdg != nil {
+		return _fd.Wrap(_ggdg, _dbaf, "\u0079\u0020\u006c\u006f\u0063\u0061\u0074\u0069\u006f\u006e")
+	}
+	_bbdf.YLocation = uint32(_fccb & _f.MaxUint32)
+	if _, _ggdg = _bbdf._dbge.ReadBits(5); _ggdg != nil {
+		return _fd.Wrap(_ggdg, _dbaf, "\u0064i\u0072\u0079\u0020\u0072\u0065\u0061d")
+	}
+	if _ggdg = _bbdf.readCombinationOperator(); _ggdg != nil {
+		return _fd.Wrap(_ggdg, _dbaf, "c\u006fm\u0062\u0069\u006e\u0061\u0074\u0069\u006f\u006e \u006f\u0070\u0065\u0072at\u006f\u0072")
+	}
+	return nil
+}
+func (_bcbfe *TableSegment) HtLow() int32 { return _bcbfe._cccb }
+func (_daec *GenericRegion) decodeTemplate1(_fdca, _dadc, _bfcc int, _faa, _adc int) (_afga error) {
+	const _gbe = "\u0064e\u0063o\u0064\u0065\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0031"
+	var (
+		_aedd, _defg  int
+		_bgfab, _adca int
+		_bagg         byte
+		_bfe, _fbd    int
+	)
+	if _fdca >= 1 {
+		_bagg, _afga = _daec.Bitmap.GetByte(_adc)
+		if _afga != nil {
+			return _fd.Wrap(_afga, _gbe, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
+		}
+		_bgfab = int(_bagg)
+	}
+	if _fdca >= 2 {
+		_bagg, _afga = _daec.Bitmap.GetByte(_adc - _daec.Bitmap.RowStride)
+		if _afga != nil {
+			return _fd.Wrap(_afga, _gbe, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00202")
+		}
+		_adca = int(_bagg) << 5
+	}
+	_aedd = ((_bgfab >> 1) & 0x1f8) | ((_adca >> 1) & 0x1e00)
+	for _cgb := 0; _cgb < _bfcc; _cgb = _bfe {
+		var (
+			_ddda byte
+			_bbc  int
+		)
+		_bfe = _cgb + 8
+		if _cea := _dadc - _cgb; _cea > 8 {
+			_bbc = 8
+		} else {
+			_bbc = _cea
+		}
+		if _fdca > 0 {
+			_bgfab <<= 8
+			if _bfe < _dadc {
+				_bagg, _afga = _daec.Bitmap.GetByte(_adc + 1)
+				if _afga != nil {
+					return _fd.Wrap(_afga, _gbe, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0030")
+				}
+				_bgfab |= int(_bagg)
+			}
+		}
+		if _fdca > 1 {
+			_adca <<= 8
+			if _bfe < _dadc {
+				_bagg, _afga = _daec.Bitmap.GetByte(_adc - _daec.Bitmap.RowStride + 1)
+				if _afga != nil {
+					return _fd.Wrap(_afga, _gbe, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0031")
+				}
+				_adca |= int(_bagg) << 5
+			}
+		}
+		for _cgdf := 0; _cgdf < _bbc; _cgdf++ {
+			if _daec._fgf {
+				_defg = _daec.overrideAtTemplate1(_aedd, _cgb+_cgdf, _fdca, int(_ddda), _cgdf)
+				_daec._aae.SetIndex(int32(_defg))
+			} else {
+				_daec._aae.SetIndex(int32(_aedd))
+			}
+			_fbd, _afga = _daec._acb.DecodeBit(_daec._aae)
+			if _afga != nil {
+				return _fd.Wrap(_afga, _gbe, "")
+			}
+			_ddda |= byte(_fbd) << uint(7-_cgdf)
+			_eebc := uint(8 - _cgdf)
+			_aedd = ((_aedd & 0xefb) << 1) | _fbd | ((_bgfab >> _eebc) & 0x8) | ((_adca >> _eebc) & 0x200)
+		}
+		if _ede := _daec.Bitmap.SetByte(_faa, _ddda); _ede != nil {
+			return _fd.Wrap(_ede, _gbe, "")
+		}
+		_faa++
+		_adc++
+	}
+	return nil
+}
+func (_ddeba *PageInformationSegment) readIsLossless() error {
+	_dff, _dabca := _ddeba._ace.ReadBit()
+	if _dabca != nil {
+		return _dabca
+	}
+	if _dff == 1 {
+		_ddeba.IsLossless = true
+	}
+	return nil
+}
 
 type HalftoneRegion struct {
-	_ebf                 _g.StreamReader
-	_bdeg                *Header
+	_gdfe                _fg.StreamReader
+	_fdag                *Header
 	DataHeaderOffset     int64
 	DataHeaderLength     int64
 	DataOffset           int64
 	DataLength           int64
 	RegionSegment        *RegionSegment
 	HDefaultPixel        int8
-	CombinationOperator  _c.CombinationOperator
+	CombinationOperator  _d.CombinationOperator
 	HSkipEnabled         bool
 	HTemplate            byte
 	IsMMREncoded         bool
@@ -524,240 +354,518 @@ type HalftoneRegion struct {
 	HGridY               int32
 	HRegionX             uint16
 	HRegionY             uint16
-	HalftoneRegionBitmap *_c.Bitmap
-	Patterns             []*_c.Bitmap
-}
-type TextRegion struct {
-	_ceegd                  _g.StreamReader
-	RegionInfo              *RegionSegment
-	SbrTemplate             int8
-	SbDsOffset              int8
-	DefaultPixel            int8
-	CombinationOperator     _c.CombinationOperator
-	IsTransposed            int8
-	ReferenceCorner         int16
-	LogSBStrips             int16
-	UseRefinement           bool
-	IsHuffmanEncoded        bool
-	SbHuffRSize             int8
-	SbHuffRDY               int8
-	SbHuffRDX               int8
-	SbHuffRDHeight          int8
-	SbHuffRDWidth           int8
-	SbHuffDT                int8
-	SbHuffDS                int8
-	SbHuffFS                int8
-	SbrATX                  []int8
-	SbrATY                  []int8
-	NumberOfSymbolInstances uint32
-	_dgee                   int64
-	SbStrips                int8
-	NumberOfSymbols         uint32
-	RegionBitmap            *_c.Bitmap
-	Symbols                 []*_c.Bitmap
-	_bbcea                  *_aa.Decoder
-	_baea                   *GenericRefinementRegion
-	_fdfbf                  *_aa.DecoderStats
-	_dfge                   *_aa.DecoderStats
-	_bcca                   *_aa.DecoderStats
-	_gdgaa                  *_aa.DecoderStats
-	_feaceb                 *_aa.DecoderStats
-	_bbgdf                  *_aa.DecoderStats
-	_agag                   *_aa.DecoderStats
-	_bcfb                   *_aa.DecoderStats
-	_bfce                   *_aa.DecoderStats
-	_badb                   *_aa.DecoderStats
-	_gfd                    *_aa.DecoderStats
-	_bfa                    int8
-	_gaead                  *_aag.FixedSizeTable
-	Header                  *Header
-	_cdcga                  _aag.Tabler
-	_eabed                  _aag.Tabler
-	_afeb                   _aag.Tabler
-	_cdcgd                  _aag.Tabler
-	_agba                   _aag.Tabler
-	_aafb                   _aag.Tabler
-	_ecgf                   _aag.Tabler
-	_ddfff                  _aag.Tabler
-	_afcf, _dbe             map[int]int
-	_babe                   []int
-	_edded                  *_c.Points
-	_ebde                   *_c.Bitmaps
-	_dcfb                   *_cb.IntSlice
-	_afbf, _fadfc           int
-	_bfab                   *_c.Boxes
+	HalftoneRegionBitmap *_d.Bitmap
+	Patterns             []*_d.Bitmap
 }
 
-func (_afff *Header) writeSegmentDataLength(_agbc _g.BinaryWriter) (_efae int, _cgce error) {
-	_bgbb := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_bgbb, uint32(_afff.SegmentDataLength))
-	if _efae, _cgce = _agbc.Write(_bgbb); _cgce != nil {
-		return 0, _ac.Wrap(_cgce, "\u0048\u0065a\u0064\u0065\u0072\u002e\u0077\u0072\u0069\u0074\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0044\u0061\u0074\u0061\u004c\u0065ng\u0074\u0068", "")
+func (_ffcc *SymbolDictionary) decodeHeightClassDeltaHeight() (int64, error) {
+	if _ffcc.IsHuffmanEncoded {
+		return _ffcc.decodeHeightClassDeltaHeightWithHuffman()
 	}
-	return _efae, nil
+	_ggdc, _ebba := _ffcc._fffd.DecodeInt(_ffcc._aabg)
+	if _ebba != nil {
+		return 0, _ebba
+	}
+	return int64(_ggdc), nil
 }
-func (_dgdg *HalftoneRegion) grayScaleDecoding(_aedf int) ([][]int, error) {
-	var (
-		_cgae []int8
-		_eabd []int8
-	)
-	if !_dgdg.IsMMREncoded {
-		_cgae = make([]int8, 4)
-		_eabd = make([]int8, 4)
-		if _dgdg.HTemplate <= 1 {
-			_cgae[0] = 3
-		} else if _dgdg.HTemplate >= 2 {
-			_cgae[0] = 2
-		}
-		_eabd[0] = -1
-		_cgae[1] = -3
-		_eabd[1] = -1
-		_cgae[2] = 2
-		_eabd[2] = -2
-		_cgae[3] = -2
-		_eabd[3] = -2
-	}
-	_cbea := make([]*_c.Bitmap, _aedf)
-	_baf := NewGenericRegion(_dgdg._ebf)
-	_baf.setParametersMMR(_dgdg.IsMMREncoded, _dgdg.DataOffset, _dgdg.DataLength, _dgdg.HGridHeight, _dgdg.HGridWidth, _dgdg.HTemplate, false, _dgdg.HSkipEnabled, _cgae, _eabd)
-	_gccb := _aedf - 1
-	var _dgbf error
-	_cbea[_gccb], _dgbf = _baf.GetRegionBitmap()
-	if _dgbf != nil {
-		return nil, _dgbf
-	}
-	for _gccb > 0 {
-		_gccb--
-		_baf.Bitmap = nil
-		_cbea[_gccb], _dgbf = _baf.GetRegionBitmap()
-		if _dgbf != nil {
-			return nil, _dgbf
-		}
-		if _dgbf = _dgdg.combineGrayscalePlanes(_cbea, _gccb); _dgbf != nil {
-			return nil, _dgbf
-		}
-	}
-	return _dgdg.computeGrayScalePlanes(_cbea, _aedf)
-}
-func (_cfcgg *TextRegion) decodeStripT() (_baeb int64, _ebac error) {
-	if _cfcgg.IsHuffmanEncoded {
-		if _cfcgg.SbHuffDT == 3 {
-			if _cfcgg._afeb == nil {
-				var _bbfg int
-				if _cfcgg.SbHuffFS == 3 {
-					_bbfg++
-				}
-				if _cfcgg.SbHuffDS == 3 {
-					_bbfg++
-				}
-				_cfcgg._afeb, _ebac = _cfcgg.getUserTable(_bbfg)
-				if _ebac != nil {
-					return 0, _ebac
-				}
-			}
-			_baeb, _ebac = _cfcgg._afeb.Decode(_cfcgg._ceegd)
-			if _ebac != nil {
-				return 0, _ebac
-			}
+func (_bbe *GenericRegion) overrideAtTemplate0b(_bgfcf, _fcb, _fgg, _bcag, _gcea, _cada int) int {
+	if _bbe.GBAtOverride[0] {
+		_bgfcf &= 0xFFFD
+		if _bbe.GBAtY[0] == 0 && _bbe.GBAtX[0] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[0]&0x1)) << 1
 		} else {
-			var _gcdf _aag.Tabler
-			_gcdf, _ebac = _aag.GetStandardTable(11 + int(_cfcgg.SbHuffDT))
-			if _ebac != nil {
-				return 0, _ebac
-			}
-			_baeb, _ebac = _gcdf.Decode(_cfcgg._ceegd)
-			if _ebac != nil {
-				return 0, _ebac
-			}
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[0]), _fgg+int(_bbe.GBAtY[0]))) << 1
 		}
-	} else {
-		var _abag int32
-		_abag, _ebac = _cfcgg._bbcea.DecodeInt(_cfcgg._fdfbf)
-		if _ebac != nil {
-			return 0, _ebac
+	}
+	if _bbe.GBAtOverride[1] {
+		_bgfcf &= 0xDFFF
+		if _bbe.GBAtY[1] == 0 && _bbe.GBAtX[1] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[1]&0x1)) << 13
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[1]), _fgg+int(_bbe.GBAtY[1]))) << 13
 		}
-		_baeb = int64(_abag)
 	}
-	_baeb *= int64(-_cfcgg.SbStrips)
-	return _baeb, nil
-}
-func (_fcbb *PageInformationSegment) readCombinationOperator() error {
-	_fdbf, _geece := _fcbb._fabba.ReadBits(2)
-	if _geece != nil {
-		return _geece
-	}
-	_fcbb._cba = _c.CombinationOperator(int(_fdbf))
-	return nil
-}
-func (_ffda *GenericRegion) Size() int { return _ffda.RegionSegment.Size() + 1 + 2*len(_ffda.GBAtX) }
-
-type template1 struct{}
-
-func (_gbgd *RegionSegment) readCombinationOperator() error {
-	_edaf, _effa := _gbgd._ffade.ReadBits(3)
-	if _effa != nil {
-		return _effa
-	}
-	_gbgd.CombinaionOperator = _c.CombinationOperator(_edaf & 0xF)
-	return nil
-}
-func (_ebdc *Header) writeSegmentNumber(_eaade _g.BinaryWriter) (_aebbd int, _dfc error) {
-	_ffbg := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_ffbg, _ebdc.SegmentNumber)
-	if _aebbd, _dfc = _eaade.Write(_ffbg); _dfc != nil {
-		return 0, _ac.Wrap(_dfc, "\u0048e\u0061\u0064\u0065\u0072.\u0077\u0072\u0069\u0074\u0065S\u0065g\u006de\u006e\u0074\u004e\u0075\u006d\u0062\u0065r", "")
-	}
-	return _aebbd, nil
-}
-func (_afb *SymbolDictionary) checkInput() error {
-	if _afb.SdHuffDecodeHeightSelection == 2 {
-		_gb.Log.Debug("\u0053\u0079\u006d\u0062\u006fl\u0020\u0044\u0069\u0063\u0074i\u006fn\u0061\u0072\u0079\u0020\u0044\u0065\u0063\u006f\u0064\u0065\u0020\u0048\u0065\u0069\u0067\u0068\u0074\u0020\u0053e\u006c\u0065\u0063\u0074\u0069\u006f\u006e\u003a\u0020\u0025\u0064\u0020\u0076\u0061\u006c\u0075\u0065\u0020\u006e\u006f\u0074\u0020\u0070\u0065r\u006d\u0069\u0074\u0074\u0065\u0064", _afb.SdHuffDecodeHeightSelection)
-	}
-	if _afb.SdHuffDecodeWidthSelection == 2 {
-		_gb.Log.Debug("\u0053\u0079\u006d\u0062\u006f\u006c\u0020\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079 \u0044\u0065\u0063\u006f\u0064\u0065\u0020\u0057\u0069\u0064t\u0068\u0020\u0053\u0065\u006c\u0065\u0063\u0074\u0069\u006f\u006e\u003a\u0020\u0025\u0064\u0020\u0076\u0061l\u0075\u0065\u0020\u006e\u006f\u0074 \u0070\u0065r\u006d\u0069t\u0074e\u0064", _afb.SdHuffDecodeWidthSelection)
-	}
-	if _afb.IsHuffmanEncoded {
-		if _afb.SdTemplate != 0 {
-			_gb.Log.Debug("\u0053\u0044T\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0020\u003d\u0020\u0025\u0064\u0020\u0028\u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0062e \u0030\u0029", _afb.SdTemplate)
+	if _bbe.GBAtOverride[2] {
+		_bgfcf &= 0xFDFF
+		if _bbe.GBAtY[2] == 0 && _bbe.GBAtX[2] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[2]&0x1)) << 9
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[2]), _fgg+int(_bbe.GBAtY[2]))) << 9
 		}
-		if !_afb.UseRefinementAggregation {
-			if !_afb.UseRefinementAggregation {
-				if _afb._bebbf {
-					_gb.Log.Debug("\u0049\u0073\u0043\u006f\u0064\u0069\u006e\u0067C\u006f\u006e\u0074ex\u0074\u0052\u0065\u0074\u0061\u0069n\u0065\u0064\u0020\u003d\u0020\u0074\u0072\u0075\u0065\u0020\u0028\u0073\u0068\u006f\u0075l\u0064\u0020\u0062\u0065\u0020\u0066\u0061\u006cs\u0065\u0029")
-					_afb._bebbf = false
+	}
+	if _bbe.GBAtOverride[3] {
+		_bgfcf &= 0xBFFF
+		if _bbe.GBAtY[3] == 0 && _bbe.GBAtX[3] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[3]&0x1)) << 14
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[3]), _fgg+int(_bbe.GBAtY[3]))) << 14
+		}
+	}
+	if _bbe.GBAtOverride[4] {
+		_bgfcf &= 0xEFFF
+		if _bbe.GBAtY[4] == 0 && _bbe.GBAtX[4] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[4]&0x1)) << 12
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[4]), _fgg+int(_bbe.GBAtY[4]))) << 12
+		}
+	}
+	if _bbe.GBAtOverride[5] {
+		_bgfcf &= 0xFFDF
+		if _bbe.GBAtY[5] == 0 && _bbe.GBAtX[5] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[5]&0x1)) << 5
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[5]), _fgg+int(_bbe.GBAtY[5]))) << 5
+		}
+	}
+	if _bbe.GBAtOverride[6] {
+		_bgfcf &= 0xFFFB
+		if _bbe.GBAtY[6] == 0 && _bbe.GBAtX[6] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[6]&0x1)) << 2
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[6]), _fgg+int(_bbe.GBAtY[6]))) << 2
+		}
+	}
+	if _bbe.GBAtOverride[7] {
+		_bgfcf &= 0xFFF7
+		if _bbe.GBAtY[7] == 0 && _bbe.GBAtX[7] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[7]&0x1)) << 3
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[7]), _fgg+int(_bbe.GBAtY[7]))) << 3
+		}
+	}
+	if _bbe.GBAtOverride[8] {
+		_bgfcf &= 0xF7FF
+		if _bbe.GBAtY[8] == 0 && _bbe.GBAtX[8] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[8]&0x1)) << 11
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[8]), _fgg+int(_bbe.GBAtY[8]))) << 11
+		}
+	}
+	if _bbe.GBAtOverride[9] {
+		_bgfcf &= 0xFFEF
+		if _bbe.GBAtY[9] == 0 && _bbe.GBAtX[9] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[9]&0x1)) << 4
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[9]), _fgg+int(_bbe.GBAtY[9]))) << 4
+		}
+	}
+	if _bbe.GBAtOverride[10] {
+		_bgfcf &= 0x7FFF
+		if _bbe.GBAtY[10] == 0 && _bbe.GBAtX[10] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[10]&0x1)) << 15
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[10]), _fgg+int(_bbe.GBAtY[10]))) << 15
+		}
+	}
+	if _bbe.GBAtOverride[11] {
+		_bgfcf &= 0xFDFF
+		if _bbe.GBAtY[11] == 0 && _bbe.GBAtX[11] >= -int8(_gcea) {
+			_bgfcf |= (_bcag >> uint(int8(_cada)-_bbe.GBAtX[11]&0x1)) << 10
+		} else {
+			_bgfcf |= int(_bbe.getPixel(_fcb+int(_bbe.GBAtX[11]), _fgg+int(_bbe.GBAtY[11]))) << 10
+		}
+	}
+	return _bgfcf
+}
+func (_fcega *SymbolDictionary) encodeSymbols(_bceb _fg.BinaryWriter) (_bbde int, _gcgd error) {
+	const _efcc = "\u0065\u006e\u0063o\u0064\u0065\u0053\u0079\u006d\u0062\u006f\u006c"
+	_bcbf := _ga.New()
+	_bcbf.Init()
+	_cfea, _gcgd := _fcega._dbag.SelectByIndexes(_fcega._fagdd)
+	if _gcgd != nil {
+		return 0, _fd.Wrap(_gcgd, _efcc, "\u0069n\u0069\u0074\u0069\u0061\u006c")
+	}
+	_bgdf := map[*_d.Bitmap]int{}
+	for _bfda, _dgcg := range _cfea.Values {
+		_bgdf[_dgcg] = _bfda
+	}
+	_cfea.SortByHeight()
+	var _ecbg, _gebd int
+	_dgad, _gcgd := _cfea.GroupByHeight()
+	if _gcgd != nil {
+		return 0, _fd.Wrap(_gcgd, _efcc, "")
+	}
+	for _, _bfdc := range _dgad.Values {
+		_cdce := _bfdc.Values[0].Height
+		_ecfd := _cdce - _ecbg
+		if _gcgd = _bcbf.EncodeInteger(_ga.IADH, _ecfd); _gcgd != nil {
+			return 0, _fd.Wrapf(_gcgd, _efcc, "\u0049\u0041\u0044\u0048\u0020\u0066\u006f\u0072\u0020\u0064\u0068\u003a \u0027\u0025\u0064\u0027", _ecfd)
+		}
+		_ecbg = _cdce
+		_afad, _edgg := _bfdc.GroupByWidth()
+		if _edgg != nil {
+			return 0, _fd.Wrapf(_edgg, _efcc, "\u0068\u0065\u0069g\u0068\u0074\u003a\u0020\u0027\u0025\u0064\u0027", _cdce)
+		}
+		var _aabba int
+		for _, _gfec := range _afad.Values {
+			for _, _cefb := range _gfec.Values {
+				_cdae := _cefb.Width
+				_cffd := _cdae - _aabba
+				if _edgg = _bcbf.EncodeInteger(_ga.IADW, _cffd); _edgg != nil {
+					return 0, _fd.Wrapf(_edgg, _efcc, "\u0049\u0041\u0044\u0057\u0020\u0066\u006f\u0072\u0020\u0064\u0077\u003a \u0027\u0025\u0064\u0027", _cffd)
 				}
-				if _afb._bcce {
-					_gb.Log.Debug("\u0069s\u0043\u006fd\u0069\u006e\u0067\u0043o\u006e\u0074\u0065x\u0074\u0055\u0073\u0065\u0064\u0020\u003d\u0020\u0074ru\u0065\u0020\u0028s\u0068\u006fu\u006c\u0064\u0020\u0062\u0065\u0020f\u0061\u006cs\u0065\u0029")
-					_afb._bcce = false
+				_aabba += _cffd
+				if _edgg = _bcbf.EncodeBitmap(_cefb, false); _edgg != nil {
+					return 0, _fd.Wrapf(_edgg, _efcc, "H\u0065i\u0067\u0068\u0074\u003a\u0020\u0025\u0064\u0020W\u0069\u0064\u0074\u0068: \u0025\u0064", _cdce, _cdae)
 				}
+				_abfb := _bgdf[_cefb]
+				_fcega._dcbf[_abfb] = _gebd
+				_gebd++
 			}
 		}
-	} else {
-		if _afb.SdHuffBMSizeSelection != 0 {
-			_gb.Log.Debug("\u0053\u0064\u0048\u0075\u0066\u0066B\u004d\u0053\u0069\u007a\u0065\u0053\u0065\u006c\u0065\u0063\u0074\u0069\u006fn\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u0062\u0065\u0020\u0030")
-			_afb.SdHuffBMSizeSelection = 0
-		}
-		if _afb.SdHuffDecodeWidthSelection != 0 {
-			_gb.Log.Debug("\u0053\u0064\u0048\u0075\u0066\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0057\u0069\u0064\u0074\u0068\u0053\u0065\u006c\u0065\u0063\u0074\u0069o\u006e\u0020\u0073\u0068\u006fu\u006c\u0064 \u0062\u0065\u0020\u0030")
-			_afb.SdHuffDecodeWidthSelection = 0
-		}
-		if _afb.SdHuffDecodeHeightSelection != 0 {
-			_gb.Log.Debug("\u0053\u0064\u0048\u0075\u0066\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0048e\u0069\u0067\u0068\u0074\u0053\u0065l\u0065\u0063\u0074\u0069\u006f\u006e\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u0062\u0065\u0020\u0030")
-			_afb.SdHuffDecodeHeightSelection = 0
+		if _edgg = _bcbf.EncodeOOB(_ga.IADW); _edgg != nil {
+			return 0, _fd.Wrap(_edgg, _efcc, "\u0049\u0041\u0044\u0057")
 		}
 	}
-	if !_afb.UseRefinementAggregation {
-		if _afb.SdrTemplate != 0 {
-			_gb.Log.Debug("\u0053\u0044\u0052\u0054\u0065\u006d\u0070\u006c\u0061\u0074e\u0020\u003d\u0020\u0025\u0064\u0020\u0028s\u0068\u006f\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030\u0029", _afb.SdrTemplate)
-			_afb.SdrTemplate = 0
-		}
+	if _gcgd = _bcbf.EncodeInteger(_ga.IAEX, 0); _gcgd != nil {
+		return 0, _fd.Wrap(_gcgd, _efcc, "\u0065\u0078p\u006f\u0072\u0074e\u0064\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0073")
 	}
-	if !_afb.IsHuffmanEncoded || !_afb.UseRefinementAggregation {
-		if _afb.SdHuffAggInstanceSelection {
-			_gb.Log.Debug("\u0053d\u0048\u0075f\u0066\u0041\u0067g\u0049\u006e\u0073\u0074\u0061\u006e\u0063e\u0053\u0065\u006c\u0065\u0063\u0074i\u006f\u006e\u0020\u003d\u0020\u0025\u0064\u0020\u0028\u0073\u0068o\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030\u0029", _afb.SdHuffAggInstanceSelection)
+	if _gcgd = _bcbf.EncodeInteger(_ga.IAEX, len(_fcega._fagdd)); _gcgd != nil {
+		return 0, _fd.Wrap(_gcgd, _efcc, "\u006e\u0075\u006d\u0062\u0065\u0072\u0020\u006f\u0066\u0020\u0073\u0079m\u0062\u006f\u006c\u0073")
+	}
+	_bcbf.Final()
+	_ccfa, _gcgd := _bcbf.WriteTo(_bceb)
+	if _gcgd != nil {
+		return 0, _fd.Wrap(_gcgd, _efcc, "\u0077\u0072i\u0074\u0069\u006e\u0067 \u0065\u006ec\u006f\u0064\u0065\u0072\u0020\u0063\u006f\u006et\u0065\u0078\u0074\u0020\u0074\u006f\u0020\u0027\u0077\u0027\u0020\u0077r\u0069\u0074\u0065\u0072")
+	}
+	return int(_ccfa), nil
+}
+func _dfe(_eeba int) int {
+	if _eeba == 0 {
+		return 0
+	}
+	_eeba |= _eeba >> 1
+	_eeba |= _eeba >> 2
+	_eeba |= _eeba >> 4
+	_eeba |= _eeba >> 8
+	_eeba |= _eeba >> 16
+	return (_eeba + 1) >> 1
+}
+func (_aeaga *SymbolDictionary) setAtPixels() error {
+	if _aeaga.IsHuffmanEncoded {
+		return nil
+	}
+	_aafe := 1
+	if _aeaga.SdTemplate == 0 {
+		_aafe = 4
+	}
+	if _agcd := _aeaga.readAtPixels(_aafe); _agcd != nil {
+		return _agcd
+	}
+	return nil
+}
+func NewGenericRegion(r _fg.StreamReader) *GenericRegion {
+	return &GenericRegion{RegionSegment: NewRegionSegment(r), _baf: r}
+}
+func (_fafdf *SymbolDictionary) setCodingStatistics() error {
+	if _fafdf._eegg == nil {
+		_fafdf._eegg = _b.NewStats(512, 1)
+	}
+	if _fafdf._aabg == nil {
+		_fafdf._aabg = _b.NewStats(512, 1)
+	}
+	if _fafdf._aafa == nil {
+		_fafdf._aafa = _b.NewStats(512, 1)
+	}
+	if _fafdf._eagcd == nil {
+		_fafdf._eagcd = _b.NewStats(512, 1)
+	}
+	if _fafdf._gabe == nil {
+		_fafdf._gabe = _b.NewStats(512, 1)
+	}
+	if _fafdf.UseRefinementAggregation && _fafdf._fac == nil {
+		_fafdf._fac = _b.NewStats(1<<uint(_fafdf._cff), 1)
+		_fafdf._abag = _b.NewStats(512, 1)
+		_fafdf._dfb = _b.NewStats(512, 1)
+	}
+	if _fafdf._bagf == nil {
+		_fafdf._bagf = _b.NewStats(65536, 1)
+	}
+	if _fafdf._fffd == nil {
+		var _aefgg error
+		_fafdf._fffd, _aefgg = _b.New(_fafdf._bcagf)
+		if _aefgg != nil {
+			return _aefgg
 		}
 	}
 	return nil
+}
+func (_egcb *PageInformationSegment) parseHeader() (_dbaa error) {
+	_da.Log.Trace("\u005b\u0050\u0061\u0067\u0065I\u006e\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0053\u0065\u0067m\u0065\u006e\u0074\u005d\u0020\u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0048\u0065\u0061\u0064\u0065\u0072\u002e\u002e\u002e")
+	defer func() {
+		var _dbga = "[\u0050\u0061\u0067\u0065\u0049\u006e\u0066\u006f\u0072m\u0061\u0074\u0069\u006f\u006e\u0053\u0065gm\u0065\u006e\u0074\u005d \u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0048\u0065ad\u0065\u0072 \u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064"
+		if _dbaa != nil {
+			_dbga += "\u0020\u0077\u0069t\u0068\u0020\u0065\u0072\u0072\u006f\u0072\u0020" + _dbaa.Error()
+		} else {
+			_dbga += "\u0020\u0073\u0075\u0063\u0063\u0065\u0073\u0073\u0066\u0075\u006c\u006c\u0079"
+		}
+		_da.Log.Trace(_dbga)
+	}()
+	if _dbaa = _egcb.readWidthAndHeight(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readResolution(); _dbaa != nil {
+		return _dbaa
+	}
+	_, _dbaa = _egcb._ace.ReadBit()
+	if _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readCombinationOperatorOverrideAllowed(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readRequiresAuxiliaryBuffer(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readCombinationOperator(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readDefaultPixelValue(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readContainsRefinement(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readIsLossless(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readIsStriped(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.readMaxStripeSize(); _dbaa != nil {
+		return _dbaa
+	}
+	if _dbaa = _egcb.checkInput(); _dbaa != nil {
+		return _dbaa
+	}
+	_da.Log.Trace("\u0025\u0073", _egcb)
+	return nil
+}
+func (_abc *template1) form(_gbf, _dge, _gbd, _fegd, _efe int16) int16 {
+	return ((_gbf & 0x02) << 8) | (_dge << 6) | ((_gbd & 0x03) << 4) | (_fegd << 1) | _efe
+}
+func (_gggf *TextRegion) decodeRdx() (int64, error) {
+	const _ccgea = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064x"
+	if _gggf.IsHuffmanEncoded {
+		if _gggf.SbHuffRDX == 3 {
+			if _gggf._agag == nil {
+				var (
+					_edbb  int
+					_cabfa error
+				)
+				if _gggf.SbHuffFS == 3 {
+					_edbb++
+				}
+				if _gggf.SbHuffDS == 3 {
+					_edbb++
+				}
+				if _gggf.SbHuffDT == 3 {
+					_edbb++
+				}
+				if _gggf.SbHuffRDWidth == 3 {
+					_edbb++
+				}
+				if _gggf.SbHuffRDHeight == 3 {
+					_edbb++
+				}
+				_gggf._agag, _cabfa = _gggf.getUserTable(_edbb)
+				if _cabfa != nil {
+					return 0, _fd.Wrap(_cabfa, _ccgea, "")
+				}
+			}
+			return _gggf._agag.Decode(_gggf._effb)
+		}
+		_fcff, _gfb := _ba.GetStandardTable(14 + int(_gggf.SbHuffRDX))
+		if _gfb != nil {
+			return 0, _fd.Wrap(_gfb, _ccgea, "")
+		}
+		return _fcff.Decode(_gggf._effb)
+	}
+	_fdeed, _adge := _gggf._dffe.DecodeInt(_gggf._beda)
+	if _adge != nil {
+		return 0, _fd.Wrap(_adge, _ccgea, "")
+	}
+	return int64(_fdeed), nil
+}
+func (_daecb *GenericRegion) writeGBAtPixels(_fecd _fg.BinaryWriter) (_eed int, _fggg error) {
+	const _dadd = "\u0077r\u0069t\u0065\u0047\u0042\u0041\u0074\u0050\u0069\u0078\u0065\u006c\u0073"
+	if _daecb.UseMMR {
+		return 0, nil
+	}
+	_edg := 1
+	if _daecb.GBTemplate == 0 {
+		_edg = 4
+	} else if _daecb.UseExtTemplates {
+		_edg = 12
+	}
+	if len(_daecb.GBAtX) != _edg {
+		return 0, _fd.Errorf(_dadd, "\u0067\u0062\u0020\u0061\u0074\u0020\u0070\u0061\u0069\u0072\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0020d\u006f\u0065\u0073\u006e\u0027\u0074\u0020m\u0061\u0074\u0063\u0068\u0020\u0074\u006f\u0020\u0047\u0042\u0041t\u0058\u0020\u0073\u006c\u0069\u0063\u0065\u0020\u006c\u0065\u006e")
+	}
+	if len(_daecb.GBAtY) != _edg {
+		return 0, _fd.Errorf(_dadd, "\u0067\u0062\u0020\u0061\u0074\u0020\u0070\u0061\u0069\u0072\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0020d\u006f\u0065\u0073\u006e\u0027\u0074\u0020m\u0061\u0074\u0063\u0068\u0020\u0074\u006f\u0020\u0047\u0042\u0041t\u0059\u0020\u0073\u006c\u0069\u0063\u0065\u0020\u006c\u0065\u006e")
+	}
+	for _acacc := 0; _acacc < _edg; _acacc++ {
+		if _fggg = _fecd.WriteByte(byte(_daecb.GBAtX[_acacc])); _fggg != nil {
+			return _eed, _fd.Wrap(_fggg, _dadd, "w\u0072\u0069\u0074\u0065\u0020\u0047\u0042\u0041\u0074\u0058")
+		}
+		_eed++
+		if _fggg = _fecd.WriteByte(byte(_daecb.GBAtY[_acacc])); _fggg != nil {
+			return _eed, _fd.Wrap(_fggg, _dadd, "w\u0072\u0069\u0074\u0065\u0020\u0047\u0042\u0041\u0074\u0059")
+		}
+		_eed++
+	}
+	return _eed, nil
+}
+
+type template0 struct{}
+
+func NewHeader(d Documenter, r _fg.StreamReader, offset int64, organizationType OrganizationType) (*Header, error) {
+	_ged := &Header{Reader: r}
+	if _ccab := _ged.parse(d, r, offset, organizationType); _ccab != nil {
+		return nil, _fd.Wrap(_ccab, "\u004ee\u0077\u0048\u0065\u0061\u0064\u0065r", "")
+	}
+	return _ged, nil
+}
+func (_ff *EndOfStripe) LineNumber() int { return _ff._dc }
+func (_fb *GenericRegion) Size() int     { return _fb.RegionSegment.Size() + 1 + 2*len(_fb.GBAtX) }
+func (_dbggg *PageInformationSegment) readContainsRefinement() error {
+	_dcf, _egbf := _dbggg._ace.ReadBit()
+	if _egbf != nil {
+		return _egbf
+	}
+	if _dcf == 1 {
+		_dbggg._bgeb = true
+	}
+	return nil
+}
+
+var _ SegmentEncoder = &RegionSegment{}
+
+func (_cgeb *PageInformationSegment) encodeFlags(_ddfb _fg.BinaryWriter) (_ggcad error) {
+	const _bace = "e\u006e\u0063\u006f\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
+	if _ggcad = _ddfb.SkipBits(1); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0072\u0065\u0073e\u0072\u0076\u0065\u0064\u0020\u0062\u0069\u0074")
+	}
+	var _dfdb int
+	if _cgeb.CombinationOperatorOverrideAllowed() {
+		_dfdb = 1
+	}
+	if _ggcad = _ddfb.WriteBit(_dfdb); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0063\u006f\u006db\u0069\u006e\u0061\u0074i\u006f\u006e\u0020\u006f\u0070\u0065\u0072a\u0074\u006f\u0072\u0020\u006f\u0076\u0065\u0072\u0072\u0069\u0064\u0064\u0065\u006e")
+	}
+	_dfdb = 0
+	if _cgeb._bfgd {
+		_dfdb = 1
+	}
+	if _ggcad = _ddfb.WriteBit(_dfdb); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0072e\u0071\u0075\u0069\u0072e\u0073\u0020\u0061\u0075\u0078i\u006ci\u0061r\u0079\u0020\u0062\u0075\u0066\u0066\u0065r")
+	}
+	if _ggcad = _ddfb.WriteBit((int(_cgeb._aefgc) >> 1) & 0x01); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0063\u006f\u006d\u0062\u0069\u006e\u0061\u0074\u0069\u006fn\u0020\u006f\u0070\u0065\u0072\u0061\u0074o\u0072\u0020\u0066\u0069\u0072\u0073\u0074\u0020\u0062\u0069\u0074")
+	}
+	if _ggcad = _ddfb.WriteBit(int(_cgeb._aefgc) & 0x01); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0063\u006f\u006db\u0069\u006e\u0061\u0074i\u006f\u006e\u0020\u006f\u0070\u0065\u0072a\u0074\u006f\u0072\u0020\u0073\u0065\u0063\u006f\u006e\u0064\u0020\u0062\u0069\u0074")
+	}
+	_dfdb = int(_cgeb.DefaultPixelValue)
+	if _ggcad = _ddfb.WriteBit(_dfdb); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0064e\u0066\u0061\u0075\u006c\u0074\u0020\u0070\u0061\u0067\u0065\u0020p\u0069\u0078\u0065\u006c\u0020\u0076\u0061\u006c\u0075\u0065")
+	}
+	_dfdb = 0
+	if _cgeb._bgeb {
+		_dfdb = 1
+	}
+	if _ggcad = _ddfb.WriteBit(_dfdb); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "\u0063\u006f\u006e\u0074ai\u006e\u0073\u0020\u0072\u0065\u0066\u0069\u006e\u0065\u006d\u0065\u006e\u0074")
+	}
+	_dfdb = 0
+	if _cgeb.IsLossless {
+		_dfdb = 1
+	}
+	if _ggcad = _ddfb.WriteBit(_dfdb); _ggcad != nil {
+		return _fd.Wrap(_ggcad, _bace, "p\u0061\u0067\u0065\u0020\u0069\u0073 \u0065\u0076\u0065\u006e\u0074\u0075\u0061\u006c\u006cy\u0020\u006c\u006fs\u0073l\u0065\u0073\u0073")
+	}
+	return nil
+}
+func (_dedd *Header) readSegmentDataLength(_fgcb _fg.StreamReader) (_dgag error) {
+	_dedd.SegmentDataLength, _dgag = _fgcb.ReadBits(32)
+	if _dgag != nil {
+		return _dgag
+	}
+	_dedd.SegmentDataLength &= _f.MaxInt32
+	if _dedd.SegmentDataLength > _fgcb.Length() {
+		_dedd.SegmentDataLength = _fgcb.Length()
+	}
+	return nil
+}
+func (_eggd *TableSegment) HtOOB() int32 { return _eggd._eaed }
+func (_ggdd *HalftoneRegion) combineGrayscalePlanes(_eeeg []*_d.Bitmap, _dfa int) error {
+	_bgb := 0
+	for _bbd := 0; _bbd < _eeeg[_dfa].Height; _bbd++ {
+		for _ffbe := 0; _ffbe < _eeeg[_dfa].Width; _ffbe += 8 {
+			_gfggc, _feb := _eeeg[_dfa+1].GetByte(_bgb)
+			if _feb != nil {
+				return _feb
+			}
+			_ccg, _feb := _eeeg[_dfa].GetByte(_bgb)
+			if _feb != nil {
+				return _feb
+			}
+			_feb = _eeeg[_dfa].SetByte(_bgb, _d.CombineBytes(_ccg, _gfggc, _d.CmbOpXor))
+			if _feb != nil {
+				return _feb
+			}
+			_bgb++
+		}
+	}
+	return nil
+}
+func (_cadf *TableSegment) parseHeader() error {
+	var (
+		_gcafc int
+		_bacc  uint64
+		_ddebf error
+	)
+	_gcafc, _ddebf = _cadf._defgf.ReadBit()
+	if _ddebf != nil {
+		return _ddebf
+	}
+	if _gcafc == 1 {
+		return _e.Errorf("\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0061\u0062\u006c\u0065 \u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0064e\u0066\u0069\u006e\u0069\u0074\u0069\u006f\u006e\u002e\u0020\u0042\u002e\u0032\u002e1\u0020\u0043\u006f\u0064\u0065\u0020\u0054\u0061\u0062\u006c\u0065\u0020\u0066\u006c\u0061\u0067\u0073\u003a\u0020\u0042\u0069\u0074\u0020\u0037\u0020\u006d\u0075\u0073\u0074\u0020b\u0065\u0020\u007a\u0065\u0072\u006f\u002e\u0020\u0057a\u0073\u003a \u0025\u0064", _gcafc)
+	}
+	if _bacc, _ddebf = _cadf._defgf.ReadBits(3); _ddebf != nil {
+		return _ddebf
+	}
+	_cadf._cgeg = (int32(_bacc) + 1) & 0xf
+	if _bacc, _ddebf = _cadf._defgf.ReadBits(3); _ddebf != nil {
+		return _ddebf
+	}
+	_cadf._fbdc = (int32(_bacc) + 1) & 0xf
+	if _bacc, _ddebf = _cadf._defgf.ReadBits(32); _ddebf != nil {
+		return _ddebf
+	}
+	_cadf._cccb = int32(_bacc & _f.MaxInt32)
+	if _bacc, _ddebf = _cadf._defgf.ReadBits(32); _ddebf != nil {
+		return _ddebf
+	}
+	_cadf._efgd = int32(_bacc & _f.MaxInt32)
+	return nil
+}
+func (_ceec *TextRegion) GetRegionBitmap() (*_d.Bitmap, error) {
+	if _ceec.RegionBitmap != nil {
+		return _ceec.RegionBitmap, nil
+	}
+	if !_ceec.IsHuffmanEncoded {
+		if _baff := _ceec.setCodingStatistics(); _baff != nil {
+			return nil, _baff
+		}
+	}
+	if _cebd := _ceec.createRegionBitmap(); _cebd != nil {
+		return nil, _cebd
+	}
+	if _dadg := _ceec.decodeSymbolInstances(); _dadg != nil {
+		return nil, _dadg
+	}
+	return _ceec.RegionBitmap, nil
 }
 
 var (
@@ -765,1733 +873,142 @@ var (
 	_ Segmenter = &TextRegion{}
 )
 
-func (_bdb *GenericRefinementRegion) overrideAtTemplate0(_cgaa, _fbda, _cdef, _fcb, _baec int) int {
-	if _bdb._gbd[0] {
-		_cgaa &= 0xfff7
-		if _bdb.GrAtY[0] == 0 && int(_bdb.GrAtX[0]) >= -_baec {
-			_cgaa |= (_fcb >> uint(7-(_baec+int(_bdb.GrAtX[0]))) & 0x1) << 3
-		} else {
-			_cgaa |= _bdb.getPixel(_bdb.RegionBitmap, _fbda+int(_bdb.GrAtX[0]), _cdef+int(_bdb.GrAtY[0])) << 3
-		}
-	}
-	if _bdb._gbd[1] {
-		_cgaa &= 0xefff
-		if _bdb.GrAtY[1] == 0 && int(_bdb.GrAtX[1]) >= -_baec {
-			_cgaa |= (_fcb >> uint(7-(_baec+int(_bdb.GrAtX[1]))) & 0x1) << 12
-		} else {
-			_cgaa |= _bdb.getPixel(_bdb.ReferenceBitmap, _fbda+int(_bdb.GrAtX[1]), _cdef+int(_bdb.GrAtY[1]))
-		}
-	}
-	return _cgaa
-}
-func (_ced *SymbolDictionary) getUserTable(_ffgad int) (_aag.Tabler, error) {
-	var _dgdd int
-	for _, _degg := range _ced.Header.RTSegments {
-		if _degg.Type == 53 {
-			if _dgdd == _ffgad {
-				_decd, _dacc := _degg.GetSegmentData()
-				if _dacc != nil {
-					return nil, _dacc
-				}
-				_fac := _decd.(_aag.BasicTabler)
-				return _aag.NewEncodedTable(_fac)
-			}
-			_dgdd++
-		}
-	}
-	return nil, nil
-}
-func (_caff *PageInformationSegment) CombinationOperator() _c.CombinationOperator { return _caff._cba }
-func (_cfbe *GenericRegion) decodeTemplate0a(_ffgb, _gagc, _gbag int, _ecfg, _eece int) (_gea error) {
-	const _bff = "\u0064\u0065c\u006f\u0064\u0065T\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0030\u0061"
-	var (
-		_debg, _ffe int
-		_aafc, _cbf int
-		_aae        byte
-		_ddaf       int
-	)
-	if _ffgb >= 1 {
-		_aae, _gea = _cfbe.Bitmap.GetByte(_eece)
-		if _gea != nil {
-			return _ac.Wrap(_gea, _bff, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
-		}
-		_aafc = int(_aae)
-	}
-	if _ffgb >= 2 {
-		_aae, _gea = _cfbe.Bitmap.GetByte(_eece - _cfbe.Bitmap.RowStride)
-		if _gea != nil {
-			return _ac.Wrap(_gea, _bff, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00202")
-		}
-		_cbf = int(_aae) << 6
-	}
-	_debg = (_aafc & 0xf0) | (_cbf & 0x3800)
-	for _bfff := 0; _bfff < _gbag; _bfff = _ddaf {
-		var (
-			_geaa byte
-			_eda  int
-		)
-		_ddaf = _bfff + 8
-		if _egcf := _gagc - _bfff; _egcf > 8 {
-			_eda = 8
-		} else {
-			_eda = _egcf
-		}
-		if _ffgb > 0 {
-			_aafc <<= 8
-			if _ddaf < _gagc {
-				_aae, _gea = _cfbe.Bitmap.GetByte(_eece + 1)
-				if _gea != nil {
-					return _ac.Wrap(_gea, _bff, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0030")
-				}
-				_aafc |= int(_aae)
-			}
-		}
-		if _ffgb > 1 {
-			_gbde := _eece - _cfbe.Bitmap.RowStride + 1
-			_cbf <<= 8
-			if _ddaf < _gagc {
-				_aae, _gea = _cfbe.Bitmap.GetByte(_gbde)
-				if _gea != nil {
-					return _ac.Wrap(_gea, _bff, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0031")
-				}
-				_cbf |= int(_aae) << 6
-			} else {
-				_cbf |= 0
-			}
-		}
-		for _ddeg := 0; _ddeg < _eda; _ddeg++ {
-			_cacd := uint(7 - _ddeg)
-			if _cfbe._aaaf {
-				_ffe = _cfbe.overrideAtTemplate0a(_debg, _bfff+_ddeg, _ffgb, int(_geaa), _ddeg, int(_cacd))
-				_cfbe._bcae.SetIndex(int32(_ffe))
-			} else {
-				_cfbe._bcae.SetIndex(int32(_debg))
-			}
-			var _fdd int
-			_fdd, _gea = _cfbe._ga.DecodeBit(_cfbe._bcae)
-			if _gea != nil {
-				return _ac.Wrap(_gea, _bff, "")
-			}
-			_geaa |= byte(_fdd) << _cacd
-			_debg = ((_debg & 0x7bf7) << 1) | _fdd | ((_aafc >> _cacd) & 0x10) | ((_cbf >> _cacd) & 0x800)
-		}
-		if _dgf := _cfbe.Bitmap.SetByte(_ecfg, _geaa); _dgf != nil {
-			return _ac.Wrap(_dgf, _bff, "")
-		}
-		_ecfg++
-		_eece++
-	}
+func (_aaed *GenericRegion) computeSegmentDataStructure() error {
+	_aaed.DataOffset = _aaed._baf.StreamPosition()
+	_aaed.DataHeaderLength = _aaed.DataOffset - _aaed.DataHeaderOffset
+	_aaed.DataLength = int64(_aaed._baf.Length()) - _aaed.DataHeaderLength
 	return nil
 }
-func (_fcgb *TextRegion) readUseRefinement() error {
-	if !_fcgb.UseRefinement || _fcgb.SbrTemplate != 0 {
-		return nil
-	}
-	var (
-		_cgba byte
-		_ccda error
-	)
-	_fcgb.SbrATX = make([]int8, 2)
-	_fcgb.SbrATY = make([]int8, 2)
-	_cgba, _ccda = _fcgb._ceegd.ReadByte()
-	if _ccda != nil {
-		return _ccda
-	}
-	_fcgb.SbrATX[0] = int8(_cgba)
-	_cgba, _ccda = _fcgb._ceegd.ReadByte()
-	if _ccda != nil {
-		return _ccda
-	}
-	_fcgb.SbrATY[0] = int8(_cgba)
-	_cgba, _ccda = _fcgb._ceegd.ReadByte()
-	if _ccda != nil {
-		return _ccda
-	}
-	_fcgb.SbrATX[1] = int8(_cgba)
-	_cgba, _ccda = _fcgb._ceegd.ReadByte()
-	if _ccda != nil {
-		return _ccda
-	}
-	_fcgb.SbrATY[1] = int8(_cgba)
-	return nil
-}
-func (_ebagd *SymbolDictionary) readNumberOfNewSymbols() error {
-	_ddcbcc, _aedfe := _ebagd._aege.ReadBits(32)
-	if _aedfe != nil {
-		return _aedfe
-	}
-	_ebagd.NumberOfNewSymbols = uint32(_ddcbcc & _f.MaxUint32)
-	return nil
-}
-func (_dbaa *SymbolDictionary) encodeATFlags(_aede _g.BinaryWriter) (_bcge int, _ggca error) {
-	const _cgadg = "\u0065\u006e\u0063\u006f\u0064\u0065\u0041\u0054\u0046\u006c\u0061\u0067\u0073"
-	if _dbaa.IsHuffmanEncoded || _dbaa.SdTemplate != 0 {
-		return 0, nil
-	}
-	_dcgce := 4
-	if _dbaa.SdTemplate != 0 {
-		_dcgce = 1
-	}
-	for _bgd := 0; _bgd < _dcgce; _bgd++ {
-		if _ggca = _aede.WriteByte(byte(_dbaa.SdATX[_bgd])); _ggca != nil {
-			return _bcge, _ac.Wrapf(_ggca, _cgadg, "\u0053d\u0041\u0054\u0058\u005b\u0025\u0064]", _bgd)
-		}
-		_bcge++
-		if _ggca = _aede.WriteByte(byte(_dbaa.SdATY[_bgd])); _ggca != nil {
-			return _bcge, _ac.Wrapf(_ggca, _cgadg, "\u0053d\u0041\u0054\u0059\u005b\u0025\u0064]", _bgd)
-		}
-		_bcge++
-	}
-	return _bcge, nil
-}
-func (_caec *Header) readDataStartOffset(_bffd _g.StreamReader, _fffe OrganizationType) {
-	if _fffe == OSequential {
-		_caec.SegmentDataStartOffset = uint64(_bffd.StreamPosition())
-	}
-}
-func (_aged *GenericRegion) decodeLine(_beg, _gag, _gcg int) error {
-	const _fgdg = "\u0064\u0065\u0063\u006f\u0064\u0065\u004c\u0069\u006e\u0065"
-	_dgg := _aged.Bitmap.GetByteIndex(0, _beg)
-	_gbb := _dgg - _aged.Bitmap.RowStride
-	switch _aged.GBTemplate {
-	case 0:
-		if !_aged.UseExtTemplates {
-			return _aged.decodeTemplate0a(_beg, _gag, _gcg, _dgg, _gbb)
-		}
-		return _aged.decodeTemplate0b(_beg, _gag, _gcg, _dgg, _gbb)
-	case 1:
-		return _aged.decodeTemplate1(_beg, _gag, _gcg, _dgg, _gbb)
-	case 2:
-		return _aged.decodeTemplate2(_beg, _gag, _gcg, _dgg, _gbb)
-	case 3:
-		return _aged.decodeTemplate3(_beg, _gag, _gcg, _dgg, _gbb)
-	}
-	return _ac.Errorf(_fgdg, "\u0069\u006e\u0076a\u006c\u0069\u0064\u0020G\u0042\u0054\u0065\u006d\u0070\u006c\u0061t\u0065\u0020\u0070\u0072\u006f\u0076\u0069\u0064\u0065\u0064\u003a\u0020\u0025\u0064", _aged.GBTemplate)
-}
-func (_ccbd *SymbolDictionary) GetDictionary() ([]*_c.Bitmap, error) {
-	_gb.Log.Trace("\u005b\u0053\u0059\u004d\u0042\u004f\u004c-\u0044\u0049\u0043T\u0049\u004f\u004e\u0041R\u0059\u005d\u0020\u0047\u0065\u0074\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e")
-	defer func() {
-		_gb.Log.Trace("\u005b\u0053\u0059M\u0042\u004f\u004c\u002d\u0044\u0049\u0043\u0054\u0049\u004f\u004e\u0041\u0052\u0059\u005d\u0020\u0047\u0065\u0074\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079 \u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
-		_gb.Log.Trace("\u005b\u0053Y\u004d\u0042\u004f\u004c\u002dD\u0049\u0043\u0054\u0049\u004fN\u0041\u0052\u0059\u005d\u0020\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u002e\u0020\u000a\u0045\u0078\u003a\u0020\u0027\u0025\u0073\u0027\u002c\u0020\u000a\u006e\u0065\u0077\u003a\u0027\u0025\u0073\u0027", _ccbd._abab, _ccbd._gbeb)
-	}()
-	if _ccbd._abab == nil {
-		var _gacde error
-		if _ccbd.UseRefinementAggregation {
-			_ccbd._ebafc = _ccbd.getSbSymCodeLen()
-		}
-		if !_ccbd.IsHuffmanEncoded {
-			if _gacde = _ccbd.setCodingStatistics(); _gacde != nil {
-				return nil, _gacde
-			}
-		}
-		_ccbd._gbeb = make([]*_c.Bitmap, _ccbd.NumberOfNewSymbols)
-		var _fcgf []int
-		if _ccbd.IsHuffmanEncoded && !_ccbd.UseRefinementAggregation {
-			_fcgf = make([]int, _ccbd.NumberOfNewSymbols)
-		}
-		if _gacde = _ccbd.setSymbolsArray(); _gacde != nil {
-			return nil, _gacde
-		}
-		var _dcbd, _ffffe int64
-		_ccbd._geba = 0
-		for _ccbd._geba < _ccbd.NumberOfNewSymbols {
-			_ffffe, _gacde = _ccbd.decodeHeightClassDeltaHeight()
-			if _gacde != nil {
-				return nil, _gacde
-			}
-			_dcbd += _ffffe
-			var _gggc, _agef uint32
-			_bccc := int64(_ccbd._geba)
-			for {
-				var _fbgc int64
-				_fbgc, _gacde = _ccbd.decodeDifferenceWidth()
-				if _fc.Is(_gacde, _bca.ErrOOB) {
-					break
-				}
-				if _gacde != nil {
-					return nil, _gacde
-				}
-				if _ccbd._geba >= _ccbd.NumberOfNewSymbols {
-					break
-				}
-				_gggc += uint32(_fbgc)
-				_agef += _gggc
-				if !_ccbd.IsHuffmanEncoded || _ccbd.UseRefinementAggregation {
-					if !_ccbd.UseRefinementAggregation {
-						_gacde = _ccbd.decodeDirectlyThroughGenericRegion(_gggc, uint32(_dcbd))
-						if _gacde != nil {
-							return nil, _gacde
-						}
-					} else {
-						_gacde = _ccbd.decodeAggregate(_gggc, uint32(_dcbd))
-						if _gacde != nil {
-							return nil, _gacde
-						}
-					}
-				} else if _ccbd.IsHuffmanEncoded && !_ccbd.UseRefinementAggregation {
-					_fcgf[_ccbd._geba] = int(_gggc)
-				}
-				_ccbd._geba++
-			}
-			if _ccbd.IsHuffmanEncoded && !_ccbd.UseRefinementAggregation {
-				var _aafcf int64
-				if _ccbd.SdHuffBMSizeSelection == 0 {
-					var _cfaa _aag.Tabler
-					_cfaa, _gacde = _aag.GetStandardTable(1)
-					if _gacde != nil {
-						return nil, _gacde
-					}
-					_aafcf, _gacde = _cfaa.Decode(_ccbd._aege)
-					if _gacde != nil {
-						return nil, _gacde
-					}
-				} else {
-					_aafcf, _gacde = _ccbd.huffDecodeBmSize()
-					if _gacde != nil {
-						return nil, _gacde
-					}
-				}
-				_ccbd._aege.Align()
-				var _eacg *_c.Bitmap
-				_eacg, _gacde = _ccbd.decodeHeightClassCollectiveBitmap(_aafcf, uint32(_dcbd), _agef)
-				if _gacde != nil {
-					return nil, _gacde
-				}
-				_gacde = _ccbd.decodeHeightClassBitmap(_eacg, _bccc, int(_dcbd), _fcgf)
-				if _gacde != nil {
-					return nil, _gacde
-				}
-			}
-		}
-		_cggcb, _gacde := _ccbd.getToExportFlags()
-		if _gacde != nil {
-			return nil, _gacde
-		}
-		_ccbd.setExportedSymbols(_cggcb)
-	}
-	return _ccbd._abab, nil
-}
-func (_fdgf *Header) Encode(w _g.BinaryWriter) (_eeae int, _ceef error) {
-	const _acg = "\u0048\u0065\u0061d\u0065\u0072\u002e\u0057\u0072\u0069\u0074\u0065"
-	var _bgg _g.BinaryWriter
-	_gb.Log.Trace("\u005b\u0053\u0045G\u004d\u0045\u004e\u0054-\u0048\u0045\u0041\u0044\u0045\u0052\u005d[\u0045\u004e\u0043\u004f\u0044\u0045\u005d\u0020\u0042\u0065\u0067\u0069\u006e\u0073")
-	defer func() {
-		if _ceef != nil {
-			_gb.Log.Trace("[\u0053\u0045\u0047\u004d\u0045\u004eT\u002d\u0048\u0045\u0041\u0044\u0045R\u005d\u005b\u0045\u004e\u0043\u004f\u0044E\u005d\u0020\u0046\u0061\u0069\u006c\u0065\u0064\u002e\u0020%\u0076", _ceef)
-		} else {
-			_gb.Log.Trace("\u005b\u0053\u0045\u0047ME\u004e\u0054\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0025\u0076", _fdgf)
-			_gb.Log.Trace("\u005b\u0053\u0045\u0047\u004d\u0045N\u0054\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u005b\u0045\u004e\u0043O\u0044\u0045\u005d\u0020\u0046\u0069\u006ei\u0073\u0068\u0065\u0064")
-		}
-	}()
-	w.FinishByte()
-	if _fdgf.SegmentData != nil {
-		_edb, _aaca := _fdgf.SegmentData.(SegmentEncoder)
-		if !_aaca {
-			return 0, _ac.Errorf(_acg, "\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u003a\u0020\u0025\u0054\u0020\u0064\u006f\u0065s\u006e\u0027\u0074\u0020\u0069\u006d\u0070\u006c\u0065\u006d\u0065\u006e\u0074 \u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0045\u006e\u0063\u006f\u0064er\u0020\u0069\u006e\u0074\u0065\u0072\u0066\u0061\u0063\u0065", _fdgf.SegmentData)
-		}
-		_bgg = _g.BufferedMSB()
-		_eeae, _ceef = _edb.Encode(_bgg)
-		if _ceef != nil {
-			return 0, _ac.Wrap(_ceef, _acg, "")
-		}
-		_fdgf.SegmentDataLength = uint64(_eeae)
-	}
-	if _fdgf.pageSize() == 4 {
-		_fdgf.PageAssociationFieldSize = true
-	}
-	var _aca int
-	_aca, _ceef = _fdgf.writeSegmentNumber(w)
-	if _ceef != nil {
-		return 0, _ac.Wrap(_ceef, _acg, "")
-	}
-	_eeae += _aca
-	if _ceef = _fdgf.writeFlags(w); _ceef != nil {
-		return _eeae, _ac.Wrap(_ceef, _acg, "")
-	}
-	_eeae++
-	_aca, _ceef = _fdgf.writeReferredToCount(w)
-	if _ceef != nil {
-		return 0, _ac.Wrap(_ceef, _acg, "")
-	}
-	_eeae += _aca
-	_aca, _ceef = _fdgf.writeReferredToSegments(w)
-	if _ceef != nil {
-		return 0, _ac.Wrap(_ceef, _acg, "")
-	}
-	_eeae += _aca
-	_aca, _ceef = _fdgf.writeSegmentPageAssociation(w)
-	if _ceef != nil {
-		return 0, _ac.Wrap(_ceef, _acg, "")
-	}
-	_eeae += _aca
-	_aca, _ceef = _fdgf.writeSegmentDataLength(w)
-	if _ceef != nil {
-		return 0, _ac.Wrap(_ceef, _acg, "")
-	}
-	_eeae += _aca
-	_fdgf.HeaderLength = int64(_eeae) - int64(_fdgf.SegmentDataLength)
-	if _bgg != nil {
-		if _, _ceef = w.Write(_bgg.Data()); _ceef != nil {
-			return _eeae, _ac.Wrap(_ceef, _acg, "\u0077r\u0069t\u0065\u0020\u0073\u0065\u0067m\u0065\u006et\u0020\u0064\u0061\u0074\u0061")
-		}
-	}
-	return _eeae, nil
-}
-
-type Pager interface {
-	GetSegment(int) (*Header, error)
-	GetBitmap() (*_c.Bitmap, error)
-}
-
-func (_cege *TableSegment) HtPS() int32 { return _cege._gagg }
-func (_effc *GenericRegion) decodeTemplate1(_cfdd, _aadb, _bced int, _bcdc, _cbb int) (_cdea error) {
-	const _dege = "\u0064e\u0063o\u0064\u0065\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0031"
-	var (
-		_bdd, _cdgb int
-		_bad, _fgg  int
-		_cae        byte
-		_fbg, _dccb int
-	)
-	if _cfdd >= 1 {
-		_cae, _cdea = _effc.Bitmap.GetByte(_cbb)
-		if _cdea != nil {
-			return _ac.Wrap(_cdea, _dege, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
-		}
-		_bad = int(_cae)
-	}
-	if _cfdd >= 2 {
-		_cae, _cdea = _effc.Bitmap.GetByte(_cbb - _effc.Bitmap.RowStride)
-		if _cdea != nil {
-			return _ac.Wrap(_cdea, _dege, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00202")
-		}
-		_fgg = int(_cae) << 5
-	}
-	_bdd = ((_bad >> 1) & 0x1f8) | ((_fgg >> 1) & 0x1e00)
-	for _aaff := 0; _aaff < _bced; _aaff = _fbg {
-		var (
-			_dfee byte
-			_ccf  int
-		)
-		_fbg = _aaff + 8
-		if _cgbg := _aadb - _aaff; _cgbg > 8 {
-			_ccf = 8
-		} else {
-			_ccf = _cgbg
-		}
-		if _cfdd > 0 {
-			_bad <<= 8
-			if _fbg < _aadb {
-				_cae, _cdea = _effc.Bitmap.GetByte(_cbb + 1)
-				if _cdea != nil {
-					return _ac.Wrap(_cdea, _dege, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0030")
-				}
-				_bad |= int(_cae)
-			}
-		}
-		if _cfdd > 1 {
-			_fgg <<= 8
-			if _fbg < _aadb {
-				_cae, _cdea = _effc.Bitmap.GetByte(_cbb - _effc.Bitmap.RowStride + 1)
-				if _cdea != nil {
-					return _ac.Wrap(_cdea, _dege, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0031")
-				}
-				_fgg |= int(_cae) << 5
-			}
-		}
-		for _bgag := 0; _bgag < _ccf; _bgag++ {
-			if _effc._aaaf {
-				_cdgb = _effc.overrideAtTemplate1(_bdd, _aaff+_bgag, _cfdd, int(_dfee), _bgag)
-				_effc._bcae.SetIndex(int32(_cdgb))
-			} else {
-				_effc._bcae.SetIndex(int32(_bdd))
-			}
-			_dccb, _cdea = _effc._ga.DecodeBit(_effc._bcae)
-			if _cdea != nil {
-				return _ac.Wrap(_cdea, _dege, "")
-			}
-			_dfee |= byte(_dccb) << uint(7-_bgag)
-			_gecc := uint(8 - _bgag)
-			_bdd = ((_bdd & 0xefb) << 1) | _dccb | ((_bad >> _gecc) & 0x8) | ((_fgg >> _gecc) & 0x200)
-		}
-		if _cdf := _effc.Bitmap.SetByte(_bcdc, _dfee); _cdf != nil {
-			return _ac.Wrap(_cdf, _dege, "")
-		}
-		_bcdc++
-		_cbb++
-	}
-	return nil
-}
-func (_feace *GenericRegion) readGBAtPixels(_gedb int) error {
-	const _dfbg = "\u0072\u0065\u0061\u0064\u0047\u0042\u0041\u0074\u0050i\u0078\u0065\u006c\u0073"
-	_feace.GBAtX = make([]int8, _gedb)
-	_feace.GBAtY = make([]int8, _gedb)
-	for _ccc := 0; _ccc < _gedb; _ccc++ {
-		_debba, _bebb := _feace._degf.ReadByte()
-		if _bebb != nil {
-			return _ac.Wrapf(_bebb, _dfbg, "\u0058\u0020\u0061t\u0020\u0069\u003a\u0020\u0027\u0025\u0064\u0027", _ccc)
-		}
-		_feace.GBAtX[_ccc] = int8(_debba)
-		_debba, _bebb = _feace._degf.ReadByte()
-		if _bebb != nil {
-			return _ac.Wrapf(_bebb, _dfbg, "\u0059\u0020\u0061t\u0020\u0069\u003a\u0020\u0027\u0025\u0064\u0027", _ccc)
-		}
-		_feace.GBAtY[_ccc] = int8(_debba)
-	}
-	return nil
-}
-func (_fbcce *TextRegion) decodeCurrentT() (int64, error) {
-	if _fbcce.SbStrips != 1 {
-		if _fbcce.IsHuffmanEncoded {
-			_ddbc, _gcf := _fbcce._ceegd.ReadBits(byte(_fbcce.LogSBStrips))
-			return int64(_ddbc), _gcf
-		}
-		_cdfb, _gbgg := _fbcce._bbcea.DecodeInt(_fbcce._gdgaa)
-		if _gbgg != nil {
-			return 0, _gbgg
-		}
-		return int64(_cdfb), nil
-	}
-	return 0, nil
-}
-
-type PatternDictionary struct {
-	_fad             _g.StreamReader
-	DataHeaderOffset int64
-	DataHeaderLength int64
-	DataOffset       int64
-	DataLength       int64
-	GBAtX            []int8
-	GBAtY            []int8
-	IsMMREncoded     bool
-	HDTemplate       byte
-	HdpWidth         byte
-	HdpHeight        byte
-	Patterns         []*_c.Bitmap
-	GrayMax          uint32
-}
-
-func (_dgcc *TableSegment) StreamReader() _g.StreamReader { return _dgcc._fafc }
-func (_gdgg *GenericRegion) updateOverrideFlags() error {
-	const _fdca = "\u0075\u0070\u0064\u0061te\u004f\u0076\u0065\u0072\u0072\u0069\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
-	if _gdgg.GBAtX == nil || _gdgg.GBAtY == nil {
-		return nil
-	}
-	if len(_gdgg.GBAtX) != len(_gdgg.GBAtY) {
-		return _ac.Errorf(_fdca, "i\u006eco\u0073i\u0073t\u0065\u006e\u0074\u0020\u0041T\u0020\u0070\u0069x\u0065\u006c\u002e\u0020\u0041m\u006f\u0075\u006et\u0020\u006f\u0066\u0020\u0027\u0078\u0027\u0020\u0070\u0069\u0078e\u006c\u0073\u003a %d\u002c\u0020\u0041\u006d\u006f\u0075n\u0074\u0020\u006f\u0066\u0020\u0027\u0079\u0027\u0020\u0070\u0069\u0078e\u006cs\u003a\u0020\u0025\u0064", len(_gdgg.GBAtX), len(_gdgg.GBAtY))
-	}
-	_gdgg.GBAtOverride = make([]bool, len(_gdgg.GBAtX))
-	switch _gdgg.GBTemplate {
-	case 0:
-		if !_gdgg.UseExtTemplates {
-			if _gdgg.GBAtX[0] != 3 || _gdgg.GBAtY[0] != -1 {
-				_gdgg.setOverrideFlag(0)
-			}
-			if _gdgg.GBAtX[1] != -3 || _gdgg.GBAtY[1] != -1 {
-				_gdgg.setOverrideFlag(1)
-			}
-			if _gdgg.GBAtX[2] != 2 || _gdgg.GBAtY[2] != -2 {
-				_gdgg.setOverrideFlag(2)
-			}
-			if _gdgg.GBAtX[3] != -2 || _gdgg.GBAtY[3] != -2 {
-				_gdgg.setOverrideFlag(3)
-			}
-		} else {
-			if _gdgg.GBAtX[0] != -2 || _gdgg.GBAtY[0] != 0 {
-				_gdgg.setOverrideFlag(0)
-			}
-			if _gdgg.GBAtX[1] != 0 || _gdgg.GBAtY[1] != -2 {
-				_gdgg.setOverrideFlag(1)
-			}
-			if _gdgg.GBAtX[2] != -2 || _gdgg.GBAtY[2] != -1 {
-				_gdgg.setOverrideFlag(2)
-			}
-			if _gdgg.GBAtX[3] != -1 || _gdgg.GBAtY[3] != -2 {
-				_gdgg.setOverrideFlag(3)
-			}
-			if _gdgg.GBAtX[4] != 1 || _gdgg.GBAtY[4] != -2 {
-				_gdgg.setOverrideFlag(4)
-			}
-			if _gdgg.GBAtX[5] != 2 || _gdgg.GBAtY[5] != -1 {
-				_gdgg.setOverrideFlag(5)
-			}
-			if _gdgg.GBAtX[6] != -3 || _gdgg.GBAtY[6] != 0 {
-				_gdgg.setOverrideFlag(6)
-			}
-			if _gdgg.GBAtX[7] != -4 || _gdgg.GBAtY[7] != 0 {
-				_gdgg.setOverrideFlag(7)
-			}
-			if _gdgg.GBAtX[8] != 2 || _gdgg.GBAtY[8] != -2 {
-				_gdgg.setOverrideFlag(8)
-			}
-			if _gdgg.GBAtX[9] != 3 || _gdgg.GBAtY[9] != -1 {
-				_gdgg.setOverrideFlag(9)
-			}
-			if _gdgg.GBAtX[10] != -2 || _gdgg.GBAtY[10] != -2 {
-				_gdgg.setOverrideFlag(10)
-			}
-			if _gdgg.GBAtX[11] != -3 || _gdgg.GBAtY[11] != -1 {
-				_gdgg.setOverrideFlag(11)
-			}
-		}
-	case 1:
-		if _gdgg.GBAtX[0] != 3 || _gdgg.GBAtY[0] != -1 {
-			_gdgg.setOverrideFlag(0)
-		}
-	case 2:
-		if _gdgg.GBAtX[0] != 2 || _gdgg.GBAtY[0] != -1 {
-			_gdgg.setOverrideFlag(0)
-		}
-	case 3:
-		if _gdgg.GBAtX[0] != 2 || _gdgg.GBAtY[0] != -1 {
-			_gdgg.setOverrideFlag(0)
-		}
-	}
-	return nil
-}
-func (_fgd *GenericRefinementRegion) decodeTypicalPredictedLine(_cbc, _dcd, _cac, _gf, _dda, _aaf int) error {
-	_aaa := _cbc - int(_fgd.ReferenceDY)
-	_gec := _fgd.ReferenceBitmap.GetByteIndex(0, _aaa)
-	_bac := _fgd.RegionBitmap.GetByteIndex(0, _cbc)
-	var _cbd error
-	switch _fgd.TemplateID {
-	case 0:
-		_cbd = _fgd.decodeTypicalPredictedLineTemplate0(_cbc, _dcd, _cac, _gf, _dda, _aaf, _bac, _aaa, _gec)
-	case 1:
-		_cbd = _fgd.decodeTypicalPredictedLineTemplate1(_cbc, _dcd, _cac, _gf, _dda, _aaf, _bac, _aaa, _gec)
-	}
-	return _cbd
-}
-func (_aagg *PageInformationSegment) readIsStriped() error {
-	_caacb, _ffde := _aagg._fabba.ReadBit()
-	if _ffde != nil {
-		return _ffde
-	}
-	if _caacb == 1 {
-		_aagg.IsStripe = true
-	}
-	return nil
-}
-func (_fggf *GenericRegion) setParametersMMR(_gac bool, _cbfg, _ggac int64, _egcc, _acda uint32, _fgeg byte, _caa, _dacd bool, _fcf, _bbd []int8) {
-	_fggf.DataOffset = _cbfg
-	_fggf.DataLength = _ggac
-	_fggf.RegionSegment = &RegionSegment{}
-	_fggf.RegionSegment.BitmapHeight = _egcc
-	_fggf.RegionSegment.BitmapWidth = _acda
-	_fggf.GBTemplate = _fgeg
-	_fggf.IsMMREncoded = _gac
-	_fggf.IsTPGDon = _caa
-	_fggf.GBAtX = _fcf
-	_fggf.GBAtY = _bbd
-}
-func (_bdbgg *TextRegion) decodeRdh() (int64, error) {
-	const _eeggg = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064h"
-	if _bdbgg.IsHuffmanEncoded {
-		if _bdbgg.SbHuffRDHeight == 3 {
-			if _bdbgg._agba == nil {
-				var (
-					_fffa int
-					_dadf error
-				)
-				if _bdbgg.SbHuffFS == 3 {
-					_fffa++
-				}
-				if _bdbgg.SbHuffDS == 3 {
-					_fffa++
-				}
-				if _bdbgg.SbHuffDT == 3 {
-					_fffa++
-				}
-				if _bdbgg.SbHuffRDWidth == 3 {
-					_fffa++
-				}
-				_bdbgg._agba, _dadf = _bdbgg.getUserTable(_fffa)
-				if _dadf != nil {
-					return 0, _ac.Wrap(_dadf, _eeggg, "")
-				}
-			}
-			return _bdbgg._agba.Decode(_bdbgg._ceegd)
-		}
-		_fabg, _dcfe := _aag.GetStandardTable(14 + int(_bdbgg.SbHuffRDHeight))
-		if _dcfe != nil {
-			return 0, _ac.Wrap(_dcfe, _eeggg, "")
-		}
-		return _fabg.Decode(_bdbgg._ceegd)
-	}
-	_ddbd, _cdada := _bdbgg._bbcea.DecodeInt(_bdbgg._agag)
-	if _cdada != nil {
-		return 0, _ac.Wrap(_cdada, _eeggg, "")
-	}
-	return int64(_ddbd), nil
-}
-func (_cdbg *HalftoneRegion) computeSegmentDataStructure() error {
-	_cdbg.DataOffset = _cdbg._ebf.StreamPosition()
-	_cdbg.DataHeaderLength = _cdbg.DataOffset - _cdbg.DataHeaderOffset
-	_cdbg.DataLength = int64(_cdbg._ebf.Length()) - _cdbg.DataHeaderLength
-	return nil
-}
-func (_dcda *PatternDictionary) computeSegmentDataStructure() error {
-	_dcda.DataOffset = _dcda._fad.StreamPosition()
-	_dcda.DataHeaderLength = _dcda.DataOffset - _dcda.DataHeaderOffset
-	_dcda.DataLength = int64(_dcda._fad.Length()) - _dcda.DataHeaderLength
-	return nil
-}
-func (_cca *PageInformationSegment) Encode(w _g.BinaryWriter) (_dcae int, _degc error) {
-	const _beae = "\u0050\u0061g\u0065\u0049\u006e\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u002e\u0045\u006eco\u0064\u0065"
-	_dggc := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_dggc, uint32(_cca.PageBMWidth))
-	_dcae, _degc = w.Write(_dggc)
-	if _degc != nil {
-		return _dcae, _ac.Wrap(_degc, _beae, "\u0077\u0069\u0064t\u0068")
-	}
-	_bc.BigEndian.PutUint32(_dggc, uint32(_cca.PageBMHeight))
-	var _aaege int
-	_aaege, _degc = w.Write(_dggc)
-	if _degc != nil {
-		return _aaege + _dcae, _ac.Wrap(_degc, _beae, "\u0068\u0065\u0069\u0067\u0068\u0074")
-	}
-	_dcae += _aaege
-	_bc.BigEndian.PutUint32(_dggc, uint32(_cca.ResolutionX))
-	_aaege, _degc = w.Write(_dggc)
-	if _degc != nil {
-		return _aaege + _dcae, _ac.Wrap(_degc, _beae, "\u0078\u0020\u0072e\u0073\u006f\u006c\u0075\u0074\u0069\u006f\u006e")
-	}
-	_dcae += _aaege
-	_bc.BigEndian.PutUint32(_dggc, uint32(_cca.ResolutionY))
-	if _aaege, _degc = w.Write(_dggc); _degc != nil {
-		return _aaege + _dcae, _ac.Wrap(_degc, _beae, "\u0079\u0020\u0072e\u0073\u006f\u006c\u0075\u0074\u0069\u006f\u006e")
-	}
-	_dcae += _aaege
-	if _degc = _cca.encodeFlags(w); _degc != nil {
-		return _dcae, _ac.Wrap(_degc, _beae, "")
-	}
-	_dcae++
-	if _aaege, _degc = _cca.encodeStripingInformation(w); _degc != nil {
-		return _dcae, _ac.Wrap(_degc, _beae, "")
-	}
-	_dcae += _aaege
-	return _dcae, nil
-}
-func (_cdfe *Header) referenceSize() uint {
-	switch {
-	case _cdfe.SegmentNumber <= 255:
-		return 1
-	case _cdfe.SegmentNumber <= 65535:
-		return 2
-	default:
-		return 4
-	}
-}
-func (_aaag *TableSegment) parseHeader() error {
-	var (
-		_eaeg int
-		_efd  uint64
-		_edeb error
-	)
-	_eaeg, _edeb = _aaag._fafc.ReadBit()
-	if _edeb != nil {
-		return _edeb
-	}
-	if _eaeg == 1 {
-		return _be.Errorf("\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0061\u0062\u006c\u0065 \u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0064e\u0066\u0069\u006e\u0069\u0074\u0069\u006f\u006e\u002e\u0020\u0042\u002e\u0032\u002e1\u0020\u0043\u006f\u0064\u0065\u0020\u0054\u0061\u0062\u006c\u0065\u0020\u0066\u006c\u0061\u0067\u0073\u003a\u0020\u0042\u0069\u0074\u0020\u0037\u0020\u006d\u0075\u0073\u0074\u0020b\u0065\u0020\u007a\u0065\u0072\u006f\u002e\u0020\u0057a\u0073\u003a \u0025\u0064", _eaeg)
-	}
-	if _efd, _edeb = _aaag._fafc.ReadBits(3); _edeb != nil {
-		return _edeb
-	}
-	_aaag._fgfe = (int32(_efd) + 1) & 0xf
-	if _efd, _edeb = _aaag._fafc.ReadBits(3); _edeb != nil {
-		return _edeb
-	}
-	_aaag._gagg = (int32(_efd) + 1) & 0xf
-	if _efd, _edeb = _aaag._fafc.ReadBits(32); _edeb != nil {
-		return _edeb
-	}
-	_aaag._afgc = int32(_efd & _f.MaxInt32)
-	if _efd, _edeb = _aaag._fafc.ReadBits(32); _edeb != nil {
-		return _edeb
-	}
-	_aaag._bed = int32(_efd & _f.MaxInt32)
-	return nil
-}
-func (_agedg *Header) readSegmentNumber(_dcbf _g.StreamReader) error {
-	const _ebd = "\u0072\u0065\u0061\u0064\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u004eu\u006d\u0062\u0065\u0072"
-	_fgfb := make([]byte, 4)
-	_, _gdgge := _dcbf.Read(_fgfb)
-	if _gdgge != nil {
-		return _ac.Wrap(_gdgge, _ebd, "")
-	}
-	_agedg.SegmentNumber = _bc.BigEndian.Uint32(_fgfb)
-	return nil
-}
-func (_fbfe *Header) pageSize() uint {
-	if _fbfe.PageAssociation <= 255 {
+func (_badd *Header) pageSize() uint {
+	if _badd.PageAssociation <= 255 {
 		return 1
 	}
 	return 4
 }
-func NewRegionSegment(r _g.StreamReader) *RegionSegment { return &RegionSegment{_ffade: r} }
-func (_bafg *HalftoneRegion) shiftAndFill(_dgda int) int {
-	_dgda >>= 8
-	if _dgda < 0 {
-		_bagc := int(_f.Log(float64(_ffgc(_dgda))) / _f.Log(2))
-		_deec := 31 - _bagc
-		for _dedb := 1; _dedb < _deec; _dedb++ {
-			_dgda |= 1 << uint(31-_dedb)
-		}
-	}
-	return _dgda
-}
-func (_adcf *TextRegion) getUserTable(_bdegf int) (_aag.Tabler, error) {
-	const _bddde = "\u0067\u0065\u0074U\u0073\u0065\u0072\u0054\u0061\u0062\u006c\u0065"
-	var _gbdg int
-	for _, _gabd := range _adcf.Header.RTSegments {
-		if _gabd.Type == 53 {
-			if _gbdg == _bdegf {
-				_eccd, _gace := _gabd.GetSegmentData()
-				if _gace != nil {
-					return nil, _gace
-				}
-				_eefc, _dccbd := _eccd.(*TableSegment)
-				if !_dccbd {
-					_gb.Log.Debug(_be.Sprintf("\u0073\u0065\u0067\u006d\u0065\u006e\u0074 \u0077\u0069\u0074h\u0020\u0054\u0079p\u0065\u00205\u0033\u0020\u002d\u0020\u0061\u006ed\u0020in\u0064\u0065\u0078\u003a\u0020\u0025\u0064\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0054\u0061\u0062\u006c\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074", _gabd.SegmentNumber))
-					return nil, _ac.Error(_bddde, "\u0073\u0065\u0067\u006d\u0065\u006e\u0074 \u0077\u0069\u0074h\u0020\u0054\u0079\u0070e\u0020\u0035\u0033\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u002a\u0054\u0061\u0062\u006c\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074")
-				}
-				return _aag.NewEncodedTable(_eefc)
-			}
-			_gbdg++
-		}
-	}
-	return nil, nil
-}
-func (_dga *GenericRegion) String() string {
-	_acb := &_bb.Builder{}
-	_acb.WriteString("\u000a[\u0047E\u004e\u0045\u0052\u0049\u0043 \u0052\u0045G\u0049\u004f\u004e\u005d\u000a")
-	_acb.WriteString(_dga.RegionSegment.String() + "\u000a")
-	_acb.WriteString(_be.Sprintf("\u0009\u002d\u0020Us\u0065\u0045\u0078\u0074\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0073\u003a\u0020\u0025\u0076\u000a", _dga.UseExtTemplates))
-	_acb.WriteString(_be.Sprintf("\u0009\u002d \u0049\u0073\u0054P\u0047\u0044\u006f\u006e\u003a\u0020\u0025\u0076\u000a", _dga.IsTPGDon))
-	_acb.WriteString(_be.Sprintf("\u0009-\u0020G\u0042\u0054\u0065\u006d\u0070l\u0061\u0074e\u003a\u0020\u0025\u0064\u000a", _dga.GBTemplate))
-	_acb.WriteString(_be.Sprintf("\t\u002d \u0049\u0073\u004d\u004d\u0052\u0045\u006e\u0063o\u0064\u0065\u0064\u003a %\u0076\u000a", _dga.IsMMREncoded))
-	_acb.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0047\u0042\u0041\u0074\u0058\u003a\u0020\u0025\u0076\u000a", _dga.GBAtX))
-	_acb.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0047\u0042\u0041\u0074\u0059\u003a\u0020\u0025\u0076\u000a", _dga.GBAtY))
-	_acb.WriteString(_be.Sprintf("\t\u002d \u0047\u0042\u0041\u0074\u004f\u0076\u0065\u0072r\u0069\u0064\u0065\u003a %\u0076\u000a", _dga.GBAtOverride))
-	return _acb.String()
-}
-func _ffgc(_agac int) int {
-	if _agac == 0 {
-		return 0
-	}
-	_agac |= _agac >> 1
-	_agac |= _agac >> 2
-	_agac |= _agac >> 4
-	_agac |= _agac >> 8
-	_agac |= _agac >> 16
-	return (_agac + 1) >> 1
-}
-func (_abbg *PageInformationSegment) checkInput() error {
-	if _abbg.PageBMHeight == _f.MaxInt32 {
-		if !_abbg.IsStripe {
-			_gb.Log.Debug("P\u0061\u0067\u0065\u0049\u006e\u0066\u006f\u0072\u006da\u0074\u0069\u006f\u006e\u0053\u0065\u0067me\u006e\u0074\u002e\u0049s\u0053\u0074\u0072\u0069\u0070\u0065\u0020\u0073\u0068ou\u006c\u0064 \u0062\u0065\u0020\u0074\u0072\u0075\u0065\u002e")
-		}
-	}
-	return nil
-}
-func (_gbdb *SymbolDictionary) Encode(w _g.BinaryWriter) (_fgbd int, _deef error) {
-	const _caffg = "\u0053\u0079\u006dbo\u006c\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u002e\u0045\u006e\u0063\u006f\u0064\u0065"
-	if _gbdb == nil {
-		return 0, _ac.Error(_caffg, "\u0073\u0079m\u0062\u006f\u006c\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066in\u0065\u0064")
-	}
-	if _fgbd, _deef = _gbdb.encodeFlags(w); _deef != nil {
-		return _fgbd, _ac.Wrap(_deef, _caffg, "")
-	}
-	_ecfd, _deef := _gbdb.encodeATFlags(w)
-	if _deef != nil {
-		return _fgbd, _ac.Wrap(_deef, _caffg, "")
-	}
-	_fgbd += _ecfd
-	if _ecfd, _deef = _gbdb.encodeRefinementATFlags(w); _deef != nil {
-		return _fgbd, _ac.Wrap(_deef, _caffg, "")
-	}
-	_fgbd += _ecfd
-	if _ecfd, _deef = _gbdb.encodeNumSyms(w); _deef != nil {
-		return _fgbd, _ac.Wrap(_deef, _caffg, "")
-	}
-	_fgbd += _ecfd
-	if _ecfd, _deef = _gbdb.encodeSymbols(w); _deef != nil {
-		return _fgbd, _ac.Wrap(_deef, _caffg, "")
-	}
-	_fgbd += _ecfd
-	return _fgbd, nil
-}
-func (_abfg *GenericRegion) GetRegionBitmap() (_cfd *_c.Bitmap, _fecd error) {
-	if _abfg.Bitmap != nil {
-		return _abfg.Bitmap, nil
-	}
-	if _abfg.IsMMREncoded {
-		if _abfg._cgdc == nil {
-			_abfg._cgdc, _fecd = _ae.New(_abfg._degf, int(_abfg.RegionSegment.BitmapWidth), int(_abfg.RegionSegment.BitmapHeight), _abfg.DataOffset, _abfg.DataLength)
-			if _fecd != nil {
-				return nil, _fecd
-			}
-		}
-		_abfg.Bitmap, _fecd = _abfg._cgdc.UncompressMMR()
-		return _abfg.Bitmap, _fecd
-	}
-	if _fecd = _abfg.updateOverrideFlags(); _fecd != nil {
-		return nil, _fecd
-	}
-	var _ffbf int
-	if _abfg._ga == nil {
-		_abfg._ga, _fecd = _aa.New(_abfg._degf)
-		if _fecd != nil {
-			return nil, _fecd
-		}
-	}
-	if _abfg._bcae == nil {
-		_abfg._bcae = _aa.NewStats(65536, 1)
-	}
-	_abfg.Bitmap = _c.New(int(_abfg.RegionSegment.BitmapWidth), int(_abfg.RegionSegment.BitmapHeight))
-	_gca := int(uint32(_abfg.Bitmap.Width+7) & (^uint32(7)))
-	for _ggeg := 0; _ggeg < _abfg.Bitmap.Height; _ggeg++ {
-		if _abfg.IsTPGDon {
-			var _cgc int
-			_cgc, _fecd = _abfg.decodeSLTP()
-			if _fecd != nil {
-				return nil, _fecd
-			}
-			_ffbf ^= _cgc
-		}
-		if _ffbf == 1 {
-			if _ggeg > 0 {
-				if _fecd = _abfg.copyLineAbove(_ggeg); _fecd != nil {
-					return nil, _fecd
+func (_bfac *TextRegion) decodeDfs() (int64, error) {
+	if _bfac.IsHuffmanEncoded {
+		if _bfac.SbHuffFS == 3 {
+			if _bfac._bcf == nil {
+				var _agee error
+				_bfac._bcf, _agee = _bfac.getUserTable(0)
+				if _agee != nil {
+					return 0, _agee
 				}
 			}
+			return _bfac._bcf.Decode(_bfac._effb)
+		}
+		_fcfg, _aagg := _ba.GetStandardTable(6 + int(_bfac.SbHuffFS))
+		if _aagg != nil {
+			return 0, _aagg
+		}
+		return _fcfg.Decode(_bfac._effb)
+	}
+	_ddge, _gdaf := _bfac._dffe.DecodeInt(_bfac._geaa)
+	if _gdaf != nil {
+		return 0, _gdaf
+	}
+	return int64(_ddge), nil
+}
+func _cda(_bcef _fg.StreamReader, _geged *Header) *GenericRefinementRegion {
+	return &GenericRefinementRegion{_geg: _bcef, RegionInfo: NewRegionSegment(_bcef), _cdg: _geged, _dae: &template0{}, _dec: &template1{}}
+}
+func (_aaff *SymbolDictionary) getToExportFlags() ([]int, error) {
+	var (
+		_cded  int
+		_cdde  int32
+		_febc  error
+		_abbff = int32(_aaff._gbbg + _aaff.NumberOfNewSymbols)
+		_fcdb  = make([]int, _abbff)
+	)
+	for _effa := int32(0); _effa < _abbff; _effa += _cdde {
+		if _aaff.IsHuffmanEncoded {
+			_fbbc, _bdd := _ba.GetStandardTable(1)
+			if _bdd != nil {
+				return nil, _bdd
+			}
+			_gbgg, _bdd := _fbbc.Decode(_aaff._bcagf)
+			if _bdd != nil {
+				return nil, _bdd
+			}
+			_cdde = int32(_gbgg)
 		} else {
-			if _fecd = _abfg.decodeLine(_ggeg, _abfg.Bitmap.Width, _gca); _fecd != nil {
-				return nil, _fecd
+			_cdde, _febc = _aaff._fffd.DecodeInt(_aaff._gabe)
+			if _febc != nil {
+				return nil, _febc
 			}
 		}
+		if _cdde != 0 {
+			for _eadb := _effa; _eadb < _effa+_cdde; _eadb++ {
+				_fcdb[_eadb] = _cded
+			}
+		}
+		if _cded == 0 {
+			_cded = 1
+		} else {
+			_cded = 0
+		}
 	}
-	return _abfg.Bitmap, nil
+	return _fcdb, nil
 }
-func (_aea *GenericRegion) overrideAtTemplate0b(_fecgg, _bec, _gfce, _bdbg, _ebab, _fcg int) int {
-	if _aea.GBAtOverride[0] {
-		_fecgg &= 0xFFFD
-		if _aea.GBAtY[0] == 0 && _aea.GBAtX[0] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[0]&0x1)) << 1
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[0]), _gfce+int(_aea.GBAtY[0]))) << 1
+func (_fccgf *SymbolDictionary) huffDecodeRefAggNInst() (int64, error) {
+	if !_fccgf.SdHuffAggInstanceSelection {
+		_ddca, _afcg := _ba.GetStandardTable(1)
+		if _afcg != nil {
+			return 0, _afcg
 		}
+		return _ddca.Decode(_fccgf._bcagf)
 	}
-	if _aea.GBAtOverride[1] {
-		_fecgg &= 0xDFFF
-		if _aea.GBAtY[1] == 0 && _aea.GBAtX[1] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[1]&0x1)) << 13
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[1]), _gfce+int(_aea.GBAtY[1]))) << 13
-		}
-	}
-	if _aea.GBAtOverride[2] {
-		_fecgg &= 0xFDFF
-		if _aea.GBAtY[2] == 0 && _aea.GBAtX[2] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[2]&0x1)) << 9
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[2]), _gfce+int(_aea.GBAtY[2]))) << 9
-		}
-	}
-	if _aea.GBAtOverride[3] {
-		_fecgg &= 0xBFFF
-		if _aea.GBAtY[3] == 0 && _aea.GBAtX[3] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[3]&0x1)) << 14
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[3]), _gfce+int(_aea.GBAtY[3]))) << 14
-		}
-	}
-	if _aea.GBAtOverride[4] {
-		_fecgg &= 0xEFFF
-		if _aea.GBAtY[4] == 0 && _aea.GBAtX[4] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[4]&0x1)) << 12
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[4]), _gfce+int(_aea.GBAtY[4]))) << 12
-		}
-	}
-	if _aea.GBAtOverride[5] {
-		_fecgg &= 0xFFDF
-		if _aea.GBAtY[5] == 0 && _aea.GBAtX[5] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[5]&0x1)) << 5
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[5]), _gfce+int(_aea.GBAtY[5]))) << 5
-		}
-	}
-	if _aea.GBAtOverride[6] {
-		_fecgg &= 0xFFFB
-		if _aea.GBAtY[6] == 0 && _aea.GBAtX[6] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[6]&0x1)) << 2
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[6]), _gfce+int(_aea.GBAtY[6]))) << 2
-		}
-	}
-	if _aea.GBAtOverride[7] {
-		_fecgg &= 0xFFF7
-		if _aea.GBAtY[7] == 0 && _aea.GBAtX[7] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[7]&0x1)) << 3
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[7]), _gfce+int(_aea.GBAtY[7]))) << 3
-		}
-	}
-	if _aea.GBAtOverride[8] {
-		_fecgg &= 0xF7FF
-		if _aea.GBAtY[8] == 0 && _aea.GBAtX[8] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[8]&0x1)) << 11
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[8]), _gfce+int(_aea.GBAtY[8]))) << 11
-		}
-	}
-	if _aea.GBAtOverride[9] {
-		_fecgg &= 0xFFEF
-		if _aea.GBAtY[9] == 0 && _aea.GBAtX[9] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[9]&0x1)) << 4
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[9]), _gfce+int(_aea.GBAtY[9]))) << 4
-		}
-	}
-	if _aea.GBAtOverride[10] {
-		_fecgg &= 0x7FFF
-		if _aea.GBAtY[10] == 0 && _aea.GBAtX[10] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[10]&0x1)) << 15
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[10]), _gfce+int(_aea.GBAtY[10]))) << 15
-		}
-	}
-	if _aea.GBAtOverride[11] {
-		_fecgg &= 0xFDFF
-		if _aea.GBAtY[11] == 0 && _aea.GBAtX[11] >= -int8(_ebab) {
-			_fecgg |= (_bdbg >> uint(int8(_fcg)-_aea.GBAtX[11]&0x1)) << 10
-		} else {
-			_fecgg |= int(_aea.getPixel(_bec+int(_aea.GBAtX[11]), _gfce+int(_aea.GBAtY[11]))) << 10
-		}
-	}
-	return _fecgg
-}
-func (_afbe *SymbolDictionary) decodeHeightClassBitmap(_egbf *_c.Bitmap, _edce int64, _bgafe int, _ecgg []int) error {
-	for _dfg := _edce; _dfg < int64(_afbe._geba); _dfg++ {
-		var _bccd int
-		for _fgdb := _edce; _fgdb <= _dfg-1; _fgdb++ {
-			_bccd += _ecgg[_fgdb]
-		}
-		_efga := _b.Rect(_bccd, 0, _bccd+_ecgg[_dfg], _bgafe)
-		_fccgd, _fgea := _c.Extract(_efga, _egbf)
-		if _fgea != nil {
-			return _fgea
-		}
-		_afbe._gbeb[_dfg] = _fccgd
-		_afbe._deeb = append(_afbe._deeb, _fccgd)
-	}
-	return nil
-}
-
-type Type int
-
-func (_bce *GenericRefinementRegion) GetRegionInfo() *RegionSegment { return _bce.RegionInfo }
-func (_fffc *SymbolDictionary) huffDecodeRefAggNInst() (int64, error) {
-	if !_fffc.SdHuffAggInstanceSelection {
-		_dea, _afbg := _aag.GetStandardTable(1)
-		if _afbg != nil {
-			return 0, _afbg
-		}
-		return _dea.Decode(_fffc._aege)
-	}
-	if _fffc._ece == nil {
+	if _fccgf._fggec == nil {
 		var (
-			_aafg int
-			_bceg error
+			_gfde int
+			_abfa error
 		)
-		if _fffc.SdHuffDecodeHeightSelection == 3 {
-			_aafg++
+		if _fccgf.SdHuffDecodeHeightSelection == 3 {
+			_gfde++
 		}
-		if _fffc.SdHuffDecodeWidthSelection == 3 {
-			_aafg++
+		if _fccgf.SdHuffDecodeWidthSelection == 3 {
+			_gfde++
 		}
-		if _fffc.SdHuffBMSizeSelection == 3 {
-			_aafg++
+		if _fccgf.SdHuffBMSizeSelection == 3 {
+			_gfde++
 		}
-		_fffc._ece, _bceg = _fffc.getUserTable(_aafg)
-		if _bceg != nil {
-			return 0, _bceg
+		_fccgf._fggec, _abfa = _fccgf.getUserTable(_gfde)
+		if _abfa != nil {
+			return 0, _abfa
 		}
 	}
-	return _fffc._ece.Decode(_fffc._aege)
+	return _fccgf._fggec.Decode(_fccgf._bcagf)
 }
-func (_afgb *SymbolDictionary) decodeDifferenceWidth() (int64, error) {
-	if _afgb.IsHuffmanEncoded {
-		switch _afgb.SdHuffDecodeWidthSelection {
-		case 0:
-			_aebbdd, _fbabb := _aag.GetStandardTable(2)
-			if _fbabb != nil {
-				return 0, _fbabb
-			}
-			return _aebbdd.Decode(_afgb._aege)
-		case 1:
-			_dbgf, _afddd := _aag.GetStandardTable(3)
-			if _afddd != nil {
-				return 0, _afddd
-			}
-			return _dbgf.Decode(_afgb._aege)
-		case 3:
-			if _afgb._dgff == nil {
-				var _aebg int
-				if _afgb.SdHuffDecodeHeightSelection == 3 {
-					_aebg++
-				}
-				_aadbc, _gfad := _afgb.getUserTable(_aebg)
-				if _gfad != nil {
-					return 0, _gfad
-				}
-				_afgb._dgff = _aadbc
-			}
-			return _afgb._dgff.Decode(_afgb._aege)
-		}
-	} else {
-		_gaf, _cfgb := _afgb._caaa.DecodeInt(_afgb._bba)
-		if _cfgb != nil {
-			return 0, _cfgb
-		}
-		return int64(_gaf), nil
+func (_gegda *TextRegion) String() string {
+	_cdaag := &_cc.Builder{}
+	_cdaag.WriteString("\u000a[\u0054E\u0058\u0054\u0020\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u000a")
+	_cdaag.WriteString(_gegda.RegionInfo.String() + "\u000a")
+	_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053br\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u003a\u0020\u0025\u0076\u000a", _gegda.SbrTemplate))
+	_cdaag.WriteString(_e.Sprintf("\u0009-\u0020S\u0062\u0044\u0073\u004f\u0066f\u0073\u0065t\u003a\u0020\u0025\u0076\u000a", _gegda.SbDsOffset))
+	_cdaag.WriteString(_e.Sprintf("\t\u002d \u0044\u0065\u0066\u0061\u0075\u006c\u0074\u0050i\u0078\u0065\u006c\u003a %\u0076\u000a", _gegda.DefaultPixel))
+	_cdaag.WriteString(_e.Sprintf("\t\u002d\u0020\u0043\u006f\u006d\u0062i\u006e\u0061\u0074\u0069\u006f\u006e\u004f\u0070\u0065r\u0061\u0074\u006fr\u003a \u0025\u0076\u000a", _gegda.CombinationOperator))
+	_cdaag.WriteString(_e.Sprintf("\t\u002d \u0049\u0073\u0054\u0072\u0061\u006e\u0073\u0070o\u0073\u0065\u0064\u003a %\u0076\u000a", _gegda.IsTransposed))
+	_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020Re\u0066\u0065\u0072\u0065\u006e\u0063\u0065\u0043\u006f\u0072\u006e\u0065\u0072\u003a\u0020\u0025\u0076\u000a", _gegda.ReferenceCorner))
+	_cdaag.WriteString(_e.Sprintf("\t\u002d\u0020\u0055\u0073eR\u0065f\u0069\u006e\u0065\u006d\u0065n\u0074\u003a\u0020\u0025\u0076\u000a", _gegda.UseRefinement))
+	_cdaag.WriteString(_e.Sprintf("\u0009-\u0020\u0049\u0073\u0048\u0075\u0066\u0066\u006d\u0061\u006e\u0045n\u0063\u006f\u0064\u0065\u0064\u003a\u0020\u0025\u0076\u000a", _gegda.IsHuffmanEncoded))
+	if _gegda.IsHuffmanEncoded {
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053bH\u0075\u0066\u0066\u0052\u0053\u0069\u007a\u0065\u003a\u0020\u0025\u0076\u000a", _gegda.SbHuffRSize))
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0048\u0075\u0066\u0066\u0052\u0044\u0059:\u0020\u0025\u0076\u000a", _gegda.SbHuffRDY))
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0048\u0075\u0066\u0066\u0052\u0044\u0058:\u0020\u0025\u0076\u000a", _gegda.SbHuffRDX))
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053bH\u0075\u0066\u0066\u0052\u0044\u0048\u0065\u0069\u0067\u0068\u0074\u003a\u0020\u0025v\u000a", _gegda.SbHuffRDHeight))
+		_cdaag.WriteString(_e.Sprintf("\t\u002d\u0020\u0053\u0062Hu\u0066f\u0052\u0044\u0057\u0069\u0064t\u0068\u003a\u0020\u0025\u0076\u000a", _gegda.SbHuffRDWidth))
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d \u0053\u0062\u0048u\u0066\u0066\u0044\u0054\u003a\u0020\u0025\u0076\u000a", _gegda.SbHuffDT))
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d \u0053\u0062\u0048u\u0066\u0066\u0044\u0053\u003a\u0020\u0025\u0076\u000a", _gegda.SbHuffDS))
+		_cdaag.WriteString(_e.Sprintf("\u0009\u002d \u0053\u0062\u0048u\u0066\u0066\u0046\u0053\u003a\u0020\u0025\u0076\u000a", _gegda.SbHuffFS))
 	}
-	return 0, nil
+	_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0072\u0041\u0054\u0058:\u0020\u0025\u0076\u000a", _gegda.SbrATX))
+	_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0072\u0041\u0054\u0059:\u0020\u0025\u0076\u000a", _gegda.SbrATY))
+	_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020N\u0075\u006d\u0062\u0065r\u004f\u0066\u0053\u0079\u006d\u0062\u006fl\u0049\u006e\u0073\u0074\u0061\u006e\u0063\u0065\u0073\u003a\u0020\u0025\u0076\u000a", _gegda.NumberOfSymbolInstances))
+	_cdaag.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0072\u0041\u0054\u0058:\u0020\u0025\u0076\u000a", _gegda.SbrATX))
+	return _cdaag.String()
 }
-func (_cgg *PatternDictionary) checkInput() error {
-	if _cgg.HdpHeight < 1 || _cgg.HdpWidth < 1 {
-		return _ag.New("in\u0076\u0061l\u0069\u0064\u0020\u0048\u0065\u0061\u0064\u0065\u0072 \u0056\u0061\u006c\u0075\u0065\u003a\u0020\u0057\u0069\u0064\u0074\u0068\u002f\u0048\u0065\u0069\u0067\u0068\u0074\u0020\u006d\u0075\u0073\u0074\u0020\u0062\u0065\u0020g\u0072e\u0061\u0074\u0065\u0072\u0020\u0074\u0068\u0061n\u0020z\u0065\u0072o")
-	}
-	if _cgg.IsMMREncoded {
-		if _cgg.HDTemplate != 0 {
-			_gb.Log.Debug("\u0076\u0061\u0072\u0069\u0061\u0062\u006c\u0065\u0020\u0048\u0044\u0054\u0065\u006d\u0070\u006c\u0061\u0074e\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u006e\u006f\u0074\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e \u0074\u0068\u0065\u0020\u0076\u0061\u006c\u0075\u0065\u0020\u0030")
-		}
-	}
-	return nil
-}
-func (_gddc *RegionSegment) parseHeader() error {
-	const _gda = "p\u0061\u0072\u0073\u0065\u0048\u0065\u0061\u0064\u0065\u0072"
-	_gb.Log.Trace("\u005b\u0052\u0045\u0047I\u004f\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002dH\u0045A\u0044\u0045\u0052\u005d\u0020\u0042\u0065g\u0069\u006e")
-	defer func() {
-		_gb.Log.Trace("\u005b\u0052\u0045G\u0049\u004f\u004e\u005d[\u0050\u0041\u0052\u0053\u0045\u002d\u0048E\u0041\u0044\u0045\u0052\u005d\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
-	}()
-	_bdg, _ddgef := _gddc._ffade.ReadBits(32)
-	if _ddgef != nil {
-		return _ac.Wrap(_ddgef, _gda, "\u0077\u0069\u0064t\u0068")
-	}
-	_gddc.BitmapWidth = uint32(_bdg & _f.MaxUint32)
-	_bdg, _ddgef = _gddc._ffade.ReadBits(32)
-	if _ddgef != nil {
-		return _ac.Wrap(_ddgef, _gda, "\u0068\u0065\u0069\u0067\u0068\u0074")
-	}
-	_gddc.BitmapHeight = uint32(_bdg & _f.MaxUint32)
-	_bdg, _ddgef = _gddc._ffade.ReadBits(32)
-	if _ddgef != nil {
-		return _ac.Wrap(_ddgef, _gda, "\u0078\u0020\u006c\u006f\u0063\u0061\u0074\u0069\u006f\u006e")
-	}
-	_gddc.XLocation = uint32(_bdg & _f.MaxUint32)
-	_bdg, _ddgef = _gddc._ffade.ReadBits(32)
-	if _ddgef != nil {
-		return _ac.Wrap(_ddgef, _gda, "\u0079\u0020\u006c\u006f\u0063\u0061\u0074\u0069\u006f\u006e")
-	}
-	_gddc.YLocation = uint32(_bdg & _f.MaxUint32)
-	if _, _ddgef = _gddc._ffade.ReadBits(5); _ddgef != nil {
-		return _ac.Wrap(_ddgef, _gda, "\u0064i\u0072\u0079\u0020\u0072\u0065\u0061d")
-	}
-	if _ddgef = _gddc.readCombinationOperator(); _ddgef != nil {
-		return _ac.Wrap(_ddgef, _gda, "c\u006fm\u0062\u0069\u006e\u0061\u0074\u0069\u006f\u006e \u006f\u0070\u0065\u0072at\u006f\u0072")
-	}
-	return nil
-}
-func (_ecc *GenericRegion) parseHeader() (_dcf error) {
-	_gb.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052I\u0043\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0050\u0061\u0072s\u0069\u006e\u0067\u0048\u0065\u0061\u0064e\u0072\u002e\u002e\u002e")
-	defer func() {
-		if _dcf != nil {
-			_gb.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0047\u0049\u004f\u004e]\u0020\u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0048\u0065\u0061\u0064\u0065r\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u0020\u0077\u0069th\u0020\u0065\u0072\u0072\u006f\u0072\u002e\u0020\u0025\u0076", _dcf)
-		} else {
-			_gb.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049C\u002d\u0052\u0045G\u0049\u004f\u004e]\u0020\u0050a\u0072\u0073\u0069\u006e\u0067\u0048e\u0061de\u0072\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u0020\u0053\u0075\u0063\u0063\u0065\u0073\u0073\u0066\u0075\u006c\u006c\u0079\u002e\u002e\u002e")
-		}
-	}()
-	var (
-		_eebc int
-		_feg  uint64
-	)
-	if _dcf = _ecc.RegionSegment.parseHeader(); _dcf != nil {
-		return _dcf
-	}
-	if _, _dcf = _ecc._degf.ReadBits(3); _dcf != nil {
-		return _dcf
-	}
-	_eebc, _dcf = _ecc._degf.ReadBit()
-	if _dcf != nil {
-		return _dcf
-	}
-	if _eebc == 1 {
-		_ecc.UseExtTemplates = true
-	}
-	_eebc, _dcf = _ecc._degf.ReadBit()
-	if _dcf != nil {
-		return _dcf
-	}
-	if _eebc == 1 {
-		_ecc.IsTPGDon = true
-	}
-	_feg, _dcf = _ecc._degf.ReadBits(2)
-	if _dcf != nil {
-		return _dcf
-	}
-	_ecc.GBTemplate = byte(_feg & 0xf)
-	_eebc, _dcf = _ecc._degf.ReadBit()
-	if _dcf != nil {
-		return _dcf
-	}
-	if _eebc == 1 {
-		_ecc.IsMMREncoded = true
-	}
-	if !_ecc.IsMMREncoded {
-		_degb := 1
-		if _ecc.GBTemplate == 0 {
-			_degb = 4
-			if _ecc.UseExtTemplates {
-				_degb = 12
-			}
-		}
-		if _dcf = _ecc.readGBAtPixels(_degb); _dcf != nil {
-			return _dcf
-		}
-	}
-	if _dcf = _ecc.computeSegmentDataStructure(); _dcf != nil {
-		return _dcf
-	}
-	_gb.Log.Trace("\u0025\u0073", _ecc)
-	return nil
-}
-
-type templater interface {
-	form(_adg, _bab, _bbea, _ffdf, _fgc int16) int16
-	setIndex(_bda *_aa.DecoderStats)
-}
-
-func (_fgecb *SymbolDictionary) setCodingStatistics() error {
-	if _fgecb._ddfd == nil {
-		_fgecb._ddfd = _aa.NewStats(512, 1)
-	}
-	if _fgecb._fcbe == nil {
-		_fgecb._fcbe = _aa.NewStats(512, 1)
-	}
-	if _fgecb._bba == nil {
-		_fgecb._bba = _aa.NewStats(512, 1)
-	}
-	if _fgecb._efab == nil {
-		_fgecb._efab = _aa.NewStats(512, 1)
-	}
-	if _fgecb._fddg == nil {
-		_fgecb._fddg = _aa.NewStats(512, 1)
-	}
-	if _fgecb.UseRefinementAggregation && _fgecb._dcfa == nil {
-		_fgecb._dcfa = _aa.NewStats(1<<uint(_fgecb._ebafc), 1)
-		_fgecb._bcb = _aa.NewStats(512, 1)
-		_fgecb._gebb = _aa.NewStats(512, 1)
-	}
-	if _fgecb._ebff == nil {
-		_fgecb._ebff = _aa.NewStats(65536, 1)
-	}
-	if _fgecb._caaa == nil {
-		var _gcbe error
-		_fgecb._caaa, _gcbe = _aa.New(_fgecb._aege)
-		if _gcbe != nil {
-			return _gcbe
-		}
-	}
-	return nil
-}
-func (_dbab *Header) writeSegmentPageAssociation(_gdba _g.BinaryWriter) (_faa int, _beab error) {
-	const _gggf = "w\u0072\u0069\u0074\u0065\u0053\u0065g\u006d\u0065\u006e\u0074\u0050\u0061\u0067\u0065\u0041s\u0073\u006f\u0063i\u0061t\u0069\u006f\u006e"
-	if _dbab.pageSize() != 4 {
-		if _beab = _gdba.WriteByte(byte(_dbab.PageAssociation)); _beab != nil {
-			return 0, _ac.Wrap(_beab, _gggf, "\u0070\u0061\u0067\u0065\u0053\u0069\u007a\u0065\u0020\u0021\u003d\u0020\u0034")
-		}
-		return 1, nil
-	}
-	_ccfa := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_ccfa, uint32(_dbab.PageAssociation))
-	if _faa, _beab = _gdba.Write(_ccfa); _beab != nil {
-		return 0, _ac.Wrap(_beab, _gggf, "\u0034 \u0062y\u0074\u0065\u0020\u0070\u0061g\u0065\u0020n\u0075\u006d\u0062\u0065\u0072")
-	}
-	return _faa, nil
-}
-func (_efbbbc *SymbolDictionary) decodeThroughTextRegion(_dcdab, _bcfe, _cbca uint32) error {
-	if _efbbbc._cfcd == nil {
-		_efbbbc._cfcd = _ggad(_efbbbc._aege, nil)
-		_efbbbc._cfcd.setContexts(_efbbbc._ebff, _aa.NewStats(512, 1), _aa.NewStats(512, 1), _aa.NewStats(512, 1), _aa.NewStats(512, 1), _efbbbc._dcfa, _aa.NewStats(512, 1), _aa.NewStats(512, 1), _aa.NewStats(512, 1), _aa.NewStats(512, 1))
-	}
-	if _acbf := _efbbbc.setSymbolsArray(); _acbf != nil {
-		return _acbf
-	}
-	_efbbbc._cfcd.setParameters(_efbbbc._caaa, _efbbbc.IsHuffmanEncoded, true, _dcdab, _bcfe, _cbca, 1, _efbbbc._fgfc+_efbbbc._geba, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, _efbbbc.SdrTemplate, _efbbbc.SdrATX, _efbbbc.SdrATY, _efbbbc._deeb, _efbbbc._ebafc)
-	return _efbbbc.addSymbol(_efbbbc._cfcd)
-}
-
-type Header struct {
-	SegmentNumber            uint32
-	Type                     Type
-	RetainFlag               bool
-	PageAssociation          int
-	PageAssociationFieldSize bool
-	RTSegments               []*Header
-	HeaderLength             int64
-	SegmentDataLength        uint64
-	SegmentDataStartOffset   uint64
-	Reader                   _g.StreamReader
-	SegmentData              Segmenter
-	RTSNumbers               []int
-	RetainBits               []uint8
-}
-
-func (_ccfb *Header) readNumberOfReferredToSegments(_gegf _g.StreamReader) (uint64, error) {
-	const _eed = "\u0072\u0065\u0061\u0064\u004e\u0075\u006d\u0062\u0065\u0072O\u0066\u0052\u0065\u0066\u0065\u0072\u0072e\u0064\u0054\u006f\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0073"
-	_ggcc, _agce := _gegf.ReadBits(3)
-	if _agce != nil {
-		return 0, _ac.Wrap(_agce, _eed, "\u0063\u006f\u0075n\u0074\u0020\u006f\u0066\u0020\u0072\u0074\u0073")
-	}
-	_ggcc &= 0xf
-	var _fga []byte
-	if _ggcc <= 4 {
-		_fga = make([]byte, 5)
-		for _gecgg := 0; _gecgg <= 4; _gecgg++ {
-			_ebad, _faea := _gegf.ReadBit()
-			if _faea != nil {
-				return 0, _ac.Wrap(_faea, _eed, "\u0073\u0068\u006fr\u0074\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
-			}
-			_fga[_gecgg] = byte(_ebad)
-		}
-	} else {
-		_ggcc, _agce = _gegf.ReadBits(29)
-		if _agce != nil {
-			return 0, _agce
-		}
-		_ggcc &= _f.MaxInt32
-		_bagde := (_ggcc + 8) >> 3
-		_bagde <<= 3
-		_fga = make([]byte, _bagde)
-		var _accf uint64
-		for _accf = 0; _accf < _bagde; _accf++ {
-			_ccbga, _ddba := _gegf.ReadBit()
-			if _ddba != nil {
-				return 0, _ac.Wrap(_ddba, _eed, "l\u006f\u006e\u0067\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
-			}
-			_fga[_accf] = byte(_ccbga)
-		}
-	}
-	return _ggcc, nil
-}
-func (_fcbc *PageInformationSegment) readCombinationOperatorOverrideAllowed() error {
-	_fdda, _cbbd := _fcbc._fabba.ReadBit()
-	if _cbbd != nil {
-		return _cbbd
-	}
-	if _fdda == 1 {
-		_fcbc._bddd = true
-	}
-	return nil
-}
-func (_dfgf *TextRegion) setContexts(_abge *_aa.DecoderStats, _gbeda *_aa.DecoderStats, _ebc *_aa.DecoderStats, _cfdf *_aa.DecoderStats, _eafb *_aa.DecoderStats, _cgfd *_aa.DecoderStats, _bcbg *_aa.DecoderStats, _gfb *_aa.DecoderStats, _fccc *_aa.DecoderStats, _gaeg *_aa.DecoderStats) {
-	_dfgf._fdfbf = _gbeda
-	_dfgf._dfge = _ebc
-	_dfgf._bcca = _cfdf
-	_dfgf._gdgaa = _eafb
-	_dfgf._bbgdf = _bcbg
-	_dfgf._agag = _gfb
-	_dfgf._bcfb = _cgfd
-	_dfgf._bfce = _fccc
-	_dfgf._badb = _gaeg
-	_dfgf._gfd = _abge
-}
-func (_ebace *TextRegion) readHuffmanFlags() error {
-	var (
-		_febg int
-		_dgfc uint64
-		_dagb error
-	)
-	_, _dagb = _ebace._ceegd.ReadBit()
-	if _dagb != nil {
-		return _dagb
-	}
-	_febg, _dagb = _ebace._ceegd.ReadBit()
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffRSize = int8(_febg)
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffRDY = int8(_dgfc) & 0xf
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffRDX = int8(_dgfc) & 0xf
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffRDHeight = int8(_dgfc) & 0xf
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffRDWidth = int8(_dgfc) & 0xf
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffDT = int8(_dgfc) & 0xf
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffDS = int8(_dgfc) & 0xf
-	_dgfc, _dagb = _ebace._ceegd.ReadBits(2)
-	if _dagb != nil {
-		return _dagb
-	}
-	_ebace.SbHuffFS = int8(_dgfc) & 0xf
-	return nil
-}
-func (_ffdb *GenericRefinementRegion) parseHeader() (_ebg error) {
-	_gb.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0070\u0061\u0072s\u0069\u006e\u0067\u0020\u0048e\u0061\u0064e\u0072\u002e\u002e\u002e")
-	_cef := _a.Now()
-	defer func() {
-		if _ebg == nil {
-			_gb.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045G\u0049\u004f\u004e\u005d\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020h\u0065\u0061\u0064\u0065\u0072\u0020\u0066\u0069\u006e\u0069\u0073\u0068id\u0020\u0069\u006e\u003a\u0020\u0025\u0064\u0020\u006e\u0073", _a.Since(_cef).Nanoseconds())
-		} else {
-			_gb.Log.Trace("\u005b\u0047E\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0068\u0065\u0061\u0064\u0065\u0072\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0073", _ebg)
-		}
-	}()
-	if _ebg = _ffdb.RegionInfo.parseHeader(); _ebg != nil {
-		return _ebg
-	}
-	_, _ebg = _ffdb._ea.ReadBits(6)
-	if _ebg != nil {
-		return _ebg
-	}
-	_ffdb.IsTPGROn, _ebg = _ffdb._ea.ReadBool()
-	if _ebg != nil {
-		return _ebg
-	}
-	var _bbce int
-	_bbce, _ebg = _ffdb._ea.ReadBit()
-	if _ebg != nil {
-		return _ebg
-	}
-	_ffdb.TemplateID = int8(_bbce)
-	switch _ffdb.TemplateID {
-	case 0:
-		_ffdb.Template = _ffdb._fa
-		if _ebg = _ffdb.readAtPixels(); _ebg != nil {
-			return
-		}
-	case 1:
-		_ffdb.Template = _ffdb._bcab
-	}
-	return nil
-}
-func (_ecfe *SymbolDictionary) Init(h *Header, r _g.StreamReader) error {
-	_ecfe.Header = h
-	_ecfe._aege = r
-	return _ecfe.parseHeader()
-}
-
-const (
-	TSymbolDictionary                         Type = 0
-	TIntermediateTextRegion                   Type = 4
-	TImmediateTextRegion                      Type = 6
-	TImmediateLosslessTextRegion              Type = 7
-	TPatternDictionary                        Type = 16
-	TIntermediateHalftoneRegion               Type = 20
-	TImmediateHalftoneRegion                  Type = 22
-	TImmediateLosslessHalftoneRegion          Type = 23
-	TIntermediateGenericRegion                Type = 36
-	TImmediateGenericRegion                   Type = 38
-	TImmediateLosslessGenericRegion           Type = 39
-	TIntermediateGenericRefinementRegion      Type = 40
-	TImmediateGenericRefinementRegion         Type = 42
-	TImmediateLosslessGenericRefinementRegion Type = 43
-	TPageInformation                          Type = 48
-	TEndOfPage                                Type = 49
-	TEndOfStrip                               Type = 50
-	TEndOfFile                                Type = 51
-	TProfiles                                 Type = 52
-	TTables                                   Type = 53
-	TExtension                                Type = 62
-	TBitmap                                   Type = 70
-)
-
-func (_ddd *HalftoneRegion) Init(hd *Header, r _g.StreamReader) error {
-	_ddd._ebf = r
-	_ddd._bdeg = hd
-	_ddd.RegionSegment = NewRegionSegment(r)
-	return _ddd.parseHeader()
-}
-func (_bdce *TextRegion) computeSymbolCodeLength() error {
-	if _bdce.IsHuffmanEncoded {
-		return _bdce.symbolIDCodeLengths()
-	}
-	_bdce._bfa = int8(_f.Ceil(_f.Log(float64(_bdce.NumberOfSymbols)) / _f.Log(2)))
-	return nil
-}
-func _agfb(_fcd _g.StreamReader, _aaae *Header) *GenericRefinementRegion {
-	return &GenericRefinementRegion{_ea: _fcd, RegionInfo: NewRegionSegment(_fcd), _ff: _aaae, _fa: &template0{}, _bcab: &template1{}}
-}
-func (_cbe *GenericRegion) decodeSLTP() (int, error) {
-	switch _cbe.GBTemplate {
-	case 0:
-		_cbe._bcae.SetIndex(0x9B25)
-	case 1:
-		_cbe._bcae.SetIndex(0x795)
-	case 2:
-		_cbe._bcae.SetIndex(0xE5)
-	case 3:
-		_cbe._bcae.SetIndex(0x195)
-	}
-	return _cbe._ga.DecodeBit(_cbe._bcae)
-}
-func (_fcddd *TextRegion) symbolIDCodeLengths() error {
-	var (
-		_agdf []*_aag.Code
-		_dcgf uint64
-		_ddfg _aag.Tabler
-		_fbaf error
-	)
-	for _ffgg := 0; _ffgg < 35; _ffgg++ {
-		_dcgf, _fbaf = _fcddd._ceegd.ReadBits(4)
-		if _fbaf != nil {
-			return _fbaf
-		}
-		_added := int(_dcgf & 0xf)
-		if _added > 0 {
-			_agdf = append(_agdf, _aag.NewCode(int32(_added), 0, int32(_ffgg), false))
-		}
-	}
-	_ddfg, _fbaf = _aag.NewFixedSizeTable(_agdf)
-	if _fbaf != nil {
-		return _fbaf
-	}
-	var (
-		_gbged int64
-		_bafb  uint32
-		_afgfc []*_aag.Code
-		_bdbgb int64
-	)
-	for _bafb < _fcddd.NumberOfSymbols {
-		_bdbgb, _fbaf = _ddfg.Decode(_fcddd._ceegd)
-		if _fbaf != nil {
-			return _fbaf
-		}
-		if _bdbgb < 32 {
-			if _bdbgb > 0 {
-				_afgfc = append(_afgfc, _aag.NewCode(int32(_bdbgb), 0, int32(_bafb), false))
-			}
-			_gbged = _bdbgb
-			_bafb++
-		} else {
-			var _bggddb, _abce int64
-			switch _bdbgb {
-			case 32:
-				_dcgf, _fbaf = _fcddd._ceegd.ReadBits(2)
-				if _fbaf != nil {
-					return _fbaf
-				}
-				_bggddb = 3 + int64(_dcgf)
-				if _bafb > 0 {
-					_abce = _gbged
-				}
-			case 33:
-				_dcgf, _fbaf = _fcddd._ceegd.ReadBits(3)
-				if _fbaf != nil {
-					return _fbaf
-				}
-				_bggddb = 3 + int64(_dcgf)
-			case 34:
-				_dcgf, _fbaf = _fcddd._ceegd.ReadBits(7)
-				if _fbaf != nil {
-					return _fbaf
-				}
-				_bggddb = 11 + int64(_dcgf)
-			}
-			for _gbcc := 0; _gbcc < int(_bggddb); _gbcc++ {
-				if _abce > 0 {
-					_afgfc = append(_afgfc, _aag.NewCode(int32(_abce), 0, int32(_bafb), false))
-				}
-				_bafb++
-			}
-		}
-	}
-	_fcddd._ceegd.Align()
-	_fcddd._gaead, _fbaf = _aag.NewFixedSizeTable(_afgfc)
-	return _fbaf
-}
-
-type SegmentEncoder interface {
-	Encode(_bcdb _g.BinaryWriter) (_acbb int, _bef error)
-}
-
-func (_fef *TextRegion) initSymbols() error {
-	const _gdfe = "i\u006e\u0069\u0074\u0053\u0079\u006d\u0062\u006f\u006c\u0073"
-	for _, _dbgd := range _fef.Header.RTSegments {
-		if _dbgd == nil {
-			return _ac.Error(_gdfe, "\u006e\u0069\u006c\u0020\u0073\u0065\u0067\u006de\u006e\u0074\u0020pr\u006f\u0076\u0069\u0064\u0065\u0064 \u0066\u006f\u0072\u0020\u0074\u0068\u0065\u0020\u0074\u0065\u0078\u0074\u0020\u0072\u0065g\u0069\u006f\u006e\u0020\u0053\u0079\u006d\u0062o\u006c\u0073")
-		}
-		if _dbgd.Type == 0 {
-			_eddeg, _eagf := _dbgd.GetSegmentData()
-			if _eagf != nil {
-				return _ac.Wrap(_eagf, _gdfe, "")
-			}
-			_gbda, _feecb := _eddeg.(*SymbolDictionary)
-			if !_feecb {
-				return _ac.Error(_gdfe, "\u0072e\u0066\u0065r\u0072\u0065\u0064 \u0054\u006f\u0020\u0053\u0065\u0067\u006de\u006e\u0074\u0020\u0069\u0073\u0020n\u006f\u0074\u0020\u0061\u0020\u0053\u0079\u006d\u0062\u006f\u006cD\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
-			}
-			_gbda._dcfa = _fef._bcfb
-			_edgg, _eagf := _gbda.GetDictionary()
-			if _eagf != nil {
-				return _ac.Wrap(_eagf, _gdfe, "")
-			}
-			_fef.Symbols = append(_fef.Symbols, _edgg...)
-		}
-	}
-	_fef.NumberOfSymbols = uint32(len(_fef.Symbols))
-	return nil
-}
-func (_ccg *TextRegion) GetRegionBitmap() (*_c.Bitmap, error) {
-	if _ccg.RegionBitmap != nil {
-		return _ccg.RegionBitmap, nil
-	}
-	if !_ccg.IsHuffmanEncoded {
-		if _aaagg := _ccg.setCodingStatistics(); _aaagg != nil {
-			return nil, _aaagg
-		}
-	}
-	if _gffa := _ccg.createRegionBitmap(); _gffa != nil {
-		return nil, _gffa
-	}
-	if _cgge := _ccg.decodeSymbolInstances(); _cgge != nil {
-		return nil, _cgge
-	}
-	return _ccg.RegionBitmap, nil
-}
-func (_fddde *TextRegion) setCodingStatistics() error {
-	if _fddde._fdfbf == nil {
-		_fddde._fdfbf = _aa.NewStats(512, 1)
-	}
-	if _fddde._dfge == nil {
-		_fddde._dfge = _aa.NewStats(512, 1)
-	}
-	if _fddde._bcca == nil {
-		_fddde._bcca = _aa.NewStats(512, 1)
-	}
-	if _fddde._gdgaa == nil {
-		_fddde._gdgaa = _aa.NewStats(512, 1)
-	}
-	if _fddde._feaceb == nil {
-		_fddde._feaceb = _aa.NewStats(512, 1)
-	}
-	if _fddde._bbgdf == nil {
-		_fddde._bbgdf = _aa.NewStats(512, 1)
-	}
-	if _fddde._agag == nil {
-		_fddde._agag = _aa.NewStats(512, 1)
-	}
-	if _fddde._bcfb == nil {
-		_fddde._bcfb = _aa.NewStats(1<<uint(_fddde._bfa), 1)
-	}
-	if _fddde._bfce == nil {
-		_fddde._bfce = _aa.NewStats(512, 1)
-	}
-	if _fddde._badb == nil {
-		_fddde._badb = _aa.NewStats(512, 1)
-	}
-	if _fddde._bbcea == nil {
-		var _fccd error
-		_fddde._bbcea, _fccd = _aa.New(_fddde._ceegd)
-		if _fccd != nil {
-			return _fccd
-		}
-	}
-	return nil
-}
-func (_edf *GenericRegion) setParametersWithAt(_cabc bool, _ggg byte, _daa, _ddad bool, _ccbg, _ded []int8, _fbf, _bgb uint32, _eadf *_aa.DecoderStats, _ffad *_aa.Decoder) {
-	_edf.IsMMREncoded = _cabc
-	_edf.GBTemplate = _ggg
-	_edf.IsTPGDon = _daa
-	_edf.GBAtX = _ccbg
-	_edf.GBAtY = _ded
-	_edf.RegionSegment.BitmapHeight = _bgb
-	_edf.RegionSegment.BitmapWidth = _fbf
-	_edf._cgdc = nil
-	_edf.Bitmap = nil
-	if _eadf != nil {
-		_edf._bcae = _eadf
-	}
-	if _ffad != nil {
-		_edf._ga = _ffad
-	}
-	_gb.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0047\u0049O\u004e\u005d\u0020\u0073\u0065\u0074P\u0061\u0072\u0061\u006d\u0065\u0074\u0065\u0072\u0073\u0020\u0053\u0044\u0041t\u003a\u0020\u0025\u0073", _edf)
-}
-func (_edfa *TextRegion) decodeDfs() (int64, error) {
-	if _edfa.IsHuffmanEncoded {
-		if _edfa.SbHuffFS == 3 {
-			if _edfa._cdcga == nil {
-				var _dbeb error
-				_edfa._cdcga, _dbeb = _edfa.getUserTable(0)
-				if _dbeb != nil {
-					return 0, _dbeb
-				}
-			}
-			return _edfa._cdcga.Decode(_edfa._ceegd)
-		}
-		_daeb, _ggbg := _aag.GetStandardTable(6 + int(_edfa.SbHuffFS))
-		if _ggbg != nil {
-			return 0, _ggbg
-		}
-		return _daeb.Decode(_edfa._ceegd)
-	}
-	_dggd, _cgea := _edfa._bbcea.DecodeInt(_edfa._dfge)
-	if _cgea != nil {
-		return 0, _cgea
-	}
-	return int64(_dggd), nil
-}
-func (_egfa *SymbolDictionary) decodeHeightClassDeltaHeightWithHuffman() (int64, error) {
-	switch _egfa.SdHuffDecodeHeightSelection {
-	case 0:
-		_ffac, _badc := _aag.GetStandardTable(4)
-		if _badc != nil {
-			return 0, _badc
-		}
-		return _ffac.Decode(_egfa._aege)
-	case 1:
-		_fddf, _bdaa := _aag.GetStandardTable(5)
-		if _bdaa != nil {
-			return 0, _bdaa
-		}
-		return _fddf.Decode(_egfa._aege)
-	case 3:
-		if _egfa._bdgc == nil {
-			_dgdc, _cgfc := _aag.GetStandardTable(0)
-			if _cgfc != nil {
-				return 0, _cgfc
-			}
-			_egfa._bdgc = _dgdc
-		}
-		return _egfa._bdgc.Decode(_egfa._aege)
-	}
-	return 0, nil
-}
-func (_abe *GenericRegion) GetRegionInfo() *RegionSegment { return _abe.RegionSegment }
-func (_efbbb Type) String() string {
-	switch _efbbb {
+func (_dfee Type) String() string {
+	switch _dfee {
 	case TSymbolDictionary:
 		return "\u0053\u0079\u006d\u0062\u006f\u006c\u0020\u0044\u0069\u0063\u0074\u0069o\u006e\u0061\u0072\u0079"
 	case TIntermediateTextRegion:
@@ -2539,54 +1056,3386 @@ func (_efbbb Type) String() string {
 	}
 	return "I\u006ev\u0061\u006c\u0069\u0064\u0020\u0053\u0065\u0067m\u0065\u006e\u0074\u0020Ki\u006e\u0064"
 }
-func (_cabf *PatternDictionary) parseHeader() error {
-	_gb.Log.Trace("\u005b\u0050\u0041\u0054\u0054\u0045\u0052\u004e\u002d\u0044\u0049\u0043\u0054I\u004f\u004e\u0041\u0052\u0059\u005d[\u0070\u0061\u0072\u0073\u0065\u0048\u0065\u0061\u0064\u0065\u0072\u005d\u0020b\u0065\u0067\u0069\u006e")
-	defer func() {
-		_gb.Log.Trace("\u005b\u0050\u0041T\u0054\u0045\u0052\u004e\u002d\u0044\u0049\u0043\u0054\u0049\u004f\u004e\u0041\u0052\u0059\u005d\u005b\u0070\u0061\u0072\u0073\u0065\u0048\u0065\u0061\u0064\u0065\u0072\u005d \u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
-	}()
-	_, _efaea := _cabf._fad.ReadBits(5)
-	if _efaea != nil {
-		return _efaea
-	}
-	if _efaea = _cabf.readTemplate(); _efaea != nil {
-		return _efaea
-	}
-	if _efaea = _cabf.readIsMMREncoded(); _efaea != nil {
-		return _efaea
-	}
-	if _efaea = _cabf.readPatternWidthAndHeight(); _efaea != nil {
-		return _efaea
-	}
-	if _efaea = _cabf.readGrayMax(); _efaea != nil {
-		return _efaea
-	}
-	if _efaea = _cabf.computeSegmentDataStructure(); _efaea != nil {
-		return _efaea
-	}
-	return _cabf.checkInput()
+
+const (
+	ORandom OrganizationType = iota
+	OSequential
+)
+
+func (_acee *SymbolDictionary) String() string {
+	_bccb := &_cc.Builder{}
+	_bccb.WriteString("\n\u005b\u0053\u0059\u004dBO\u004c-\u0044\u0049\u0043\u0054\u0049O\u004e\u0041\u0052\u0059\u005d\u000a")
+	_bccb.WriteString(_e.Sprintf("\u0009-\u0020S\u0064\u0072\u0054\u0065\u006dp\u006c\u0061t\u0065\u0020\u0025\u0076\u000a", _acee.SdrTemplate))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0054\u0065\u006d\u0070\u006c\u0061\u0074e\u0020\u0025\u0076\u000a", _acee.SdTemplate))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0069\u0073\u0043\u006f\u0064\u0069\u006eg\u0043\u006f\u006e\u0074\u0065\u0078\u0074R\u0065\u0074\u0061\u0069\u006e\u0065\u0064\u0020\u0025\u0076\u000a", _acee._gdae))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0069\u0073\u0043\u006f\u0064\u0069\u006e\u0067C\u006f\u006e\u0074\u0065\u0078\u0074\u0055\u0073\u0065\u0064 \u0025\u0076\u000a", _acee._gacg))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0048u\u0066\u0066\u0041\u0067\u0067\u0049\u006e\u0073\u0074\u0061\u006e\u0063\u0065S\u0065\u006c\u0065\u0063\u0074\u0069\u006fn\u0020\u0025\u0076\u000a", _acee.SdHuffAggInstanceSelection))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053d\u0048\u0075\u0066\u0066\u0042\u004d\u0053\u0069\u007a\u0065S\u0065l\u0065\u0063\u0074\u0069\u006f\u006e\u0020%\u0076\u000a", _acee.SdHuffBMSizeSelection))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0048u\u0066\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0057\u0069\u0064\u0074\u0068S\u0065\u006c\u0065\u0063\u0074\u0069\u006fn\u0020\u0025\u0076\u000a", _acee.SdHuffDecodeWidthSelection))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020Sd\u0048\u0075\u0066\u0066\u0044\u0065\u0063\u006f\u0064e\u0048e\u0069g\u0068t\u0053\u0065\u006c\u0065\u0063\u0074\u0069\u006f\u006e\u0020\u0025\u0076\u000a", _acee.SdHuffDecodeHeightSelection))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020U\u0073\u0065\u0052\u0065f\u0069\u006e\u0065\u006d\u0065\u006e\u0074A\u0067\u0067\u0072\u0065\u0067\u0061\u0074\u0069\u006f\u006e\u0020\u0025\u0076\u000a", _acee.UseRefinementAggregation))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020is\u0048\u0075\u0066\u0066\u006d\u0061\u006e\u0045\u006e\u0063\u006f\u0064\u0065\u0064\u0020\u0025\u0076\u000a", _acee.IsHuffmanEncoded))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020S\u0064\u0041\u0054\u0058\u0020\u0025\u0076\u000a", _acee.SdATX))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020S\u0064\u0041\u0054\u0059\u0020\u0025\u0076\u000a", _acee.SdATY))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0072\u0041\u0054\u0058\u0020\u0025\u0076\u000a", _acee.SdrATX))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0072\u0041\u0054\u0059\u0020\u0025\u0076\u000a", _acee.SdrATY))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u004e\u0075\u006d\u0062\u0065\u0072\u004ff\u0045\u0078\u0070\u006f\u0072\u0074\u0065d\u0053\u0079\u006d\u0062\u006f\u006c\u0073\u0020\u0025\u0076\u000a", _acee.NumberOfExportedSymbols))
+	_bccb.WriteString(_e.Sprintf("\u0009-\u0020\u004e\u0075\u006db\u0065\u0072\u004f\u0066\u004ee\u0077S\u0079m\u0062\u006f\u006c\u0073\u0020\u0025\u0076\n", _acee.NumberOfNewSymbols))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u004ff\u0049\u006d\u0070\u006f\u0072\u0074\u0065d\u0053\u0079\u006d\u0062\u006f\u006c\u0073\u0020\u0025\u0076\u000a", _acee._gbbg))
+	_bccb.WriteString(_e.Sprintf("\u0009\u002d \u006e\u0075\u006d\u0062\u0065\u0072\u004f\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0064\u0053\u0079\u006d\u0062\u006f\u006c\u0073 %\u0076\u000a", _acee._ffa))
+	return _bccb.String()
 }
-func (_dfdf *SymbolDictionary) huffDecodeBmSize() (int64, error) {
-	if _dfdf._cacb == nil {
+func (_dgca *SymbolDictionary) Init(h *Header, r _fg.StreamReader) error {
+	_dgca.Header = h
+	_dgca._bcagf = r
+	return _dgca.parseHeader()
+}
+func (_cdaa *Header) String() string {
+	_gfd := &_cc.Builder{}
+	_gfd.WriteString("\u000a[\u0053E\u0047\u004d\u0045\u004e\u0054-\u0048\u0045A\u0044\u0045\u0052\u005d\u000a")
+	_gfd.WriteString(_e.Sprintf("\t\u002d\u0020\u0053\u0065gm\u0065n\u0074\u004e\u0075\u006d\u0062e\u0072\u003a\u0020\u0025\u0076\u000a", _cdaa.SegmentNumber))
+	_gfd.WriteString(_e.Sprintf("\u0009\u002d\u0020T\u0079\u0070\u0065\u003a\u0020\u0025\u0076\u000a", _cdaa.Type))
+	_gfd.WriteString(_e.Sprintf("\u0009-\u0020R\u0065\u0074\u0061\u0069\u006eF\u006c\u0061g\u003a\u0020\u0025\u0076\u000a", _cdaa.RetainFlag))
+	_gfd.WriteString(_e.Sprintf("\u0009\u002d\u0020Pa\u0067\u0065\u0041\u0073\u0073\u006f\u0063\u0069\u0061\u0074\u0069\u006f\u006e\u003a\u0020\u0025\u0076\u000a", _cdaa.PageAssociation))
+	_gfd.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0050\u0061\u0067\u0065\u0041\u0073\u0073\u006f\u0063\u0069\u0061\u0074i\u006fn\u0046\u0069\u0065\u006c\u0064\u0053\u0069\u007a\u0065\u003a\u0020\u0025\u0076\u000a", _cdaa.PageAssociationFieldSize))
+	_gfd.WriteString("\u0009-\u0020R\u0054\u0053\u0045\u0047\u004d\u0045\u004e\u0054\u0053\u003a\u000a")
+	for _, _daegg := range _cdaa.RTSNumbers {
+		_gfd.WriteString(_e.Sprintf("\u0009\t\u002d\u0020\u0025\u0064\u000a", _daegg))
+	}
+	_gfd.WriteString(_e.Sprintf("\t\u002d \u0048\u0065\u0061\u0064\u0065\u0072\u004c\u0065n\u0067\u0074\u0068\u003a %\u0076\u000a", _cdaa.HeaderLength))
+	_gfd.WriteString(_e.Sprintf("\u0009-\u0020\u0053\u0065\u0067m\u0065\u006e\u0074\u0044\u0061t\u0061L\u0065n\u0067\u0074\u0068\u003a\u0020\u0025\u0076\n", _cdaa.SegmentDataLength))
+	_gfd.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074D\u0061\u0074\u0061\u0053\u0074\u0061\u0072t\u004f\u0066\u0066\u0073\u0065\u0074\u003a\u0020\u0025\u0076\u000a", _cdaa.SegmentDataStartOffset))
+	return _gfd.String()
+}
+func (_fdf *SymbolDictionary) decodeHeightClassBitmap(_fbad *_d.Bitmap, _gdfc int64, _aded int, _caecc []int) error {
+	for _abaa := _gdfc; _abaa < int64(_fdf._ffa); _abaa++ {
+		var _feeg int
+		for _gdgg := _gdfc; _gdgg <= _abaa-1; _gdgg++ {
+			_feeg += _caecc[_gdgg]
+		}
+		_gecd := _c.Rect(_feeg, 0, _feeg+_caecc[_abaa], _aded)
+		_dgfab, _egab := _d.Extract(_gecd, _fbad)
+		if _egab != nil {
+			return _egab
+		}
+		_fdf._gbga[_abaa] = _dgfab
+		_fdf._bded = append(_fdf._bded, _dgfab)
+	}
+	return nil
+}
+func (_egdd *SymbolDictionary) readRegionFlags() error {
+	var (
+		_abdf uint64
+		_cbcb int
+	)
+	_, _fcag := _egdd._bcagf.ReadBits(3)
+	if _fcag != nil {
+		return _fcag
+	}
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	_egdd.SdrTemplate = int8(_cbcb)
+	_abdf, _fcag = _egdd._bcagf.ReadBits(2)
+	if _fcag != nil {
+		return _fcag
+	}
+	_egdd.SdTemplate = int8(_abdf & 0xf)
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	if _cbcb == 1 {
+		_egdd._gdae = true
+	}
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	if _cbcb == 1 {
+		_egdd._gacg = true
+	}
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	if _cbcb == 1 {
+		_egdd.SdHuffAggInstanceSelection = true
+	}
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	_egdd.SdHuffBMSizeSelection = int8(_cbcb)
+	_abdf, _fcag = _egdd._bcagf.ReadBits(2)
+	if _fcag != nil {
+		return _fcag
+	}
+	_egdd.SdHuffDecodeWidthSelection = int8(_abdf & 0xf)
+	_abdf, _fcag = _egdd._bcagf.ReadBits(2)
+	if _fcag != nil {
+		return _fcag
+	}
+	_egdd.SdHuffDecodeHeightSelection = int8(_abdf & 0xf)
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	if _cbcb == 1 {
+		_egdd.UseRefinementAggregation = true
+	}
+	_cbcb, _fcag = _egdd._bcagf.ReadBit()
+	if _fcag != nil {
+		return _fcag
+	}
+	if _cbcb == 1 {
+		_egdd.IsHuffmanEncoded = true
+	}
+	return nil
+}
+func (_aca *GenericRegion) decodeTemplate2(_fga, _ggc, _bcc int, _cgg, _afgf int) (_agf error) {
+	const _fegf = "\u0064e\u0063o\u0064\u0065\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0032"
+	var (
+		_gfgg, _acac int
+		_affd, _dcc  int
+		_ffg         byte
+		_ccd, _efee  int
+	)
+	if _fga >= 1 {
+		_ffg, _agf = _aca.Bitmap.GetByte(_afgf)
+		if _agf != nil {
+			return _fd.Wrap(_agf, _fegf, "\u006ci\u006ee\u004e\u0075\u006d\u0062\u0065\u0072\u0020\u003e\u003d\u0020\u0031")
+		}
+		_affd = int(_ffg)
+	}
+	if _fga >= 2 {
+		_ffg, _agf = _aca.Bitmap.GetByte(_afgf - _aca.Bitmap.RowStride)
+		if _agf != nil {
+			return _fd.Wrap(_agf, _fegf, "\u006ci\u006ee\u004e\u0075\u006d\u0062\u0065\u0072\u0020\u003e\u003d\u0020\u0032")
+		}
+		_dcc = int(_ffg) << 4
+	}
+	_gfgg = (_affd >> 3 & 0x7c) | (_dcc >> 3 & 0x380)
+	for _egcfd := 0; _egcfd < _bcc; _egcfd = _ccd {
 		var (
-			_bcaf  int
-			_bgagb error
+			_ecdd byte
+			_gdcc int
 		)
-		if _dfdf.SdHuffDecodeHeightSelection == 3 {
-			_bcaf++
+		_ccd = _egcfd + 8
+		if _fec := _ggc - _egcfd; _fec > 8 {
+			_gdcc = 8
+		} else {
+			_gdcc = _fec
 		}
-		if _dfdf.SdHuffDecodeWidthSelection == 3 {
-			_bcaf++
+		if _fga > 0 {
+			_affd <<= 8
+			if _ccd < _ggc {
+				_ffg, _agf = _aca.Bitmap.GetByte(_afgf + 1)
+				if _agf != nil {
+					return _fd.Wrap(_agf, _fegf, "\u006c\u0069\u006e\u0065\u004e\u0075\u006d\u0062\u0065r\u0020\u003e\u0020\u0030")
+				}
+				_affd |= int(_ffg)
+			}
 		}
-		_dfdf._cacb, _bgagb = _dfdf.getUserTable(_bcaf)
-		if _bgagb != nil {
-			return 0, _bgagb
+		if _fga > 1 {
+			_dcc <<= 8
+			if _ccd < _ggc {
+				_ffg, _agf = _aca.Bitmap.GetByte(_afgf - _aca.Bitmap.RowStride + 1)
+				if _agf != nil {
+					return _fd.Wrap(_agf, _fegf, "\u006c\u0069\u006e\u0065\u004e\u0075\u006d\u0062\u0065r\u0020\u003e\u0020\u0031")
+				}
+				_dcc |= int(_ffg) << 4
+			}
+		}
+		for _cace := 0; _cace < _gdcc; _cace++ {
+			_fda := uint(10 - _cace)
+			if _aca._fgf {
+				_acac = _aca.overrideAtTemplate2(_gfgg, _egcfd+_cace, _fga, int(_ecdd), _cace)
+				_aca._aae.SetIndex(int32(_acac))
+			} else {
+				_aca._aae.SetIndex(int32(_gfgg))
+			}
+			_efee, _agf = _aca._acb.DecodeBit(_aca._aae)
+			if _agf != nil {
+				return _fd.Wrap(_agf, _fegf, "")
+			}
+			_ecdd |= byte(_efee << uint(7-_cace))
+			_gfgg = ((_gfgg & 0x1bd) << 1) | _efee | ((_affd >> _fda) & 0x4) | ((_dcc >> _fda) & 0x80)
+		}
+		if _ddfc := _aca.Bitmap.SetByte(_cgg, _ecdd); _ddfc != nil {
+			return _fd.Wrap(_ddfc, _fegf, "")
+		}
+		_cgg++
+		_afgf++
+	}
+	return nil
+}
+func (_afb *TextRegion) decodeRdw() (int64, error) {
+	const _bcfd = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064w"
+	if _afb.IsHuffmanEncoded {
+		if _afb.SbHuffRDWidth == 3 {
+			if _afb._gcba == nil {
+				var (
+					_gdfeb int
+					_egae  error
+				)
+				if _afb.SbHuffFS == 3 {
+					_gdfeb++
+				}
+				if _afb.SbHuffDS == 3 {
+					_gdfeb++
+				}
+				if _afb.SbHuffDT == 3 {
+					_gdfeb++
+				}
+				_afb._gcba, _egae = _afb.getUserTable(_gdfeb)
+				if _egae != nil {
+					return 0, _fd.Wrap(_egae, _bcfd, "")
+				}
+			}
+			return _afb._gcba.Decode(_afb._effb)
+		}
+		_bgbcb, _ebgf := _ba.GetStandardTable(14 + int(_afb.SbHuffRDWidth))
+		if _ebgf != nil {
+			return 0, _fd.Wrap(_ebgf, _bcfd, "")
+		}
+		return _bgbcb.Decode(_afb._effb)
+	}
+	_gfgga, _fbbe := _afb._dffe.DecodeInt(_afb._egcff)
+	if _fbbe != nil {
+		return 0, _fd.Wrap(_fbbe, _bcfd, "")
+	}
+	return int64(_gfgga), nil
+}
+func (_dea *HalftoneRegion) GetRegionInfo() *RegionSegment { return _dea.RegionSegment }
+
+var (
+	_bfd  Segmenter
+	_ffdg = map[Type]func() Segmenter{TSymbolDictionary: func() Segmenter { return &SymbolDictionary{} }, TIntermediateTextRegion: func() Segmenter { return &TextRegion{} }, TImmediateTextRegion: func() Segmenter { return &TextRegion{} }, TImmediateLosslessTextRegion: func() Segmenter { return &TextRegion{} }, TPatternDictionary: func() Segmenter { return &PatternDictionary{} }, TIntermediateHalftoneRegion: func() Segmenter { return &HalftoneRegion{} }, TImmediateHalftoneRegion: func() Segmenter { return &HalftoneRegion{} }, TImmediateLosslessHalftoneRegion: func() Segmenter { return &HalftoneRegion{} }, TIntermediateGenericRegion: func() Segmenter { return &GenericRegion{} }, TImmediateGenericRegion: func() Segmenter { return &GenericRegion{} }, TImmediateLosslessGenericRegion: func() Segmenter { return &GenericRegion{} }, TIntermediateGenericRefinementRegion: func() Segmenter { return &GenericRefinementRegion{} }, TImmediateGenericRefinementRegion: func() Segmenter { return &GenericRefinementRegion{} }, TImmediateLosslessGenericRefinementRegion: func() Segmenter { return &GenericRefinementRegion{} }, TPageInformation: func() Segmenter { return &PageInformationSegment{} }, TEndOfPage: func() Segmenter { return _bfd }, TEndOfStrip: func() Segmenter { return &EndOfStripe{} }, TEndOfFile: func() Segmenter { return _bfd }, TProfiles: func() Segmenter { return _bfd }, TTables: func() Segmenter { return &TableSegment{} }, TExtension: func() Segmenter { return _bfd }, TBitmap: func() Segmenter { return _bfd }}
+)
+
+func (_caef *SymbolDictionary) readNumberOfExportedSymbols() error {
+	_caed, _fcac := _caef._bcagf.ReadBits(32)
+	if _fcac != nil {
+		return _fcac
+	}
+	_caef.NumberOfExportedSymbols = uint32(_caed & _f.MaxUint32)
+	return nil
+}
+func (_fdae *HalftoneRegion) checkInput() error {
+	if _fdae.IsMMREncoded {
+		if _fdae.HTemplate != 0 {
+			_da.Log.Debug("\u0048\u0054\u0065\u006d\u0070l\u0061\u0074\u0065\u0020\u003d\u0020\u0025\u0064\u0020\u0073\u0068\u006f\u0075l\u0064\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e\u0020\u0074\u0068\u0065\u0020\u0076\u0061\u006c\u0075\u0065\u0020\u0030", _fdae.HTemplate)
+		}
+		if _fdae.HSkipEnabled {
+			_da.Log.Debug("\u0048\u0053\u006b\u0069\u0070\u0045\u006e\u0061\u0062\u006c\u0065\u0064\u0020\u0030\u0020\u0025\u0076\u0020(\u0073\u0068\u006f\u0075\u006c\u0064\u0020c\u006f\u006e\u0074\u0061\u0069\u006e\u0020\u0074\u0068\u0065\u0020v\u0061\u006c\u0075\u0065\u0020\u0066\u0061\u006c\u0073\u0065\u0029", _fdae.HSkipEnabled)
 		}
 	}
-	return _dfdf._cacb.Decode(_dfdf._aege)
+	return nil
+}
+func (_geb *GenericRegion) overrideAtTemplate0a(_gfgb, _fcc, _gfeb, _bbcb, _bedg, _dddd int) int {
+	if _geb.GBAtOverride[0] {
+		_gfgb &= 0xFFEF
+		if _geb.GBAtY[0] == 0 && _geb.GBAtX[0] >= -int8(_bedg) {
+			_gfgb |= (_bbcb >> uint(int8(_dddd)-_geb.GBAtX[0]&0x1)) << 4
+		} else {
+			_gfgb |= int(_geb.getPixel(_fcc+int(_geb.GBAtX[0]), _gfeb+int(_geb.GBAtY[0]))) << 4
+		}
+	}
+	if _geb.GBAtOverride[1] {
+		_gfgb &= 0xFBFF
+		if _geb.GBAtY[1] == 0 && _geb.GBAtX[1] >= -int8(_bedg) {
+			_gfgb |= (_bbcb >> uint(int8(_dddd)-_geb.GBAtX[1]&0x1)) << 10
+		} else {
+			_gfgb |= int(_geb.getPixel(_fcc+int(_geb.GBAtX[1]), _gfeb+int(_geb.GBAtY[1]))) << 10
+		}
+	}
+	if _geb.GBAtOverride[2] {
+		_gfgb &= 0xF7FF
+		if _geb.GBAtY[2] == 0 && _geb.GBAtX[2] >= -int8(_bedg) {
+			_gfgb |= (_bbcb >> uint(int8(_dddd)-_geb.GBAtX[2]&0x1)) << 11
+		} else {
+			_gfgb |= int(_geb.getPixel(_fcc+int(_geb.GBAtX[2]), _gfeb+int(_geb.GBAtY[2]))) << 11
+		}
+	}
+	if _geb.GBAtOverride[3] {
+		_gfgb &= 0x7FFF
+		if _geb.GBAtY[3] == 0 && _geb.GBAtX[3] >= -int8(_bedg) {
+			_gfgb |= (_bbcb >> uint(int8(_dddd)-_geb.GBAtX[3]&0x1)) << 15
+		} else {
+			_gfgb |= int(_geb.getPixel(_fcc+int(_geb.GBAtX[3]), _gfeb+int(_geb.GBAtY[3]))) << 15
+		}
+	}
+	return _gfgb
+}
+func (_ddcg *PageInformationSegment) Encode(w _fg.BinaryWriter) (_cddf int, _fadc error) {
+	const _adebe = "\u0050\u0061g\u0065\u0049\u006e\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u002e\u0045\u006eco\u0064\u0065"
+	_degbc := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_degbc, uint32(_ddcg.PageBMWidth))
+	_cddf, _fadc = w.Write(_degbc)
+	if _fadc != nil {
+		return _cddf, _fd.Wrap(_fadc, _adebe, "\u0077\u0069\u0064t\u0068")
+	}
+	_fe.BigEndian.PutUint32(_degbc, uint32(_ddcg.PageBMHeight))
+	var _caec int
+	_caec, _fadc = w.Write(_degbc)
+	if _fadc != nil {
+		return _caec + _cddf, _fd.Wrap(_fadc, _adebe, "\u0068\u0065\u0069\u0067\u0068\u0074")
+	}
+	_cddf += _caec
+	_fe.BigEndian.PutUint32(_degbc, uint32(_ddcg.ResolutionX))
+	_caec, _fadc = w.Write(_degbc)
+	if _fadc != nil {
+		return _caec + _cddf, _fd.Wrap(_fadc, _adebe, "\u0078\u0020\u0072e\u0073\u006f\u006c\u0075\u0074\u0069\u006f\u006e")
+	}
+	_cddf += _caec
+	_fe.BigEndian.PutUint32(_degbc, uint32(_ddcg.ResolutionY))
+	if _caec, _fadc = w.Write(_degbc); _fadc != nil {
+		return _caec + _cddf, _fd.Wrap(_fadc, _adebe, "\u0079\u0020\u0072e\u0073\u006f\u006c\u0075\u0074\u0069\u006f\u006e")
+	}
+	_cddf += _caec
+	if _fadc = _ddcg.encodeFlags(w); _fadc != nil {
+		return _cddf, _fd.Wrap(_fadc, _adebe, "")
+	}
+	_cddf++
+	if _caec, _fadc = _ddcg.encodeStripingInformation(w); _fadc != nil {
+		return _cddf, _fd.Wrap(_fadc, _adebe, "")
+	}
+	_cddf += _caec
+	return _cddf, nil
+}
+func (_ddg *GenericRefinementRegion) GetRegionInfo() *RegionSegment { return _ddg.RegionInfo }
+func (_ded *HalftoneRegion) GetPatterns() ([]*_d.Bitmap, error) {
+	var (
+		_cgbe []*_d.Bitmap
+		_gee  error
+	)
+	for _, _gddd := range _ded._fdag.RTSegments {
+		var _deg Segmenter
+		_deg, _gee = _gddd.GetSegmentData()
+		if _gee != nil {
+			_da.Log.Debug("\u0047e\u0074\u0053\u0065\u0067m\u0065\u006e\u0074\u0044\u0061t\u0061 \u0066a\u0069\u006c\u0065\u0064\u003a\u0020\u0025v", _gee)
+			return nil, _gee
+		}
+		_cfd, _aefg := _deg.(*PatternDictionary)
+		if !_aefg {
+			_gee = _e.Errorf("\u0072e\u006c\u0061t\u0065\u0064\u0020\u0073e\u0067\u006d\u0065n\u0074\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0070at\u0074\u0065\u0072n\u0020\u0064i\u0063\u0074\u0069\u006f\u006e\u0061r\u0079\u003a \u0025\u0054", _deg)
+			return nil, _gee
+		}
+		var _dfca []*_d.Bitmap
+		_dfca, _gee = _cfd.GetDictionary()
+		if _gee != nil {
+			_da.Log.Debug("\u0070\u0061\u0074\u0074\u0065\u0072\u006e\u0020\u0047\u0065\u0074\u0044\u0069\u0063\u0074i\u006fn\u0061\u0072\u0079\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0076", _gee)
+			return nil, _gee
+		}
+		_cgbe = append(_cgbe, _dfca...)
+	}
+	return _cgbe, nil
+}
+func (_ecb *template0) form(_gcb, _eea, _aged, _edc, _gae int16) int16 {
+	return (_gcb << 10) | (_eea << 7) | (_aged << 4) | (_edc << 1) | _gae
+}
+func (_eafa *GenericRegion) setParametersMMR(_gcfg bool, _bea, _fcaa int64, _daca, _badff uint32, _ccag byte, _afc, _gcff bool, _cbff, _gffc []int8) {
+	_eafa.DataOffset = _bea
+	_eafa.DataLength = _fcaa
+	_eafa.RegionSegment = &RegionSegment{}
+	_eafa.RegionSegment.BitmapHeight = _daca
+	_eafa.RegionSegment.BitmapWidth = _badff
+	_eafa.GBTemplate = _ccag
+	_eafa.IsMMREncoded = _gcfg
+	_eafa.IsTPGDon = _afc
+	_eafa.GBAtX = _cbff
+	_eafa.GBAtY = _gffc
+}
+func (_efg *template1) setIndex(_agec *_b.DecoderStats) { _agec.SetIndex(0x080) }
+func (_bad *GenericRegion) String() string {
+	_effg := &_cc.Builder{}
+	_effg.WriteString("\u000a[\u0047E\u004e\u0045\u0052\u0049\u0043 \u0052\u0045G\u0049\u004f\u004e\u005d\u000a")
+	_effg.WriteString(_bad.RegionSegment.String() + "\u000a")
+	_effg.WriteString(_e.Sprintf("\u0009\u002d\u0020Us\u0065\u0045\u0078\u0074\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0073\u003a\u0020\u0025\u0076\u000a", _bad.UseExtTemplates))
+	_effg.WriteString(_e.Sprintf("\u0009\u002d \u0049\u0073\u0054P\u0047\u0044\u006f\u006e\u003a\u0020\u0025\u0076\u000a", _bad.IsTPGDon))
+	_effg.WriteString(_e.Sprintf("\u0009-\u0020G\u0042\u0054\u0065\u006d\u0070l\u0061\u0074e\u003a\u0020\u0025\u0064\u000a", _bad.GBTemplate))
+	_effg.WriteString(_e.Sprintf("\t\u002d \u0049\u0073\u004d\u004d\u0052\u0045\u006e\u0063o\u0064\u0065\u0064\u003a %\u0076\u000a", _bad.IsMMREncoded))
+	_effg.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0047\u0042\u0041\u0074\u0058\u003a\u0020\u0025\u0076\u000a", _bad.GBAtX))
+	_effg.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0047\u0042\u0041\u0074\u0059\u003a\u0020\u0025\u0076\u000a", _bad.GBAtY))
+	_effg.WriteString(_e.Sprintf("\t\u002d \u0047\u0042\u0041\u0074\u004f\u0076\u0065\u0072r\u0069\u0064\u0065\u003a %\u0076\u000a", _bad.GBAtOverride))
+	return _effg.String()
+}
+func (_dca *SymbolDictionary) decodeDifferenceWidth() (int64, error) {
+	if _dca.IsHuffmanEncoded {
+		switch _dca.SdHuffDecodeWidthSelection {
+		case 0:
+			_agab, _fdeg := _ba.GetStandardTable(2)
+			if _fdeg != nil {
+				return 0, _fdeg
+			}
+			return _agab.Decode(_dca._bcagf)
+		case 1:
+			_aefe, _ffde := _ba.GetStandardTable(3)
+			if _ffde != nil {
+				return 0, _ffde
+			}
+			return _aefe.Decode(_dca._bcagf)
+		case 3:
+			if _dca._agdg == nil {
+				var _fgcbb int
+				if _dca.SdHuffDecodeHeightSelection == 3 {
+					_fgcbb++
+				}
+				_fbdb, _cfga := _dca.getUserTable(_fgcbb)
+				if _cfga != nil {
+					return 0, _cfga
+				}
+				_dca._agdg = _fbdb
+			}
+			return _dca._agdg.Decode(_dca._bcagf)
+		}
+	} else {
+		_fegga, _cfge := _dca._fffd.DecodeInt(_dca._aafa)
+		if _cfge != nil {
+			return 0, _cfge
+		}
+		return int64(_fegga), nil
+	}
+	return 0, nil
+}
+func (_eab *GenericRegion) decodeTemplate3(_addg, _fafc, _gaa int, _aef, _adea int) (_bfa error) {
+	const _bccg = "\u0064e\u0063o\u0064\u0065\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0033"
+	var (
+		_cdbf, _fcg int
+		_gfea       int
+		_ffe        byte
+		_fddc, _fbe int
+	)
+	if _addg >= 1 {
+		_ffe, _bfa = _eab.Bitmap.GetByte(_adea)
+		if _bfa != nil {
+			return _fd.Wrap(_bfa, _bccg, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
+		}
+		_gfea = int(_ffe)
+	}
+	_cdbf = (_gfea >> 1) & 0x70
+	for _abbg := 0; _abbg < _gaa; _abbg = _fddc {
+		var (
+			_ege  byte
+			_fedb int
+		)
+		_fddc = _abbg + 8
+		if _afa := _fafc - _abbg; _afa > 8 {
+			_fedb = 8
+		} else {
+			_fedb = _afa
+		}
+		if _addg >= 1 {
+			_gfea <<= 8
+			if _fddc < _fafc {
+				_ffe, _bfa = _eab.Bitmap.GetByte(_adea + 1)
+				if _bfa != nil {
+					return _fd.Wrap(_bfa, _bccg, "\u0069\u006e\u006e\u0065\u0072\u0020\u002d\u0020\u006c\u0069\u006e\u0065 \u003e\u003d\u0020\u0031")
+				}
+				_gfea |= int(_ffe)
+			}
+		}
+		for _fde := 0; _fde < _fedb; _fde++ {
+			if _eab._fgf {
+				_fcg = _eab.overrideAtTemplate3(_cdbf, _abbg+_fde, _addg, int(_ege), _fde)
+				_eab._aae.SetIndex(int32(_fcg))
+			} else {
+				_eab._aae.SetIndex(int32(_cdbf))
+			}
+			_fbe, _bfa = _eab._acb.DecodeBit(_eab._aae)
+			if _bfa != nil {
+				return _fd.Wrap(_bfa, _bccg, "")
+			}
+			_ege |= byte(_fbe) << byte(7-_fde)
+			_cdbf = ((_cdbf & 0x1f7) << 1) | _fbe | ((_gfea >> uint(8-_fde)) & 0x010)
+		}
+		if _gceg := _eab.Bitmap.SetByte(_aef, _ege); _gceg != nil {
+			return _fd.Wrap(_gceg, _bccg, "")
+		}
+		_aef++
+		_adea++
+	}
+	return nil
+}
+func (_eeg *GenericRegion) copyLineAbove(_cec int) error {
+	_daeg := _cec * _eeg.Bitmap.RowStride
+	_bef := _daeg - _eeg.Bitmap.RowStride
+	for _fbf := 0; _fbf < _eeg.Bitmap.RowStride; _fbf++ {
+		_ecbb, _fff := _eeg.Bitmap.GetByte(_bef)
+		if _fff != nil {
+			return _fff
+		}
+		_bef++
+		if _fff = _eeg.Bitmap.SetByte(_daeg, _ecbb); _fff != nil {
+			return _fff
+		}
+		_daeg++
+	}
+	return nil
+}
+func (_gaee *TextRegion) decodeSymInRefSize() (int64, error) {
+	const _fcbd = "\u0064e\u0063o\u0064\u0065\u0053\u0079\u006dI\u006e\u0052e\u0066\u0053\u0069\u007a\u0065"
+	if _gaee.SbHuffRSize == 0 {
+		_gbbfc, _cgfd := _ba.GetStandardTable(1)
+		if _cgfd != nil {
+			return 0, _fd.Wrap(_cgfd, _fcbd, "")
+		}
+		return _gbbfc.Decode(_gaee._effb)
+	}
+	if _gaee._fbeac == nil {
+		var (
+			_bege int
+			_fgaf error
+		)
+		if _gaee.SbHuffFS == 3 {
+			_bege++
+		}
+		if _gaee.SbHuffDS == 3 {
+			_bege++
+		}
+		if _gaee.SbHuffDT == 3 {
+			_bege++
+		}
+		if _gaee.SbHuffRDWidth == 3 {
+			_bege++
+		}
+		if _gaee.SbHuffRDHeight == 3 {
+			_bege++
+		}
+		if _gaee.SbHuffRDX == 3 {
+			_bege++
+		}
+		if _gaee.SbHuffRDY == 3 {
+			_bege++
+		}
+		_gaee._fbeac, _fgaf = _gaee.getUserTable(_bege)
+		if _fgaf != nil {
+			return 0, _fd.Wrap(_fgaf, _fcbd, "")
+		}
+	}
+	_affc, _cgdef := _gaee._fbeac.Decode(_gaee._effb)
+	if _cgdef != nil {
+		return 0, _fd.Wrap(_cgdef, _fcbd, "")
+	}
+	return _affc, nil
+}
+func (_ecfa *HalftoneRegion) grayScaleDecoding(_ggge int) ([][]int, error) {
+	var (
+		_adce []int8
+		_abbc []int8
+	)
+	if !_ecfa.IsMMREncoded {
+		_adce = make([]int8, 4)
+		_abbc = make([]int8, 4)
+		if _ecfa.HTemplate <= 1 {
+			_adce[0] = 3
+		} else if _ecfa.HTemplate >= 2 {
+			_adce[0] = 2
+		}
+		_abbc[0] = -1
+		_adce[1] = -3
+		_abbc[1] = -1
+		_adce[2] = 2
+		_abbc[2] = -2
+		_adce[3] = -2
+		_abbc[3] = -2
+	}
+	_gddg := make([]*_d.Bitmap, _ggge)
+	_eced := NewGenericRegion(_ecfa._gdfe)
+	_eced.setParametersMMR(_ecfa.IsMMREncoded, _ecfa.DataOffset, _ecfa.DataLength, _ecfa.HGridHeight, _ecfa.HGridWidth, _ecfa.HTemplate, false, _ecfa.HSkipEnabled, _adce, _abbc)
+	_fgfg := _ggge - 1
+	var _ggf error
+	_gddg[_fgfg], _ggf = _eced.GetRegionBitmap()
+	if _ggf != nil {
+		return nil, _ggf
+	}
+	for _fgfg > 0 {
+		_fgfg--
+		_eced.Bitmap = nil
+		_gddg[_fgfg], _ggf = _eced.GetRegionBitmap()
+		if _ggf != nil {
+			return nil, _ggf
+		}
+		if _ggf = _ecfa.combineGrayscalePlanes(_gddg, _fgfg); _ggf != nil {
+			return nil, _ggf
+		}
+	}
+	return _ecfa.computeGrayScalePlanes(_gddg, _ggge)
+}
+func (_gad *SymbolDictionary) encodeATFlags(_abeg _fg.BinaryWriter) (_ebbb int, _agdb error) {
+	const _accb = "\u0065\u006e\u0063\u006f\u0064\u0065\u0041\u0054\u0046\u006c\u0061\u0067\u0073"
+	if _gad.IsHuffmanEncoded || _gad.SdTemplate != 0 {
+		return 0, nil
+	}
+	_fccg := 4
+	if _gad.SdTemplate != 0 {
+		_fccg = 1
+	}
+	for _ecbf := 0; _ecbf < _fccg; _ecbf++ {
+		if _agdb = _abeg.WriteByte(byte(_gad.SdATX[_ecbf])); _agdb != nil {
+			return _ebbb, _fd.Wrapf(_agdb, _accb, "\u0053d\u0041\u0054\u0058\u005b\u0025\u0064]", _ecbf)
+		}
+		_ebbb++
+		if _agdb = _abeg.WriteByte(byte(_gad.SdATY[_ecbf])); _agdb != nil {
+			return _ebbb, _fd.Wrapf(_agdb, _accb, "\u0053d\u0041\u0054\u0059\u005b\u0025\u0064]", _ecbf)
+		}
+		_ebbb++
+	}
+	return _ebbb, nil
+}
+
+type PageInformationSegment struct {
+	_ace              _fg.StreamReader
+	PageBMHeight      int
+	PageBMWidth       int
+	ResolutionX       int
+	ResolutionY       int
+	_eae              bool
+	_aefgc            _d.CombinationOperator
+	_bfgd             bool
+	DefaultPixelValue uint8
+	_bgeb             bool
+	IsLossless        bool
+	IsStripe          bool
+	MaxStripeSize     uint16
+}
+
+func (_ddeb *PageInformationSegment) readResolution() error {
+	_dbgg, _fbde := _ddeb._ace.ReadBits(32)
+	if _fbde != nil {
+		return _fbde
+	}
+	_ddeb.ResolutionX = int(_dbgg & _f.MaxInt32)
+	_dbgg, _fbde = _ddeb._ace.ReadBits(32)
+	if _fbde != nil {
+		return _fbde
+	}
+	_ddeb.ResolutionY = int(_dbgg & _f.MaxInt32)
+	return nil
+}
+
+type Pager interface {
+	GetSegment(int) (*Header, error)
+	GetBitmap() (*_d.Bitmap, error)
+}
+
+func (_cadc *RegionSegment) String() string {
+	_aada := &_cc.Builder{}
+	_aada.WriteString("\u0009[\u0052E\u0047\u0049\u004f\u004e\u0020S\u0045\u0047M\u0045\u004e\u0054\u005d\u000a")
+	_aada.WriteString(_e.Sprintf("\t\u0009\u002d\u0020\u0042\u0069\u0074m\u0061\u0070\u0020\u0028\u0077\u0069d\u0074\u0068\u002c\u0020\u0068\u0065\u0069g\u0068\u0074\u0029\u0020\u005b\u0025\u0064\u0078\u0025\u0064]\u000a", _cadc.BitmapWidth, _cadc.BitmapHeight))
+	_aada.WriteString(_e.Sprintf("\u0009\u0009\u002d\u0020L\u006f\u0063\u0061\u0074\u0069\u006f\u006e\u0020\u0028\u0078,\u0079)\u003a\u0020\u005b\u0025\u0064\u002c\u0025d\u005d\u000a", _cadc.XLocation, _cadc.YLocation))
+	_aada.WriteString(_e.Sprintf("\t\u0009\u002d\u0020\u0043\u006f\u006db\u0069\u006e\u0061\u0074\u0069\u006f\u006e\u004f\u0070e\u0072\u0061\u0074o\u0072:\u0020\u0025\u0073", _cadc.CombinaionOperator))
+	return _aada.String()
+}
+func (_gg *GenericRefinementRegion) decodeTypicalPredictedLineTemplate0(_ac, _bcg, _eda, _cdge, _cca, _gb, _fgc, _bcd, _fdg int) error {
+	var (
+		_gfc, _ddb, _af, _bg, _fdd, _ggb int
+		_dcgc                            byte
+		_fgb                             error
+	)
+	if _ac > 0 {
+		_dcgc, _fgb = _gg.RegionBitmap.GetByte(_fgc - _eda)
+		if _fgb != nil {
+			return _fgb
+		}
+		_af = int(_dcgc)
+	}
+	if _bcd > 0 && _bcd <= _gg.ReferenceBitmap.Height {
+		_dcgc, _fgb = _gg.ReferenceBitmap.GetByte(_fdg - _cdge + _gb)
+		if _fgb != nil {
+			return _fgb
+		}
+		_bg = int(_dcgc) << 4
+	}
+	if _bcd >= 0 && _bcd < _gg.ReferenceBitmap.Height {
+		_dcgc, _fgb = _gg.ReferenceBitmap.GetByte(_fdg + _gb)
+		if _fgb != nil {
+			return _fgb
+		}
+		_fdd = int(_dcgc) << 1
+	}
+	if _bcd > -2 && _bcd < _gg.ReferenceBitmap.Height-1 {
+		_dcgc, _fgb = _gg.ReferenceBitmap.GetByte(_fdg + _cdge + _gb)
+		if _fgb != nil {
+			return _fgb
+		}
+		_ggb = int(_dcgc)
+	}
+	_gfc = ((_af >> 5) & 0x6) | ((_ggb >> 2) & 0x30) | (_fdd & 0x180) | (_bg & 0xc00)
+	var _bgd int
+	for _ea := 0; _ea < _cca; _ea = _bgd {
+		var _ecfe int
+		_bgd = _ea + 8
+		var _dbbg int
+		if _dbbg = _bcg - _ea; _dbbg > 8 {
+			_dbbg = 8
+		}
+		_deb := _bgd < _bcg
+		_dad := _bgd < _gg.ReferenceBitmap.Width
+		_cgc := _gb + 1
+		if _ac > 0 {
+			_dcgc = 0
+			if _deb {
+				_dcgc, _fgb = _gg.RegionBitmap.GetByte(_fgc - _eda + 1)
+				if _fgb != nil {
+					return _fgb
+				}
+			}
+			_af = (_af << 8) | int(_dcgc)
+		}
+		if _bcd > 0 && _bcd <= _gg.ReferenceBitmap.Height {
+			var _bf int
+			if _dad {
+				_dcgc, _fgb = _gg.ReferenceBitmap.GetByte(_fdg - _cdge + _cgc)
+				if _fgb != nil {
+					return _fgb
+				}
+				_bf = int(_dcgc) << 4
+			}
+			_bg = (_bg << 8) | _bf
+		}
+		if _bcd >= 0 && _bcd < _gg.ReferenceBitmap.Height {
+			var _eaf int
+			if _dad {
+				_dcgc, _fgb = _gg.ReferenceBitmap.GetByte(_fdg + _cgc)
+				if _fgb != nil {
+					return _fgb
+				}
+				_eaf = int(_dcgc) << 1
+			}
+			_fdd = (_fdd << 8) | _eaf
+		}
+		if _bcd > -2 && _bcd < (_gg.ReferenceBitmap.Height-1) {
+			_dcgc = 0
+			if _dad {
+				_dcgc, _fgb = _gg.ReferenceBitmap.GetByte(_fdg + _cdge + _cgc)
+				if _fgb != nil {
+					return _fgb
+				}
+			}
+			_ggb = (_ggb << 8) | int(_dcgc)
+		}
+		for _dbbgg := 0; _dbbgg < _dbbg; _dbbgg++ {
+			var _ggg int
+			_bce := false
+			_def := (_gfc >> 4) & 0x1ff
+			if _def == 0x1ff {
+				_bce = true
+				_ggg = 1
+			} else if _def == 0x00 {
+				_bce = true
+			}
+			if !_bce {
+				if _gg._dag {
+					_ddb = _gg.overrideAtTemplate0(_gfc, _ea+_dbbgg, _ac, _ecfe, _dbbgg)
+					_gg._cdb.SetIndex(int32(_ddb))
+				} else {
+					_gg._cdb.SetIndex(int32(_gfc))
+				}
+				_ggg, _fgb = _gg._gf.DecodeBit(_gg._cdb)
+				if _fgb != nil {
+					return _fgb
+				}
+			}
+			_gdc := uint(7 - _dbbgg)
+			_ecfe |= _ggg << _gdc
+			_gfc = ((_gfc & 0xdb6) << 1) | _ggg | (_af>>_gdc+5)&0x002 | ((_ggb>>_gdc + 2) & 0x010) | ((_fdd >> _gdc) & 0x080) | ((_bg >> _gdc) & 0x400)
+		}
+		_fgb = _gg.RegionBitmap.SetByte(_fgc, byte(_ecfe))
+		if _fgb != nil {
+			return _fgb
+		}
+		_fgc++
+		_fdg++
+	}
+	return nil
+}
+func (_ddde *Header) Encode(w _fg.BinaryWriter) (_cdfa int, _dgec error) {
+	const _bgbf = "\u0048\u0065\u0061d\u0065\u0072\u002e\u0057\u0072\u0069\u0074\u0065"
+	var _bgcc _fg.BinaryWriter
+	_da.Log.Trace("\u005b\u0053\u0045G\u004d\u0045\u004e\u0054-\u0048\u0045\u0041\u0044\u0045\u0052\u005d[\u0045\u004e\u0043\u004f\u0044\u0045\u005d\u0020\u0042\u0065\u0067\u0069\u006e\u0073")
+	defer func() {
+		if _dgec != nil {
+			_da.Log.Trace("[\u0053\u0045\u0047\u004d\u0045\u004eT\u002d\u0048\u0045\u0041\u0044\u0045R\u005d\u005b\u0045\u004e\u0043\u004f\u0044E\u005d\u0020\u0046\u0061\u0069\u006c\u0065\u0064\u002e\u0020%\u0076", _dgec)
+		} else {
+			_da.Log.Trace("\u005b\u0053\u0045\u0047ME\u004e\u0054\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0025\u0076", _ddde)
+			_da.Log.Trace("\u005b\u0053\u0045\u0047\u004d\u0045N\u0054\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u005b\u0045\u004e\u0043O\u0044\u0045\u005d\u0020\u0046\u0069\u006ei\u0073\u0068\u0065\u0064")
+		}
+	}()
+	w.FinishByte()
+	if _ddde.SegmentData != nil {
+		_ebfgc, _ccf := _ddde.SegmentData.(SegmentEncoder)
+		if !_ccf {
+			return 0, _fd.Errorf(_bgbf, "\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u003a\u0020\u0025\u0054\u0020\u0064\u006f\u0065s\u006e\u0027\u0074\u0020\u0069\u006d\u0070\u006c\u0065\u006d\u0065\u006e\u0074 \u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0045\u006e\u0063\u006f\u0064er\u0020\u0069\u006e\u0074\u0065\u0072\u0066\u0061\u0063\u0065", _ddde.SegmentData)
+		}
+		_bgcc = _fg.BufferedMSB()
+		_cdfa, _dgec = _ebfgc.Encode(_bgcc)
+		if _dgec != nil {
+			return 0, _fd.Wrap(_dgec, _bgbf, "")
+		}
+		_ddde.SegmentDataLength = uint64(_cdfa)
+	}
+	if _ddde.pageSize() == 4 {
+		_ddde.PageAssociationFieldSize = true
+	}
+	var _aeba int
+	_aeba, _dgec = _ddde.writeSegmentNumber(w)
+	if _dgec != nil {
+		return 0, _fd.Wrap(_dgec, _bgbf, "")
+	}
+	_cdfa += _aeba
+	if _dgec = _ddde.writeFlags(w); _dgec != nil {
+		return _cdfa, _fd.Wrap(_dgec, _bgbf, "")
+	}
+	_cdfa++
+	_aeba, _dgec = _ddde.writeReferredToCount(w)
+	if _dgec != nil {
+		return 0, _fd.Wrap(_dgec, _bgbf, "")
+	}
+	_cdfa += _aeba
+	_aeba, _dgec = _ddde.writeReferredToSegments(w)
+	if _dgec != nil {
+		return 0, _fd.Wrap(_dgec, _bgbf, "")
+	}
+	_cdfa += _aeba
+	_aeba, _dgec = _ddde.writeSegmentPageAssociation(w)
+	if _dgec != nil {
+		return 0, _fd.Wrap(_dgec, _bgbf, "")
+	}
+	_cdfa += _aeba
+	_aeba, _dgec = _ddde.writeSegmentDataLength(w)
+	if _dgec != nil {
+		return 0, _fd.Wrap(_dgec, _bgbf, "")
+	}
+	_cdfa += _aeba
+	_ddde.HeaderLength = int64(_cdfa) - int64(_ddde.SegmentDataLength)
+	if _bgcc != nil {
+		if _, _dgec = w.Write(_bgcc.Data()); _dgec != nil {
+			return _cdfa, _fd.Wrap(_dgec, _bgbf, "\u0077r\u0069t\u0065\u0020\u0073\u0065\u0067m\u0065\u006et\u0020\u0064\u0061\u0074\u0061")
+		}
+	}
+	return _cdfa, nil
+}
+func (_ceg *RegionSegment) readCombinationOperator() error {
+	_defd, _ddae := _ceg._dbge.ReadBits(3)
+	if _ddae != nil {
+		return _ddae
+	}
+	_ceg.CombinaionOperator = _d.CombinationOperator(_defd & 0xF)
+	return nil
+}
+func (_degc *TextRegion) encodeFlags(_faae _fg.BinaryWriter) (_caded int, _aggb error) {
+	const _fddb = "e\u006e\u0063\u006f\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
+	if _aggb = _faae.WriteBit(int(_degc.SbrTemplate)); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "s\u0062\u0072\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
+	}
+	if _, _aggb = _faae.WriteBits(uint64(_degc.SbDsOffset), 5); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "\u0073\u0062\u0044\u0073\u004f\u0066\u0066\u0073\u0065\u0074")
+	}
+	if _aggb = _faae.WriteBit(int(_degc.DefaultPixel)); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "\u0044\u0065\u0066a\u0075\u006c\u0074\u0050\u0069\u0078\u0065\u006c")
+	}
+	if _, _aggb = _faae.WriteBits(uint64(_degc.CombinationOperator), 2); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "\u0043\u006f\u006d\u0062in\u0061\u0074\u0069\u006f\u006e\u004f\u0070\u0065\u0072\u0061\u0074\u006f\u0072")
+	}
+	if _aggb = _faae.WriteBit(int(_degc.IsTransposed)); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "\u0069\u0073\u0020\u0074\u0072\u0061\u006e\u0073\u0070\u006f\u0073\u0065\u0064")
+	}
+	if _, _aggb = _faae.WriteBits(uint64(_degc.ReferenceCorner), 2); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "\u0072\u0065f\u0065\u0072\u0065n\u0063\u0065\u0020\u0063\u006f\u0072\u006e\u0065\u0072")
+	}
+	if _, _aggb = _faae.WriteBits(uint64(_degc.LogSBStrips), 2); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "L\u006f\u0067\u0053\u0042\u0053\u0074\u0072\u0069\u0070\u0073")
+	}
+	var _daddb int
+	if _degc.UseRefinement {
+		_daddb = 1
+	}
+	if _aggb = _faae.WriteBit(_daddb); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "\u0075\u0073\u0065\u0020\u0072\u0065\u0066\u0069\u006ee\u006d\u0065\u006e\u0074")
+	}
+	_daddb = 0
+	if _degc.IsHuffmanEncoded {
+		_daddb = 1
+	}
+	if _aggb = _faae.WriteBit(_daddb); _aggb != nil {
+		return _caded, _fd.Wrap(_aggb, _fddb, "u\u0073\u0065\u0020\u0068\u0075\u0066\u0066\u006d\u0061\u006e")
+	}
+	_caded = 2
+	return _caded, nil
+}
+func (_cfec *SymbolDictionary) decodeThroughTextRegion(_gggae, _aebg, _gdfaf uint32) error {
+	if _cfec._begf == nil {
+		_cfec._begf = _daae(_cfec._bcagf, nil)
+		_cfec._begf.setContexts(_cfec._bagf, _b.NewStats(512, 1), _b.NewStats(512, 1), _b.NewStats(512, 1), _b.NewStats(512, 1), _cfec._fac, _b.NewStats(512, 1), _b.NewStats(512, 1), _b.NewStats(512, 1), _b.NewStats(512, 1))
+	}
+	if _dfbg := _cfec.setSymbolsArray(); _dfbg != nil {
+		return _dfbg
+	}
+	_cfec._begf.setParameters(_cfec._fffd, _cfec.IsHuffmanEncoded, true, _gggae, _aebg, _gdfaf, 1, _cfec._gbbg+_cfec._ffa, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, _cfec.SdrTemplate, _cfec.SdrATX, _cfec.SdrATY, _cfec._bded, _cfec._cff)
+	return _cfec.addSymbol(_cfec._begf)
+}
+func (_dccd *Header) readHeaderLength(_dba _fg.StreamReader, _acc int64) {
+	_dccd.HeaderLength = _dba.StreamPosition() - _acc
+}
+func (_effd *GenericRegion) updateOverrideFlags() error {
+	const _eddf = "\u0075\u0070\u0064\u0061te\u004f\u0076\u0065\u0072\u0072\u0069\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
+	if _effd.GBAtX == nil || _effd.GBAtY == nil {
+		return nil
+	}
+	if len(_effd.GBAtX) != len(_effd.GBAtY) {
+		return _fd.Errorf(_eddf, "i\u006eco\u0073i\u0073t\u0065\u006e\u0074\u0020\u0041T\u0020\u0070\u0069x\u0065\u006c\u002e\u0020\u0041m\u006f\u0075\u006et\u0020\u006f\u0066\u0020\u0027\u0078\u0027\u0020\u0070\u0069\u0078e\u006c\u0073\u003a %d\u002c\u0020\u0041\u006d\u006f\u0075n\u0074\u0020\u006f\u0066\u0020\u0027\u0079\u0027\u0020\u0070\u0069\u0078e\u006cs\u003a\u0020\u0025\u0064", len(_effd.GBAtX), len(_effd.GBAtY))
+	}
+	_effd.GBAtOverride = make([]bool, len(_effd.GBAtX))
+	switch _effd.GBTemplate {
+	case 0:
+		if !_effd.UseExtTemplates {
+			if _effd.GBAtX[0] != 3 || _effd.GBAtY[0] != -1 {
+				_effd.setOverrideFlag(0)
+			}
+			if _effd.GBAtX[1] != -3 || _effd.GBAtY[1] != -1 {
+				_effd.setOverrideFlag(1)
+			}
+			if _effd.GBAtX[2] != 2 || _effd.GBAtY[2] != -2 {
+				_effd.setOverrideFlag(2)
+			}
+			if _effd.GBAtX[3] != -2 || _effd.GBAtY[3] != -2 {
+				_effd.setOverrideFlag(3)
+			}
+		} else {
+			if _effd.GBAtX[0] != -2 || _effd.GBAtY[0] != 0 {
+				_effd.setOverrideFlag(0)
+			}
+			if _effd.GBAtX[1] != 0 || _effd.GBAtY[1] != -2 {
+				_effd.setOverrideFlag(1)
+			}
+			if _effd.GBAtX[2] != -2 || _effd.GBAtY[2] != -1 {
+				_effd.setOverrideFlag(2)
+			}
+			if _effd.GBAtX[3] != -1 || _effd.GBAtY[3] != -2 {
+				_effd.setOverrideFlag(3)
+			}
+			if _effd.GBAtX[4] != 1 || _effd.GBAtY[4] != -2 {
+				_effd.setOverrideFlag(4)
+			}
+			if _effd.GBAtX[5] != 2 || _effd.GBAtY[5] != -1 {
+				_effd.setOverrideFlag(5)
+			}
+			if _effd.GBAtX[6] != -3 || _effd.GBAtY[6] != 0 {
+				_effd.setOverrideFlag(6)
+			}
+			if _effd.GBAtX[7] != -4 || _effd.GBAtY[7] != 0 {
+				_effd.setOverrideFlag(7)
+			}
+			if _effd.GBAtX[8] != 2 || _effd.GBAtY[8] != -2 {
+				_effd.setOverrideFlag(8)
+			}
+			if _effd.GBAtX[9] != 3 || _effd.GBAtY[9] != -1 {
+				_effd.setOverrideFlag(9)
+			}
+			if _effd.GBAtX[10] != -2 || _effd.GBAtY[10] != -2 {
+				_effd.setOverrideFlag(10)
+			}
+			if _effd.GBAtX[11] != -3 || _effd.GBAtY[11] != -1 {
+				_effd.setOverrideFlag(11)
+			}
+		}
+	case 1:
+		if _effd.GBAtX[0] != 3 || _effd.GBAtY[0] != -1 {
+			_effd.setOverrideFlag(0)
+		}
+	case 2:
+		if _effd.GBAtX[0] != 2 || _effd.GBAtY[0] != -1 {
+			_effd.setOverrideFlag(0)
+		}
+	case 3:
+		if _effd.GBAtX[0] != 2 || _effd.GBAtY[0] != -1 {
+			_effd.setOverrideFlag(0)
+		}
+	}
+	return nil
+}
+func (_bbea *PatternDictionary) GetDictionary() ([]*_d.Bitmap, error) {
+	if _bbea.Patterns != nil {
+		return _bbea.Patterns, nil
+	}
+	if !_bbea.IsMMREncoded {
+		_bbea.setGbAtPixels()
+	}
+	_cgba := NewGenericRegion(_bbea._fbdd)
+	_cgba.setParametersMMR(_bbea.IsMMREncoded, _bbea.DataOffset, _bbea.DataLength, uint32(_bbea.HdpHeight), (_bbea.GrayMax+1)*uint32(_bbea.HdpWidth), _bbea.HDTemplate, false, false, _bbea.GBAtX, _bbea.GBAtY)
+	_gdge, _cfdf := _cgba.GetRegionBitmap()
+	if _cfdf != nil {
+		return nil, _cfdf
+	}
+	if _cfdf = _bbea.extractPatterns(_gdge); _cfdf != nil {
+		return nil, _cfdf
+	}
+	return _bbea.Patterns, nil
+}
+
+const (
+	TSymbolDictionary                         Type = 0
+	TIntermediateTextRegion                   Type = 4
+	TImmediateTextRegion                      Type = 6
+	TImmediateLosslessTextRegion              Type = 7
+	TPatternDictionary                        Type = 16
+	TIntermediateHalftoneRegion               Type = 20
+	TImmediateHalftoneRegion                  Type = 22
+	TImmediateLosslessHalftoneRegion          Type = 23
+	TIntermediateGenericRegion                Type = 36
+	TImmediateGenericRegion                   Type = 38
+	TImmediateLosslessGenericRegion           Type = 39
+	TIntermediateGenericRefinementRegion      Type = 40
+	TImmediateGenericRefinementRegion         Type = 42
+	TImmediateLosslessGenericRefinementRegion Type = 43
+	TPageInformation                          Type = 48
+	TEndOfPage                                Type = 49
+	TEndOfStrip                               Type = 50
+	TEndOfFile                                Type = 51
+	TProfiles                                 Type = 52
+	TTables                                   Type = 53
+	TExtension                                Type = 62
+	TBitmap                                   Type = 70
+)
+
+func (_faff *HalftoneRegion) renderPattern(_dcda [][]int) (_ageg error) {
+	var _eege, _gde int
+	for _fdee := 0; _fdee < int(_faff.HGridHeight); _fdee++ {
+		for _fge := 0; _fge < int(_faff.HGridWidth); _fge++ {
+			_eege = _faff.computeX(_fdee, _fge)
+			_gde = _faff.computeY(_fdee, _fge)
+			_dbc := _faff.Patterns[_dcda[_fdee][_fge]]
+			if _ageg = _d.Blit(_dbc, _faff.HalftoneRegionBitmap, _eege+int(_faff.HGridX), _gde+int(_faff.HGridY), _faff.CombinationOperator); _ageg != nil {
+				return _ageg
+			}
+		}
+	}
+	return nil
+}
+func (_fadb *TextRegion) decodeRdy() (int64, error) {
+	const _fbg = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064y"
+	if _fadb.IsHuffmanEncoded {
+		if _fadb.SbHuffRDY == 3 {
+			if _fadb._bggb == nil {
+				var (
+					_cfaad int
+					_dbged error
+				)
+				if _fadb.SbHuffFS == 3 {
+					_cfaad++
+				}
+				if _fadb.SbHuffDS == 3 {
+					_cfaad++
+				}
+				if _fadb.SbHuffDT == 3 {
+					_cfaad++
+				}
+				if _fadb.SbHuffRDWidth == 3 {
+					_cfaad++
+				}
+				if _fadb.SbHuffRDHeight == 3 {
+					_cfaad++
+				}
+				if _fadb.SbHuffRDX == 3 {
+					_cfaad++
+				}
+				_fadb._bggb, _dbged = _fadb.getUserTable(_cfaad)
+				if _dbged != nil {
+					return 0, _fd.Wrap(_dbged, _fbg, "")
+				}
+			}
+			return _fadb._bggb.Decode(_fadb._effb)
+		}
+		_eaac, _bgacg := _ba.GetStandardTable(14 + int(_fadb.SbHuffRDY))
+		if _bgacg != nil {
+			return 0, _bgacg
+		}
+		return _eaac.Decode(_fadb._effb)
+	}
+	_dcef, _fdbd := _fadb._dffe.DecodeInt(_fadb._bfbb)
+	if _fdbd != nil {
+		return 0, _fd.Wrap(_fdbd, _fbg, "")
+	}
+	return int64(_dcef), nil
+}
+
+var _ templater = &template1{}
+
+func NewRegionSegment(r _fg.StreamReader) *RegionSegment { return &RegionSegment{_dbge: r} }
+
+type GenericRefinementRegion struct {
+	_dae            templater
+	_dec            templater
+	_geg            _fg.StreamReader
+	_cdg            *Header
+	RegionInfo      *RegionSegment
+	IsTPGROn        bool
+	TemplateID      int8
+	Template        templater
+	GrAtX           []int8
+	GrAtY           []int8
+	RegionBitmap    *_d.Bitmap
+	ReferenceBitmap *_d.Bitmap
+	ReferenceDX     int32
+	ReferenceDY     int32
+	_gf             *_b.Decoder
+	_cdb            *_b.DecoderStats
+	_dag            bool
+	_db             []bool
+}
+
+func (_dgbc *SymbolDictionary) getSbSymCodeLen() int8 {
+	_fcbc := int8(_f.Ceil(_f.Log(float64(_dgbc._gbbg+_dgbc.NumberOfNewSymbols)) / _f.Log(2)))
+	if _dgbc.IsHuffmanEncoded && _fcbc < 1 {
+		return 1
+	}
+	return _fcbc
+}
+func (_fgfe *SymbolDictionary) setSymbolsArray() error {
+	if _fgfe._cgfbb == nil {
+		if _dcad := _fgfe.retrieveImportSymbols(); _dcad != nil {
+			return _dcad
+		}
+	}
+	if _fgfe._bded == nil {
+		_fgfe._bded = append(_fgfe._bded, _fgfe._cgfbb...)
+	}
+	return nil
+}
+func (_ccaa *SymbolDictionary) setRetainedCodingContexts(_bfdac *SymbolDictionary) {
+	_ccaa._fffd = _bfdac._fffd
+	_ccaa.IsHuffmanEncoded = _bfdac.IsHuffmanEncoded
+	_ccaa.UseRefinementAggregation = _bfdac.UseRefinementAggregation
+	_ccaa.SdTemplate = _bfdac.SdTemplate
+	_ccaa.SdrTemplate = _bfdac.SdrTemplate
+	_ccaa.SdATX = _bfdac.SdATX
+	_ccaa.SdATY = _bfdac.SdATY
+	_ccaa.SdrATX = _bfdac.SdrATX
+	_ccaa.SdrATY = _bfdac.SdrATY
+	_ccaa._bagf = _bfdac._bagf
+}
+func (_cb *GenericRefinementRegion) overrideAtTemplate0(_fegc, _acf, _bgfc, _aeb, _fagg int) int {
+	if _cb._db[0] {
+		_fegc &= 0xfff7
+		if _cb.GrAtY[0] == 0 && int(_cb.GrAtX[0]) >= -_fagg {
+			_fegc |= (_aeb >> uint(7-(_fagg+int(_cb.GrAtX[0]))) & 0x1) << 3
+		} else {
+			_fegc |= _cb.getPixel(_cb.RegionBitmap, _acf+int(_cb.GrAtX[0]), _bgfc+int(_cb.GrAtY[0])) << 3
+		}
+	}
+	if _cb._db[1] {
+		_fegc &= 0xefff
+		if _cb.GrAtY[1] == 0 && int(_cb.GrAtX[1]) >= -_fagg {
+			_fegc |= (_aeb >> uint(7-(_fagg+int(_cb.GrAtX[1]))) & 0x1) << 12
+		} else {
+			_fegc |= _cb.getPixel(_cb.ReferenceBitmap, _acf+int(_cb.GrAtX[1]), _bgfc+int(_cb.GrAtY[1]))
+		}
+	}
+	return _fegc
+}
+func (_ggbf *PageInformationSegment) readWidthAndHeight() error {
+	_gdfag, _cagg := _ggbf._ace.ReadBits(32)
+	if _cagg != nil {
+		return _cagg
+	}
+	_ggbf.PageBMWidth = int(_gdfag & _f.MaxInt32)
+	_gdfag, _cagg = _ggbf._ace.ReadBits(32)
+	if _cagg != nil {
+		return _cagg
+	}
+	_ggbf.PageBMHeight = int(_gdfag & _f.MaxInt32)
+	return nil
+}
+func (_gce *GenericRefinementRegion) updateOverride() error {
+	if _gce.GrAtX == nil || _gce.GrAtY == nil {
+		return _ge.New("\u0041\u0054\u0020\u0070\u0069\u0078\u0065\u006c\u0073\u0020\u006e\u006ft\u0020\u0073\u0065\u0074")
+	}
+	if len(_gce.GrAtX) != len(_gce.GrAtY) {
+		return _ge.New("A\u0054\u0020\u0070\u0069xe\u006c \u0069\u006e\u0063\u006f\u006es\u0069\u0073\u0074\u0065\u006e\u0074")
+	}
+	_gce._db = make([]bool, len(_gce.GrAtX))
+	switch _gce.TemplateID {
+	case 0:
+		if _gce.GrAtX[0] != -1 && _gce.GrAtY[0] != -1 {
+			_gce._db[0] = true
+			_gce._dag = true
+		}
+		if _gce.GrAtX[1] != -1 && _gce.GrAtY[1] != -1 {
+			_gce._db[1] = true
+			_gce._dag = true
+		}
+	case 1:
+		_gce._dag = false
+	}
+	return nil
+}
+func (_ccc *GenericRefinementRegion) getPixel(_daed *_d.Bitmap, _age, _acg int) int {
+	if _age < 0 || _age >= _daed.Width {
+		return 0
+	}
+	if _acg < 0 || _acg >= _daed.Height {
+		return 0
+	}
+	if _daed.GetPixel(_age, _acg) {
+		return 1
+	}
+	return 0
+}
+func (_agfc *SymbolDictionary) decodeNewSymbols(_fbecc, _bacg uint32, _eec *_d.Bitmap, _gfce, _cfbb int32) error {
+	if _agfc._debeg == nil {
+		_agfc._debeg = _cda(_agfc._bcagf, nil)
+		if _agfc._fffd == nil {
+			var _badc error
+			_agfc._fffd, _badc = _b.New(_agfc._bcagf)
+			if _badc != nil {
+				return _badc
+			}
+		}
+		if _agfc._bagf == nil {
+			_agfc._bagf = _b.NewStats(65536, 1)
+		}
+	}
+	_agfc._debeg.setParameters(_agfc._bagf, _agfc._fffd, _agfc.SdrTemplate, _fbecc, _bacg, _eec, _gfce, _cfbb, false, _agfc.SdrATX, _agfc.SdrATY)
+	return _agfc.addSymbol(_agfc._debeg)
+}
+func (_ebd *HalftoneRegion) computeSegmentDataStructure() error {
+	_ebd.DataOffset = _ebd._gdfe.StreamPosition()
+	_ebd.DataHeaderLength = _ebd.DataOffset - _ebd.DataHeaderOffset
+	_ebd.DataLength = int64(_ebd._gdfe.Length()) - _ebd.DataHeaderLength
+	return nil
+}
+
+type TextRegion struct {
+	_effb                   _fg.StreamReader
+	RegionInfo              *RegionSegment
+	SbrTemplate             int8
+	SbDsOffset              int8
+	DefaultPixel            int8
+	CombinationOperator     _d.CombinationOperator
+	IsTransposed            int8
+	ReferenceCorner         int16
+	LogSBStrips             int16
+	UseRefinement           bool
+	IsHuffmanEncoded        bool
+	SbHuffRSize             int8
+	SbHuffRDY               int8
+	SbHuffRDX               int8
+	SbHuffRDHeight          int8
+	SbHuffRDWidth           int8
+	SbHuffDT                int8
+	SbHuffDS                int8
+	SbHuffFS                int8
+	SbrATX                  []int8
+	SbrATY                  []int8
+	NumberOfSymbolInstances uint32
+	_fbdbc                  int64
+	SbStrips                int8
+	NumberOfSymbols         uint32
+	RegionBitmap            *_d.Bitmap
+	Symbols                 []*_d.Bitmap
+	_dffe                   *_b.Decoder
+	_edge                   *GenericRefinementRegion
+	_bgad                   *_b.DecoderStats
+	_geaa                   *_b.DecoderStats
+	_dafb                   *_b.DecoderStats
+	_dace                   *_b.DecoderStats
+	_gbfge                  *_b.DecoderStats
+	_egcff                  *_b.DecoderStats
+	_acgg                   *_b.DecoderStats
+	_beabb                  *_b.DecoderStats
+	_beda                   *_b.DecoderStats
+	_bfbb                   *_b.DecoderStats
+	_aeed                   *_b.DecoderStats
+	_ebcb                   int8
+	_gegc                   *_ba.FixedSizeTable
+	Header                  *Header
+	_bcf                    _ba.Tabler
+	_cadeg                  _ba.Tabler
+	_gfad                   _ba.Tabler
+	_gcba                   _ba.Tabler
+	_fbdda                  _ba.Tabler
+	_agag                   _ba.Tabler
+	_bggb                   _ba.Tabler
+	_fbeac                  _ba.Tabler
+	_fegdc, _cfaa           map[int]int
+	_ddfbb                  []int
+	_fbc                    *_d.Points
+	_aeee                   *_d.Bitmaps
+	_faed                   *_ca.IntSlice
+	_eagb, _aagc            int
+	_ffbc                   *_d.Boxes
+}
+
+func (_ecfeb *SymbolDictionary) decodeHeightClassCollectiveBitmap(_egfg int64, _cefg, _geff uint32) (*_d.Bitmap, error) {
+	if _egfg == 0 {
+		_fgbc := _d.New(int(_geff), int(_cefg))
+		var (
+			_cabc byte
+			_dcga error
+		)
+		for _ggfe := 0; _ggfe < len(_fgbc.Data); _ggfe++ {
+			_cabc, _dcga = _ecfeb._bcagf.ReadByte()
+			if _dcga != nil {
+				return nil, _dcga
+			}
+			if _dcga = _fgbc.SetByte(_ggfe, _cabc); _dcga != nil {
+				return nil, _dcga
+			}
+		}
+		return _fgbc, nil
+	}
+	if _ecfeb._eaeb == nil {
+		_ecfeb._eaeb = NewGenericRegion(_ecfeb._bcagf)
+	}
+	_ecfeb._eaeb.setParameters(true, _ecfeb._bcagf.StreamPosition(), _egfg, _cefg, _geff)
+	_dcgca, _gagf := _ecfeb._eaeb.GetRegionBitmap()
+	if _gagf != nil {
+		return nil, _gagf
+	}
+	return _dcgca, nil
+}
+func (_efbd *TextRegion) encodeSymbols(_fegdd _fg.BinaryWriter) (_gbbe int, _ggfd error) {
+	const _bdfga = "\u0065\u006e\u0063\u006f\u0064\u0065\u0053\u0079\u006d\u0062\u006f\u006c\u0073"
+	_eggf := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_eggf, _efbd.NumberOfSymbols)
+	if _gbbe, _ggfd = _fegdd.Write(_eggf); _ggfd != nil {
+		return _gbbe, _fd.Wrap(_ggfd, _bdfga, "\u004e\u0075\u006dbe\u0072\u004f\u0066\u0053\u0079\u006d\u0062\u006f\u006c\u0049\u006e\u0073\u0074\u0061\u006e\u0063\u0065\u0073")
+	}
+	_geed, _ggfd := _d.NewClassedPoints(_efbd._fbc, _efbd._ddfbb)
+	if _ggfd != nil {
+		return 0, _fd.Wrap(_ggfd, _bdfga, "")
+	}
+	var _bbg, _eeagc int
+	_dbfb := _ga.New()
+	_dbfb.Init()
+	if _ggfd = _dbfb.EncodeInteger(_ga.IADT, 0); _ggfd != nil {
+		return _gbbe, _fd.Wrap(_ggfd, _bdfga, "\u0069\u006e\u0069\u0074\u0069\u0061\u006c\u0020\u0044\u0054")
+	}
+	_ffdc, _ggfd := _geed.GroupByY()
+	if _ggfd != nil {
+		return 0, _fd.Wrap(_ggfd, _bdfga, "")
+	}
+	for _, _bdge := range _ffdc {
+		_debg := int(_bdge.YAtIndex(0))
+		_bbca := _debg - _bbg
+		if _ggfd = _dbfb.EncodeInteger(_ga.IADT, _bbca); _ggfd != nil {
+			return _gbbe, _fd.Wrap(_ggfd, _bdfga, "")
+		}
+		var _cfafb int
+		for _fdef, _ddead := range _bdge.IntSlice {
+			switch _fdef {
+			case 0:
+				_afgg := int(_bdge.XAtIndex(_fdef)) - _eeagc
+				if _ggfd = _dbfb.EncodeInteger(_ga.IAFS, _afgg); _ggfd != nil {
+					return _gbbe, _fd.Wrap(_ggfd, _bdfga, "")
+				}
+				_eeagc += _afgg
+				_cfafb = _eeagc
+			default:
+				_ceeg := int(_bdge.XAtIndex(_fdef)) - _cfafb
+				if _ggfd = _dbfb.EncodeInteger(_ga.IADS, _ceeg); _ggfd != nil {
+					return _gbbe, _fd.Wrap(_ggfd, _bdfga, "")
+				}
+				_cfafb += _ceeg
+			}
+			_eefc, _acga := _efbd._faed.Get(_ddead)
+			if _acga != nil {
+				return _gbbe, _fd.Wrap(_acga, _bdfga, "")
+			}
+			_acafe, _fefg := _efbd._fegdc[_eefc]
+			if !_fefg {
+				_acafe, _fefg = _efbd._cfaa[_eefc]
+				if !_fefg {
+					return _gbbe, _fd.Errorf(_bdfga, "\u0053\u0079\u006d\u0062\u006f\u006c:\u0020\u0027\u0025d\u0027\u0020\u0069s\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064 \u0069\u006e\u0020\u0067\u006cob\u0061\u006c\u0020\u0061\u006e\u0064\u0020\u006c\u006f\u0063\u0061\u006c\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0020\u006d\u0061\u0070", _eefc)
+				}
+			}
+			if _acga = _dbfb.EncodeIAID(_efbd._aagc, _acafe); _acga != nil {
+				return _gbbe, _fd.Wrap(_acga, _bdfga, "")
+			}
+		}
+		if _ggfd = _dbfb.EncodeOOB(_ga.IADS); _ggfd != nil {
+			return _gbbe, _fd.Wrap(_ggfd, _bdfga, "")
+		}
+	}
+	_dbfb.Final()
+	_acdd, _ggfd := _dbfb.WriteTo(_fegdd)
+	if _ggfd != nil {
+		return _gbbe, _fd.Wrap(_ggfd, _bdfga, "")
+	}
+	_gbbe += int(_acdd)
+	return _gbbe, nil
+}
+func (_gggb *SymbolDictionary) retrieveImportSymbols() error {
+	for _, _ggbe := range _gggb.Header.RTSegments {
+		if _ggbe.Type == 0 {
+			_cfaf, _gcdfa := _ggbe.GetSegmentData()
+			if _gcdfa != nil {
+				return _gcdfa
+			}
+			_dcaa, _bdgd := _cfaf.(*SymbolDictionary)
+			if !_bdgd {
+				return _e.Errorf("\u0070\u0072\u006f\u0076\u0069\u0064\u0065\u0064\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0044\u0061\u0074a\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0053\u0079\u006d\u0062\u006f\u006c\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u0053\u0065\u0067m\u0065\u006e\u0074\u003a\u0020%\u0054", _cfaf)
+			}
+			_fdgd, _gcdfa := _dcaa.GetDictionary()
+			if _gcdfa != nil {
+				return _e.Errorf("\u0072\u0065\u006c\u0061\u0074\u0065\u0064 \u0073\u0065\u0067m\u0065\u006e\u0074 \u0077\u0069t\u0068\u0020\u0069\u006e\u0064\u0065x\u003a %\u0064\u0020\u0067\u0065\u0074\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0073", _ggbe.SegmentNumber, _gcdfa.Error())
+			}
+			_gggb._cgfbb = append(_gggb._cgfbb, _fdgd...)
+			_gggb._gbbg += _dcaa.NumberOfExportedSymbols
+		}
+	}
+	return nil
+}
+func (_caag *PageInformationSegment) String() string {
+	_gbc := &_cc.Builder{}
+	_gbc.WriteString("\u000a\u005b\u0050\u0041G\u0045\u002d\u0049\u004e\u0046\u004f\u0052\u004d\u0041\u0054I\u004fN\u002d\u0053\u0045\u0047\u004d\u0045\u004eT\u005d\u000a")
+	_gbc.WriteString(_e.Sprintf("\u0009\u002d \u0042\u004d\u0048e\u0069\u0067\u0068\u0074\u003a\u0020\u0025\u0064\u000a", _caag.PageBMHeight))
+	_gbc.WriteString(_e.Sprintf("\u0009-\u0020B\u004d\u0057\u0069\u0064\u0074\u0068\u003a\u0020\u0025\u0064\u000a", _caag.PageBMWidth))
+	_gbc.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0052es\u006f\u006c\u0075\u0074\u0069\u006f\u006e\u0058\u003a\u0020\u0025\u0064\u000a", _caag.ResolutionX))
+	_gbc.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0052es\u006f\u006c\u0075\u0074\u0069\u006f\u006e\u0059\u003a\u0020\u0025\u0064\u000a", _caag.ResolutionY))
+	_gbc.WriteString(_e.Sprintf("\t\u002d\u0020\u0043\u006f\u006d\u0062i\u006e\u0061\u0074\u0069\u006f\u006e\u004f\u0070\u0065r\u0061\u0074\u006fr\u003a \u0025\u0073\u000a", _caag._aefgc))
+	_gbc.WriteString(_e.Sprintf("\t\u002d\u0020\u0043\u006f\u006d\u0062i\u006e\u0061\u0074\u0069\u006f\u006eO\u0070\u0065\u0072\u0061\u0074\u006f\u0072O\u0076\u0065\u0072\u0072\u0069\u0064\u0065\u003a\u0020\u0025v\u000a", _caag._eae))
+	_gbc.WriteString(_e.Sprintf("\u0009-\u0020I\u0073\u004c\u006f\u0073\u0073l\u0065\u0073s\u003a\u0020\u0025\u0076\u000a", _caag.IsLossless))
+	_gbc.WriteString(_e.Sprintf("\u0009\u002d\u0020R\u0065\u0071\u0075\u0069r\u0065\u0073\u0041\u0075\u0078\u0069\u006ci\u0061\u0072\u0079\u0042\u0075\u0066\u0066\u0065\u0072\u003a\u0020\u0025\u0076\u000a", _caag._bfgd))
+	_gbc.WriteString(_e.Sprintf("\u0009\u002d\u0020M\u0069\u0067\u0068\u0074C\u006f\u006e\u0074\u0061\u0069\u006e\u0052e\u0066\u0069\u006e\u0065\u006d\u0065\u006e\u0074\u0073\u003a\u0020\u0025\u0076\u000a", _caag._bgeb))
+	_gbc.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0049\u0073\u0053\u0074\u0072\u0069\u0070\u0065\u0064:\u0020\u0025\u0076\u000a", _caag.IsStripe))
+	_gbc.WriteString(_e.Sprintf("\t\u002d\u0020\u004d\u0061xS\u0074r\u0069\u0070\u0065\u0053\u0069z\u0065\u003a\u0020\u0025\u0076\u000a", _caag.MaxStripeSize))
+	return _gbc.String()
+}
+
+type EncodeInitializer interface{ InitEncode() }
+
+func (_fee *GenericRegion) Init(h *Header, r _fg.StreamReader) error {
+	_fee.RegionSegment = NewRegionSegment(r)
+	_fee._baf = r
+	return _fee.parseHeader()
+}
+func (_bbecf *TextRegion) decodeDT() (_ggdgf int64, _egbc error) {
+	if _bbecf.IsHuffmanEncoded {
+		if _bbecf.SbHuffDT == 3 {
+			_ggdgf, _egbc = _bbecf._gfad.Decode(_bbecf._effb)
+			if _egbc != nil {
+				return 0, _egbc
+			}
+		} else {
+			var _bgge _ba.Tabler
+			_bgge, _egbc = _ba.GetStandardTable(11 + int(_bbecf.SbHuffDT))
+			if _egbc != nil {
+				return 0, _egbc
+			}
+			_ggdgf, _egbc = _bgge.Decode(_bbecf._effb)
+			if _egbc != nil {
+				return 0, _egbc
+			}
+		}
+	} else {
+		var _dgfgd int32
+		_dgfgd, _egbc = _bbecf._dffe.DecodeInt(_bbecf._bgad)
+		if _egbc != nil {
+			return
+		}
+		_ggdgf = int64(_dgfgd)
+	}
+	_ggdgf *= int64(_bbecf.SbStrips)
+	return _ggdgf, nil
+}
+func (_ef *GenericRefinementRegion) decodeOptimized(_cf, _gea, _egc, _cg, _gaf, _ade, _gcc int) error {
+	var (
+		_efb  error
+		_egcf int
+		_fa   int
+	)
+	_ed := _cf - int(_ef.ReferenceDY)
+	if _bag := int(-_ef.ReferenceDX); _bag > 0 {
+		_egcf = _bag
+	}
+	_fab := _ef.ReferenceBitmap.GetByteIndex(_egcf, _ed)
+	if _ef.ReferenceDX > 0 {
+		_fa = int(_ef.ReferenceDX)
+	}
+	_gcg := _ef.RegionBitmap.GetByteIndex(_fa, _cf)
+	switch _ef.TemplateID {
+	case 0:
+		_efb = _ef.decodeTemplate(_cf, _gea, _egc, _cg, _gaf, _ade, _gcc, _gcg, _ed, _fab, _ef._dae)
+	case 1:
+		_efb = _ef.decodeTemplate(_cf, _gea, _egc, _cg, _gaf, _ade, _gcc, _gcg, _ed, _fab, _ef._dec)
+	}
+	return _efb
+}
+func (_gccb *PageInformationSegment) readCombinationOperator() error {
+	_baga, _bgbg := _gccb._ace.ReadBits(2)
+	if _bgbg != nil {
+		return _bgbg
+	}
+	_gccb._aefgc = _d.CombinationOperator(int(_baga))
+	return nil
+}
+func (_eba *template0) setIndex(_bcec *_b.DecoderStats) { _bcec.SetIndex(0x100) }
+func (_ccgd *TextRegion) decodeRdh() (int64, error) {
+	const _fada = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064h"
+	if _ccgd.IsHuffmanEncoded {
+		if _ccgd.SbHuffRDHeight == 3 {
+			if _ccgd._fbdda == nil {
+				var (
+					_fgae int
+					_bfdf error
+				)
+				if _ccgd.SbHuffFS == 3 {
+					_fgae++
+				}
+				if _ccgd.SbHuffDS == 3 {
+					_fgae++
+				}
+				if _ccgd.SbHuffDT == 3 {
+					_fgae++
+				}
+				if _ccgd.SbHuffRDWidth == 3 {
+					_fgae++
+				}
+				_ccgd._fbdda, _bfdf = _ccgd.getUserTable(_fgae)
+				if _bfdf != nil {
+					return 0, _fd.Wrap(_bfdf, _fada, "")
+				}
+			}
+			return _ccgd._fbdda.Decode(_ccgd._effb)
+		}
+		_bbdef, _dcgcd := _ba.GetStandardTable(14 + int(_ccgd.SbHuffRDHeight))
+		if _dcgcd != nil {
+			return 0, _fd.Wrap(_dcgcd, _fada, "")
+		}
+		return _bbdef.Decode(_ccgd._effb)
+	}
+	_agef, _ffag := _ccgd._dffe.DecodeInt(_ccgd._acgg)
+	if _ffag != nil {
+		return 0, _fd.Wrap(_ffag, _fada, "")
+	}
+	return int64(_agef), nil
+}
+func (_gfdg *TextRegion) readAmountOfSymbolInstances() error {
+	_dcca, _acba := _gfdg._effb.ReadBits(32)
+	if _acba != nil {
+		return _acba
+	}
+	_gfdg.NumberOfSymbolInstances = uint32(_dcca & _f.MaxUint32)
+	_fefa := _gfdg.RegionInfo.BitmapWidth * _gfdg.RegionInfo.BitmapHeight
+	if _fefa < _gfdg.NumberOfSymbolInstances {
+		_da.Log.Debug("\u004c\u0069\u006d\u0069t\u0069\u006e\u0067\u0020t\u0068\u0065\u0020n\u0075\u006d\u0062\u0065\u0072\u0020o\u0066\u0020d\u0065\u0063\u006f\u0064e\u0064\u0020\u0073\u0079m\u0062\u006f\u006c\u0020\u0069n\u0073\u0074\u0061\u006e\u0063\u0065\u0073 \u0074\u006f\u0020\u006f\u006ee\u0020\u0070\u0065\u0072\u0020\u0070\u0069\u0078\u0065l\u0020\u0028\u0020\u0025\u0064\u0020\u0069\u006e\u0073\u0074\u0065\u0061\u0064\u0020\u006f\u0066\u0020\u0025\u0064\u0029", _fefa, _gfdg.NumberOfSymbolInstances)
+		_gfdg.NumberOfSymbolInstances = _fefa
+	}
+	return nil
+}
+func (_eaa *GenericRefinementRegion) decodeTypicalPredictedLineTemplate1(_bca, _ddc, _df, _ab, _dgd, _gaff, _ae, _eag, _cfg int) (_dbf error) {
+	var (
+		_fdgf, _dac int
+		_caf, _dagb int
+		_faf, _ead  int
+		_aff        byte
+	)
+	if _bca > 0 {
+		_aff, _dbf = _eaa.RegionBitmap.GetByte(_ae - _df)
+		if _dbf != nil {
+			return
+		}
+		_caf = int(_aff)
+	}
+	if _eag > 0 && _eag <= _eaa.ReferenceBitmap.Height {
+		_aff, _dbf = _eaa.ReferenceBitmap.GetByte(_cfg - _ab + _gaff)
+		if _dbf != nil {
+			return
+		}
+		_dagb = int(_aff) << 2
+	}
+	if _eag >= 0 && _eag < _eaa.ReferenceBitmap.Height {
+		_aff, _dbf = _eaa.ReferenceBitmap.GetByte(_cfg + _gaff)
+		if _dbf != nil {
+			return
+		}
+		_faf = int(_aff)
+	}
+	if _eag > -2 && _eag < _eaa.ReferenceBitmap.Height-1 {
+		_aff, _dbf = _eaa.ReferenceBitmap.GetByte(_cfg + _ab + _gaff)
+		if _dbf != nil {
+			return
+		}
+		_ead = int(_aff)
+	}
+	_fdgf = ((_caf >> 5) & 0x6) | ((_ead >> 2) & 0x30) | (_faf & 0xc0) | (_dagb & 0x200)
+	_dac = ((_ead >> 2) & 0x70) | (_faf & 0xc0) | (_dagb & 0x700)
+	var _fgcf int
+	for _abb := 0; _abb < _dgd; _abb = _fgcf {
+		var (
+			_bd    int
+			_fgcfb int
+		)
+		_fgcf = _abb + 8
+		if _bd = _ddc - _abb; _bd > 8 {
+			_bd = 8
+		}
+		_fag := _fgcf < _ddc
+		_bgf := _fgcf < _eaa.ReferenceBitmap.Width
+		_fad := _gaff + 1
+		if _bca > 0 {
+			_aff = 0
+			if _fag {
+				_aff, _dbf = _eaa.RegionBitmap.GetByte(_ae - _df + 1)
+				if _dbf != nil {
+					return
+				}
+			}
+			_caf = (_caf << 8) | int(_aff)
+		}
+		if _eag > 0 && _eag <= _eaa.ReferenceBitmap.Height {
+			var _be int
+			if _bgf {
+				_aff, _dbf = _eaa.ReferenceBitmap.GetByte(_cfg - _ab + _fad)
+				if _dbf != nil {
+					return
+				}
+				_be = int(_aff) << 2
+			}
+			_dagb = (_dagb << 8) | _be
+		}
+		if _eag >= 0 && _eag < _eaa.ReferenceBitmap.Height {
+			_aff = 0
+			if _bgf {
+				_aff, _dbf = _eaa.ReferenceBitmap.GetByte(_cfg + _fad)
+				if _dbf != nil {
+					return
+				}
+			}
+			_faf = (_faf << 8) | int(_aff)
+		}
+		if _eag > -2 && _eag < (_eaa.ReferenceBitmap.Height-1) {
+			_aff = 0
+			if _bgf {
+				_aff, _dbf = _eaa.ReferenceBitmap.GetByte(_cfg + _ab + _fad)
+				if _dbf != nil {
+					return
+				}
+			}
+			_ead = (_ead << 8) | int(_aff)
+		}
+		for _cgd := 0; _cgd < _bd; _cgd++ {
+			var _abbf int
+			_efa := (_dac >> 4) & 0x1ff
+			switch _efa {
+			case 0x1ff:
+				_abbf = 1
+			case 0x00:
+				_abbf = 0
+			default:
+				_eaa._cdb.SetIndex(int32(_fdgf))
+				_abbf, _dbf = _eaa._gf.DecodeBit(_eaa._cdb)
+				if _dbf != nil {
+					return
+				}
+			}
+			_ebb := uint(7 - _cgd)
+			_fgcfb |= _abbf << _ebb
+			_fdgf = ((_fdgf & 0x0d6) << 1) | _abbf | (_caf>>_ebb+5)&0x002 | ((_ead>>_ebb + 2) & 0x010) | ((_faf >> _ebb) & 0x040) | ((_dagb >> _ebb) & 0x200)
+			_dac = ((_dac & 0xdb) << 1) | ((_ead>>_ebb + 2) & 0x010) | ((_faf >> _ebb) & 0x080) | ((_dagb >> _ebb) & 0x400)
+		}
+		_dbf = _eaa.RegionBitmap.SetByte(_ae, byte(_fgcfb))
+		if _dbf != nil {
+			return
+		}
+		_ae++
+		_cfg++
+	}
+	return nil
+}
+
+type Regioner interface {
+	GetRegionBitmap() (*_d.Bitmap, error)
+	GetRegionInfo() *RegionSegment
+}
+
+func (_bgdb *TextRegion) setParameters(_aebc *_b.Decoder, _fcgf, _acdf bool, _ccdga, _cdfe uint32, _gdadb uint32, _agadc int8, _abed uint32, _edbcbd int8, _fddd _d.CombinationOperator, _cbea int8, _egfgc int16, _ebea, _adbc, _aeac, _eagga, _fcgc, _caga, _bdda, _ebef, _gfeg, _abgg int8, _gfgc, _fecb []int8, _bcaf []*_d.Bitmap, _cdaaa int8) {
+	_bgdb._dffe = _aebc
+	_bgdb.IsHuffmanEncoded = _fcgf
+	_bgdb.UseRefinement = _acdf
+	_bgdb.RegionInfo.BitmapWidth = _ccdga
+	_bgdb.RegionInfo.BitmapHeight = _cdfe
+	_bgdb.NumberOfSymbolInstances = _gdadb
+	_bgdb.SbStrips = _agadc
+	_bgdb.NumberOfSymbols = _abed
+	_bgdb.DefaultPixel = _edbcbd
+	_bgdb.CombinationOperator = _fddd
+	_bgdb.IsTransposed = _cbea
+	_bgdb.ReferenceCorner = _egfgc
+	_bgdb.SbDsOffset = _ebea
+	_bgdb.SbHuffFS = _adbc
+	_bgdb.SbHuffDS = _aeac
+	_bgdb.SbHuffDT = _eagga
+	_bgdb.SbHuffRDWidth = _fcgc
+	_bgdb.SbHuffRDHeight = _caga
+	_bgdb.SbHuffRSize = _gfeg
+	_bgdb.SbHuffRDX = _bdda
+	_bgdb.SbHuffRDY = _ebef
+	_bgdb.SbrTemplate = _abgg
+	_bgdb.SbrATX = _gfgc
+	_bgdb.SbrATY = _fecb
+	_bgdb.Symbols = _bcaf
+	_bgdb._ebcb = _cdaaa
+}
+func (_caceb *GenericRegion) overrideAtTemplate2(_bbbd, _fgba, _gacb, _fagd, _agb int) int {
+	_bbbd &= 0x3FB
+	if _caceb.GBAtY[0] == 0 && _caceb.GBAtX[0] >= -int8(_agb) {
+		_bbbd |= (_fagd >> uint(7-(int8(_agb)+_caceb.GBAtX[0])) & 0x1) << 2
+	} else {
+		_bbbd |= int(_caceb.getPixel(_fgba+int(_caceb.GBAtX[0]), _gacb+int(_caceb.GBAtY[0]))) << 2
+	}
+	return _bbbd
+}
+func (_deba *Header) writeSegmentPageAssociation(_efead _fg.BinaryWriter) (_efbe int, _ecef error) {
+	const _dada = "w\u0072\u0069\u0074\u0065\u0053\u0065g\u006d\u0065\u006e\u0074\u0050\u0061\u0067\u0065\u0041s\u0073\u006f\u0063i\u0061t\u0069\u006f\u006e"
+	if _deba.pageSize() != 4 {
+		if _ecef = _efead.WriteByte(byte(_deba.PageAssociation)); _ecef != nil {
+			return 0, _fd.Wrap(_ecef, _dada, "\u0070\u0061\u0067\u0065\u0053\u0069\u007a\u0065\u0020\u0021\u003d\u0020\u0034")
+		}
+		return 1, nil
+	}
+	_cfgf := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_cfgf, uint32(_deba.PageAssociation))
+	if _efbe, _ecef = _efead.Write(_cfgf); _ecef != nil {
+		return 0, _fd.Wrap(_ecef, _dada, "\u0034 \u0062y\u0074\u0065\u0020\u0070\u0061g\u0065\u0020n\u0075\u006d\u0062\u0065\u0072")
+	}
+	return _efbe, nil
+}
+func (_eac *GenericRegion) parseHeader() (_cbf error) {
+	_da.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052I\u0043\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0050\u0061\u0072s\u0069\u006e\u0067\u0048\u0065\u0061\u0064e\u0072\u002e\u002e\u002e")
+	defer func() {
+		if _cbf != nil {
+			_da.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0047\u0049\u004f\u004e]\u0020\u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0048\u0065\u0061\u0064\u0065r\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u0020\u0077\u0069th\u0020\u0065\u0072\u0072\u006f\u0072\u002e\u0020\u0025\u0076", _cbf)
+		} else {
+			_da.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049C\u002d\u0052\u0045G\u0049\u004f\u004e]\u0020\u0050a\u0072\u0073\u0069\u006e\u0067\u0048e\u0061de\u0072\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u0020\u0053\u0075\u0063\u0063\u0065\u0073\u0073\u0066\u0075\u006c\u006c\u0079\u002e\u002e\u002e")
+		}
+	}()
+	var (
+		_bbb int
+		_aec uint64
+	)
+	if _cbf = _eac.RegionSegment.parseHeader(); _cbf != nil {
+		return _cbf
+	}
+	if _, _cbf = _eac._baf.ReadBits(3); _cbf != nil {
+		return _cbf
+	}
+	_bbb, _cbf = _eac._baf.ReadBit()
+	if _cbf != nil {
+		return _cbf
+	}
+	if _bbb == 1 {
+		_eac.UseExtTemplates = true
+	}
+	_bbb, _cbf = _eac._baf.ReadBit()
+	if _cbf != nil {
+		return _cbf
+	}
+	if _bbb == 1 {
+		_eac.IsTPGDon = true
+	}
+	_aec, _cbf = _eac._baf.ReadBits(2)
+	if _cbf != nil {
+		return _cbf
+	}
+	_eac.GBTemplate = byte(_aec & 0xf)
+	_bbb, _cbf = _eac._baf.ReadBit()
+	if _cbf != nil {
+		return _cbf
+	}
+	if _bbb == 1 {
+		_eac.IsMMREncoded = true
+	}
+	if !_eac.IsMMREncoded {
+		_ebf := 1
+		if _eac.GBTemplate == 0 {
+			_ebf = 4
+			if _eac.UseExtTemplates {
+				_ebf = 12
+			}
+		}
+		if _cbf = _eac.readGBAtPixels(_ebf); _cbf != nil {
+			return _cbf
+		}
+	}
+	if _cbf = _eac.computeSegmentDataStructure(); _cbf != nil {
+		return _cbf
+	}
+	_da.Log.Trace("\u0025\u0073", _eac)
+	return nil
+}
+func (_dgf *GenericRefinementRegion) getGrReference() (*_d.Bitmap, error) {
+	segments := _dgf._cdg.RTSegments
+	if len(segments) == 0 {
+		return nil, _ge.New("\u0052\u0065f\u0065\u0072\u0065\u006e\u0063\u0065\u0064\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0065\u0078is\u0074\u0073")
+	}
+	_eg, _dcg := segments[0].GetSegmentData()
+	if _dcg != nil {
+		return nil, _dcg
+	}
+	_dce, _adg := _eg.(Regioner)
+	if !_adg {
+		return nil, _e.Errorf("\u0072\u0065\u0066\u0065\u0072r\u0065\u0064\u0020\u0074\u006f\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074 \u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0052\u0065\u0067\u0069\u006f\u006e\u0065\u0072\u003a\u0020\u0025\u0054", _eg)
+	}
+	return _dce.GetRegionBitmap()
+}
+func (_dgfd *SymbolDictionary) encodeFlags(_dafe _fg.BinaryWriter) (_acgf int, _eggg error) {
+	const _gdda = "e\u006e\u0063\u006f\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
+	if _eggg = _dafe.SkipBits(3); _eggg != nil {
+		return 0, _fd.Wrap(_eggg, _gdda, "\u0065\u006d\u0070\u0074\u0079\u0020\u0062\u0069\u0074\u0073")
+	}
+	var _dceb int
+	if _dgfd.SdrTemplate > 0 {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "s\u0064\u0072\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
+	}
+	_dceb = 0
+	if _dgfd.SdTemplate > 1 {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
+	}
+	_dceb = 0
+	if _dgfd.SdTemplate == 1 || _dgfd.SdTemplate == 3 {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
+	}
+	_dceb = 0
+	if _dgfd._gdae {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0063\u006f\u0064in\u0067\u0020\u0063\u006f\u006e\u0074\u0065\u0078\u0074\u0020\u0072\u0065\u0074\u0061\u0069\u006e\u0065\u0064")
+	}
+	_dceb = 0
+	if _dgfd._gacg {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0063\u006f\u0064\u0069ng\u0020\u0063\u006f\u006e\u0074\u0065\u0078\u0074\u0020\u0075\u0073\u0065\u0064")
+	}
+	_dceb = 0
+	if _dgfd.SdHuffAggInstanceSelection {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0048\u0075\u0066\u0066\u0041\u0067\u0067\u0049\u006e\u0073\u0074")
+	}
+	_dceb = int(_dgfd.SdHuffBMSizeSelection)
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0048u\u0066\u0066\u0042\u006d\u0053\u0069\u007a\u0065")
+	}
+	_dceb = 0
+	if _dgfd.SdHuffDecodeWidthSelection > 1 {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "s\u0064\u0048\u0075\u0066\u0066\u0057\u0069\u0064\u0074\u0068")
+	}
+	_dceb = 0
+	switch _dgfd.SdHuffDecodeWidthSelection {
+	case 1, 3:
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "s\u0064\u0048\u0075\u0066\u0066\u0057\u0069\u0064\u0074\u0068")
+	}
+	_dceb = 0
+	if _dgfd.SdHuffDecodeHeightSelection > 1 {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0048u\u0066\u0066\u0048\u0065\u0069\u0067\u0068\u0074")
+	}
+	_dceb = 0
+	switch _dgfd.SdHuffDecodeHeightSelection {
+	case 1, 3:
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0048u\u0066\u0066\u0048\u0065\u0069\u0067\u0068\u0074")
+	}
+	_dceb = 0
+	if _dgfd.UseRefinementAggregation {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0052\u0065\u0066\u0041\u0067\u0067")
+	}
+	_dceb = 0
+	if _dgfd.IsHuffmanEncoded {
+		_dceb = 1
+	}
+	if _eggg = _dafe.WriteBit(_dceb); _eggg != nil {
+		return _acgf, _fd.Wrap(_eggg, _gdda, "\u0073\u0064\u0048\u0075\u0066\u0066")
+	}
+	return 2, nil
+}
+func (_ebbd *SymbolDictionary) readRefinementAtPixels(_gacgb int) error {
+	_ebbd.SdrATX = make([]int8, _gacgb)
+	_ebbd.SdrATY = make([]int8, _gacgb)
+	var (
+		_fafg byte
+		_gcaa error
+	)
+	for _dcdd := 0; _dcdd < _gacgb; _dcdd++ {
+		_fafg, _gcaa = _ebbd._bcagf.ReadByte()
+		if _gcaa != nil {
+			return _gcaa
+		}
+		_ebbd.SdrATX[_dcdd] = int8(_fafg)
+		_fafg, _gcaa = _ebbd._bcagf.ReadByte()
+		if _gcaa != nil {
+			return _gcaa
+		}
+		_ebbd.SdrATY[_dcdd] = int8(_fafg)
+	}
+	return nil
+}
+func (_ecc *GenericRefinementRegion) decodeTemplate(_gege, _egg, _ee, _add, _dfc, _fgbf, _eagf, _eadc, _dga, _feg int, _ce templater) (_fdc error) {
+	var (
+		_edb, _fedf, _adeb, _cfa, _fddg int16
+		_dbfd, _gge, _gac, _dgdb        int
+		_dda                            byte
+	)
+	if _dga >= 1 && (_dga-1) < _ecc.ReferenceBitmap.Height {
+		_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg - _add)
+		if _fdc != nil {
+			return
+		}
+		_dbfd = int(_dda)
+	}
+	if _dga >= 0 && (_dga) < _ecc.ReferenceBitmap.Height {
+		_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg)
+		if _fdc != nil {
+			return
+		}
+		_gge = int(_dda)
+	}
+	if _dga >= -1 && (_dga+1) < _ecc.ReferenceBitmap.Height {
+		_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg + _add)
+		if _fdc != nil {
+			return
+		}
+		_gac = int(_dda)
+	}
+	_feg++
+	if _gege >= 1 {
+		_dda, _fdc = _ecc.RegionBitmap.GetByte(_eadc - _ee)
+		if _fdc != nil {
+			return
+		}
+		_dgdb = int(_dda)
+	}
+	_eadc++
+	_bgfa := _ecc.ReferenceDX % 8
+	_cga := 6 + _bgfa
+	_ega := _feg % _add
+	if _cga >= 0 {
+		if _cga < 8 {
+			_edb = int16(_dbfd>>uint(_cga)) & 0x07
+		}
+		if _cga < 8 {
+			_fedf = int16(_gge>>uint(_cga)) & 0x07
+		}
+		if _cga < 8 {
+			_adeb = int16(_gac>>uint(_cga)) & 0x07
+		}
+		if _cga == 6 && _ega > 1 {
+			if _dga >= 1 && (_dga-1) < _ecc.ReferenceBitmap.Height {
+				_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg - _add - 2)
+				if _fdc != nil {
+					return _fdc
+				}
+				_edb |= int16(_dda<<2) & 0x04
+			}
+			if _dga >= 0 && _dga < _ecc.ReferenceBitmap.Height {
+				_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg - 2)
+				if _fdc != nil {
+					return _fdc
+				}
+				_fedf |= int16(_dda<<2) & 0x04
+			}
+			if _dga >= -1 && _dga+1 < _ecc.ReferenceBitmap.Height {
+				_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg + _add - 2)
+				if _fdc != nil {
+					return _fdc
+				}
+				_adeb |= int16(_dda<<2) & 0x04
+			}
+		}
+		if _cga == 0 {
+			_dbfd = 0
+			_gge = 0
+			_gac = 0
+			if _ega < _add-1 {
+				if _dga >= 1 && _dga-1 < _ecc.ReferenceBitmap.Height {
+					_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg - _add)
+					if _fdc != nil {
+						return _fdc
+					}
+					_dbfd = int(_dda)
+				}
+				if _dga >= 0 && _dga < _ecc.ReferenceBitmap.Height {
+					_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg)
+					if _fdc != nil {
+						return _fdc
+					}
+					_gge = int(_dda)
+				}
+				if _dga >= -1 && _dga+1 < _ecc.ReferenceBitmap.Height {
+					_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg + _add)
+					if _fdc != nil {
+						return _fdc
+					}
+					_gac = int(_dda)
+				}
+			}
+			_feg++
+		}
+	} else {
+		_edb = int16(_dbfd<<1) & 0x07
+		_fedf = int16(_gge<<1) & 0x07
+		_adeb = int16(_gac<<1) & 0x07
+		_dbfd = 0
+		_gge = 0
+		_gac = 0
+		if _ega < _add-1 {
+			if _dga >= 1 && _dga-1 < _ecc.ReferenceBitmap.Height {
+				_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg - _add)
+				if _fdc != nil {
+					return _fdc
+				}
+				_dbfd = int(_dda)
+			}
+			if _dga >= 0 && _dga < _ecc.ReferenceBitmap.Height {
+				_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg)
+				if _fdc != nil {
+					return _fdc
+				}
+				_gge = int(_dda)
+			}
+			if _dga >= -1 && _dga+1 < _ecc.ReferenceBitmap.Height {
+				_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg + _add)
+				if _fdc != nil {
+					return _fdc
+				}
+				_gac = int(_dda)
+			}
+			_feg++
+		}
+		_edb |= int16((_dbfd >> 7) & 0x07)
+		_fedf |= int16((_gge >> 7) & 0x07)
+		_adeb |= int16((_gac >> 7) & 0x07)
+	}
+	_cfa = int16(_dgdb >> 6)
+	_fddg = 0
+	_cde := (2 - _bgfa) % 8
+	_dbfd <<= uint(_cde)
+	_gge <<= uint(_cde)
+	_gac <<= uint(_cde)
+	_dgdb <<= 2
+	var _ece int
+	for _eeb := 0; _eeb < _egg; _eeb++ {
+		_dgg := _eeb & 0x07
+		_efbg := _ce.form(_edb, _fedf, _adeb, _cfa, _fddg)
+		if _ecc._dag {
+			_dda, _fdc = _ecc.RegionBitmap.GetByte(_ecc.RegionBitmap.GetByteIndex(_eeb, _gege))
+			if _fdc != nil {
+				return _fdc
+			}
+			_ecc._cdb.SetIndex(int32(_ecc.overrideAtTemplate0(int(_efbg), _eeb, _gege, int(_dda), _dgg)))
+		} else {
+			_ecc._cdb.SetIndex(int32(_efbg))
+		}
+		_ece, _fdc = _ecc._gf.DecodeBit(_ecc._cdb)
+		if _fdc != nil {
+			return _fdc
+		}
+		if _fdc = _ecc.RegionBitmap.SetPixel(_eeb, _gege, byte(_ece)); _fdc != nil {
+			return _fdc
+		}
+		_edb = ((_edb << 1) | 0x01&int16(_dbfd>>7)) & 0x07
+		_fedf = ((_fedf << 1) | 0x01&int16(_gge>>7)) & 0x07
+		_adeb = ((_adeb << 1) | 0x01&int16(_gac>>7)) & 0x07
+		_cfa = ((_cfa << 1) | 0x01&int16(_dgdb>>7)) & 0x07
+		_fddg = int16(_ece)
+		if (_eeb-int(_ecc.ReferenceDX))%8 == 5 {
+			_dbfd = 0
+			_gge = 0
+			_gac = 0
+			if ((_eeb-int(_ecc.ReferenceDX))/8)+1 < _ecc.ReferenceBitmap.RowStride {
+				if _dga >= 1 && (_dga-1) < _ecc.ReferenceBitmap.Height {
+					_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg - _add)
+					if _fdc != nil {
+						return _fdc
+					}
+					_dbfd = int(_dda)
+				}
+				if _dga >= 0 && _dga < _ecc.ReferenceBitmap.Height {
+					_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg)
+					if _fdc != nil {
+						return _fdc
+					}
+					_gge = int(_dda)
+				}
+				if _dga >= -1 && (_dga+1) < _ecc.ReferenceBitmap.Height {
+					_dda, _fdc = _ecc.ReferenceBitmap.GetByte(_feg + _add)
+					if _fdc != nil {
+						return _fdc
+					}
+					_gac = int(_dda)
+				}
+			}
+			_feg++
+		} else {
+			_dbfd <<= 1
+			_gge <<= 1
+			_gac <<= 1
+		}
+		if _dgg == 5 && _gege >= 1 {
+			if ((_eeb >> 3) + 1) >= _ecc.RegionBitmap.RowStride {
+				_dgdb = 0
+			} else {
+				_dda, _fdc = _ecc.RegionBitmap.GetByte(_eadc - _ee)
+				if _fdc != nil {
+					return _fdc
+				}
+				_dgdb = int(_dda)
+			}
+			_eadc++
+		} else {
+			_dgdb <<= 1
+		}
+	}
+	return nil
+}
+func (_bcgf *HalftoneRegion) computeGrayScalePlanes(_fecde []*_d.Bitmap, _cddb int) ([][]int, error) {
+	_dfcb := make([][]int, _bcgf.HGridHeight)
+	for _bbeg := 0; _bbeg < len(_dfcb); _bbeg++ {
+		_dfcb[_bbeg] = make([]int, _bcgf.HGridWidth)
+	}
+	for _cfe := 0; _cfe < int(_bcgf.HGridHeight); _cfe++ {
+		for _agebf := 0; _agebf < int(_bcgf.HGridWidth); _agebf += 8 {
+			var _bcb int
+			if _ccdf := int(_bcgf.HGridWidth) - _agebf; _ccdf > 8 {
+				_bcb = 8
+			} else {
+				_bcb = _ccdf
+			}
+			_cag := _fecde[0].GetByteIndex(_agebf, _cfe)
+			for _feaf := 0; _feaf < _bcb; _feaf++ {
+				_cgfb := _feaf + _agebf
+				_dfcb[_cfe][_cgfb] = 0
+				for _bcde := 0; _bcde < _cddb; _bcde++ {
+					_ceba, _addf := _fecde[_bcde].GetByte(_cag)
+					if _addf != nil {
+						return nil, _addf
+					}
+					_dagg := _ceba >> uint(7-_cgfb&7)
+					_dgfe := _dagg & 1
+					_bba := 1 << uint(_bcde)
+					_dgeb := int(_dgfe) * _bba
+					_dfcb[_cfe][_cgfb] += _dgeb
+				}
+			}
+		}
+	}
+	return _dfcb, nil
+}
+
+type Header struct {
+	SegmentNumber            uint32
+	Type                     Type
+	RetainFlag               bool
+	PageAssociation          int
+	PageAssociationFieldSize bool
+	RTSegments               []*Header
+	HeaderLength             int64
+	SegmentDataLength        uint64
+	SegmentDataStartOffset   uint64
+	Reader                   _fg.StreamReader
+	SegmentData              Segmenter
+	RTSNumbers               []int
+	RetainBits               []uint8
+}
+
+func (_fcde *TextRegion) blit(_dcbde *_d.Bitmap, _ddgb int64) error {
+	if _fcde.IsTransposed == 0 && (_fcde.ReferenceCorner == 2 || _fcde.ReferenceCorner == 3) {
+		_fcde._fbdbc += int64(_dcbde.Width - 1)
+	} else if _fcde.IsTransposed == 1 && (_fcde.ReferenceCorner == 0 || _fcde.ReferenceCorner == 2) {
+		_fcde._fbdbc += int64(_dcbde.Height - 1)
+	}
+	_agcgc := _fcde._fbdbc
+	if _fcde.IsTransposed == 1 {
+		_agcgc, _ddgb = _ddgb, _agcgc
+	}
+	switch _fcde.ReferenceCorner {
+	case 0:
+		_ddgb -= int64(_dcbde.Height - 1)
+	case 2:
+		_ddgb -= int64(_dcbde.Height - 1)
+		_agcgc -= int64(_dcbde.Width - 1)
+	case 3:
+		_agcgc -= int64(_dcbde.Width - 1)
+	}
+	_bfaa := _d.Blit(_dcbde, _fcde.RegionBitmap, int(_agcgc), int(_ddgb), _fcde.CombinationOperator)
+	if _bfaa != nil {
+		return _bfaa
+	}
+	if _fcde.IsTransposed == 0 && (_fcde.ReferenceCorner == 0 || _fcde.ReferenceCorner == 1) {
+		_fcde._fbdbc += int64(_dcbde.Width - 1)
+	}
+	if _fcde.IsTransposed == 1 && (_fcde.ReferenceCorner == 1 || _fcde.ReferenceCorner == 3) {
+		_fcde._fbdbc += int64(_dcbde.Height - 1)
+	}
+	return nil
+}
+func (_baed *SymbolDictionary) readNumberOfNewSymbols() error {
+	_edcb, _agad := _baed._bcagf.ReadBits(32)
+	if _agad != nil {
+		return _agad
+	}
+	_baed.NumberOfNewSymbols = uint32(_edcb & _f.MaxUint32)
+	return nil
+}
+func (_dcbd *SymbolDictionary) GetDictionary() ([]*_d.Bitmap, error) {
+	_da.Log.Trace("\u005b\u0053\u0059\u004d\u0042\u004f\u004c-\u0044\u0049\u0043T\u0049\u004f\u004e\u0041R\u0059\u005d\u0020\u0047\u0065\u0074\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e")
+	defer func() {
+		_da.Log.Trace("\u005b\u0053\u0059M\u0042\u004f\u004c\u002d\u0044\u0049\u0043\u0054\u0049\u004f\u004e\u0041\u0052\u0059\u005d\u0020\u0047\u0065\u0074\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079 \u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
+		_da.Log.Trace("\u005b\u0053Y\u004d\u0042\u004f\u004c\u002dD\u0049\u0043\u0054\u0049\u004fN\u0041\u0052\u0059\u005d\u0020\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u002e\u0020\u000a\u0045\u0078\u003a\u0020\u0027\u0025\u0073\u0027\u002c\u0020\u000a\u006e\u0065\u0077\u003a\u0027\u0025\u0073\u0027", _dcbd._cba, _dcbd._gbga)
+	}()
+	if _dcbd._cba == nil {
+		var _cbgd error
+		if _dcbd.UseRefinementAggregation {
+			_dcbd._cff = _dcbd.getSbSymCodeLen()
+		}
+		if !_dcbd.IsHuffmanEncoded {
+			if _cbgd = _dcbd.setCodingStatistics(); _cbgd != nil {
+				return nil, _cbgd
+			}
+		}
+		_dcbd._gbga = make([]*_d.Bitmap, _dcbd.NumberOfNewSymbols)
+		var _dfaa []int
+		if _dcbd.IsHuffmanEncoded && !_dcbd.UseRefinementAggregation {
+			_dfaa = make([]int, _dcbd.NumberOfNewSymbols)
+		}
+		if _cbgd = _dcbd.setSymbolsArray(); _cbgd != nil {
+			return nil, _cbgd
+		}
+		var _cee, _dgede int64
+		_dcbd._ffa = 0
+		for _dcbd._ffa < _dcbd.NumberOfNewSymbols {
+			_dgede, _cbgd = _dcbd.decodeHeightClassDeltaHeight()
+			if _cbgd != nil {
+				return nil, _cbgd
+			}
+			_cee += _dgede
+			var _daag, _fcdc uint32
+			_eeed := int64(_dcbd._ffa)
+			for {
+				var _fgfc int64
+				_fgfc, _cbgd = _dcbd.decodeDifferenceWidth()
+				if _cd.Is(_cbgd, _gd.ErrOOB) {
+					break
+				}
+				if _cbgd != nil {
+					return nil, _cbgd
+				}
+				if _dcbd._ffa >= _dcbd.NumberOfNewSymbols {
+					break
+				}
+				_daag += uint32(_fgfc)
+				_fcdc += _daag
+				if !_dcbd.IsHuffmanEncoded || _dcbd.UseRefinementAggregation {
+					if !_dcbd.UseRefinementAggregation {
+						_cbgd = _dcbd.decodeDirectlyThroughGenericRegion(_daag, uint32(_cee))
+						if _cbgd != nil {
+							return nil, _cbgd
+						}
+					} else {
+						_cbgd = _dcbd.decodeAggregate(_daag, uint32(_cee))
+						if _cbgd != nil {
+							return nil, _cbgd
+						}
+					}
+				} else if _dcbd.IsHuffmanEncoded && !_dcbd.UseRefinementAggregation {
+					_dfaa[_dcbd._ffa] = int(_daag)
+				}
+				_dcbd._ffa++
+			}
+			if _dcbd.IsHuffmanEncoded && !_dcbd.UseRefinementAggregation {
+				var _fcfb int64
+				if _dcbd.SdHuffBMSizeSelection == 0 {
+					var _cfce _ba.Tabler
+					_cfce, _cbgd = _ba.GetStandardTable(1)
+					if _cbgd != nil {
+						return nil, _cbgd
+					}
+					_fcfb, _cbgd = _cfce.Decode(_dcbd._bcagf)
+					if _cbgd != nil {
+						return nil, _cbgd
+					}
+				} else {
+					_fcfb, _cbgd = _dcbd.huffDecodeBmSize()
+					if _cbgd != nil {
+						return nil, _cbgd
+					}
+				}
+				_dcbd._bcagf.Align()
+				var _ced *_d.Bitmap
+				_ced, _cbgd = _dcbd.decodeHeightClassCollectiveBitmap(_fcfb, uint32(_cee), _fcdc)
+				if _cbgd != nil {
+					return nil, _cbgd
+				}
+				_cbgd = _dcbd.decodeHeightClassBitmap(_ced, _eeed, int(_cee), _dfaa)
+				if _cbgd != nil {
+					return nil, _cbgd
+				}
+			}
+		}
+		_cbde, _cbgd := _dcbd.getToExportFlags()
+		if _cbgd != nil {
+			return nil, _cbgd
+		}
+		_dcbd.setExportedSymbols(_cbde)
+	}
+	return _dcbd._cba, nil
+}
+func (_dgff *TextRegion) Init(header *Header, r _fg.StreamReader) error {
+	_dgff.Header = header
+	_dgff._effb = r
+	_dgff.RegionInfo = NewRegionSegment(_dgff._effb)
+	return _dgff.parseHeader()
+}
+func (_abbbd *SymbolDictionary) setRefinementAtPixels() error {
+	if !_abbbd.UseRefinementAggregation || _abbbd.SdrTemplate != 0 {
+		return nil
+	}
+	if _ggbd := _abbbd.readRefinementAtPixels(2); _ggbd != nil {
+		return _ggbd
+	}
+	return nil
+}
+func (_bafg *SymbolDictionary) decodeRefinedSymbol(_gdccb, _fadcg uint32) error {
+	var (
+		_cdbe         int
+		_bgac, _cacfc int32
+	)
+	if _bafg.IsHuffmanEncoded {
+		_edab, _faag := _bafg._bcagf.ReadBits(byte(_bafg._cff))
+		if _faag != nil {
+			return _faag
+		}
+		_cdbe = int(_edab)
+		_egff, _faag := _ba.GetStandardTable(15)
+		if _faag != nil {
+			return _faag
+		}
+		_ddfcb, _faag := _egff.Decode(_bafg._bcagf)
+		if _faag != nil {
+			return _faag
+		}
+		_bgac = int32(_ddfcb)
+		_ddfcb, _faag = _egff.Decode(_bafg._bcagf)
+		if _faag != nil {
+			return _faag
+		}
+		_cacfc = int32(_ddfcb)
+		_egff, _faag = _ba.GetStandardTable(1)
+		if _faag != nil {
+			return _faag
+		}
+		if _, _faag = _egff.Decode(_bafg._bcagf); _faag != nil {
+			return _faag
+		}
+		_bafg._bcagf.Align()
+	} else {
+		_gaab, _aeag := _bafg._fffd.DecodeIAID(uint64(_bafg._cff), _bafg._fac)
+		if _aeag != nil {
+			return _aeag
+		}
+		_cdbe = int(_gaab)
+		_bgac, _aeag = _bafg._fffd.DecodeInt(_bafg._abag)
+		if _aeag != nil {
+			return _aeag
+		}
+		_cacfc, _aeag = _bafg._fffd.DecodeInt(_bafg._dfb)
+		if _aeag != nil {
+			return _aeag
+		}
+	}
+	if _aefgf := _bafg.setSymbolsArray(); _aefgf != nil {
+		return _aefgf
+	}
+	_adbf := _bafg._bded[_cdbe]
+	if _gbfb := _bafg.decodeNewSymbols(_gdccb, _fadcg, _adbf, _bgac, _cacfc); _gbfb != nil {
+		return _gbfb
+	}
+	if _bafg.IsHuffmanEncoded {
+		_bafg._bcagf.Align()
+	}
+	return nil
+}
+func (_bfef *HalftoneRegion) GetRegionBitmap() (*_d.Bitmap, error) {
+	if _bfef.HalftoneRegionBitmap != nil {
+		return _bfef.HalftoneRegionBitmap, nil
+	}
+	var _abfe error
+	_bfef.HalftoneRegionBitmap = _d.New(int(_bfef.RegionSegment.BitmapWidth), int(_bfef.RegionSegment.BitmapHeight))
+	if _bfef.Patterns == nil || len(_bfef.Patterns) == 0 {
+		_bfef.Patterns, _abfe = _bfef.GetPatterns()
+		if _abfe != nil {
+			return nil, _abfe
+		}
+	}
+	if _bfef.HDefaultPixel == 1 {
+		_bfef.HalftoneRegionBitmap.SetDefaultPixel()
+	}
+	_bdff := _f.Ceil(_f.Log(float64(len(_bfef.Patterns))) / _f.Log(2))
+	_ccdc := int(_bdff)
+	var _bedb [][]int
+	_bedb, _abfe = _bfef.grayScaleDecoding(_ccdc)
+	if _abfe != nil {
+		return nil, _abfe
+	}
+	if _abfe = _bfef.renderPattern(_bedb); _abfe != nil {
+		return nil, _abfe
+	}
+	return _bfef.HalftoneRegionBitmap, nil
+}
+func (_baaa *PageInformationSegment) readRequiresAuxiliaryBuffer() error {
+	_cgcb, _efgg := _baaa._ace.ReadBit()
+	if _efgg != nil {
+		return _efgg
+	}
+	if _cgcb == 1 {
+		_baaa._bfgd = true
+	}
+	return nil
+}
+func (_aad *HalftoneRegion) computeY(_abbe, _beg int) int {
+	return _aad.shiftAndFill(int(_aad.HGridY) + _abbe*int(_aad.HRegionX) - _beg*int(_aad.HRegionY))
+}
+
+type Segmenter interface {
+	Init(_aag *Header, _feea _fg.StreamReader) error
+}
+
+func (_ageb *GenericRegion) setParametersWithAt(_abf bool, _gbac byte, _fbea, _abgc bool, _bdf, _aabb []int8, _bfg, _fgga uint32, _eadd *_b.DecoderStats, _fcdg *_b.Decoder) {
+	_ageb.IsMMREncoded = _abf
+	_ageb.GBTemplate = _gbac
+	_ageb.IsTPGDon = _fbea
+	_ageb.GBAtX = _bdf
+	_ageb.GBAtY = _aabb
+	_ageb.RegionSegment.BitmapHeight = _fgga
+	_ageb.RegionSegment.BitmapWidth = _bfg
+	_ageb._gcd = nil
+	_ageb.Bitmap = nil
+	if _eadd != nil {
+		_ageb._aae = _eadd
+	}
+	if _fcdg != nil {
+		_ageb._acb = _fcdg
+	}
+	_da.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0047\u0049O\u004e\u005d\u0020\u0073\u0065\u0074P\u0061\u0072\u0061\u006d\u0065\u0074\u0065\u0072\u0073\u0020\u0053\u0044\u0041t\u003a\u0020\u0025\u0073", _ageb)
+}
+func (_aea *PatternDictionary) computeSegmentDataStructure() error {
+	_aea.DataOffset = _aea._fbdd.StreamPosition()
+	_aea.DataHeaderLength = _aea.DataOffset - _aea.DataHeaderOffset
+	_aea.DataLength = int64(_aea._fbdd.Length()) - _aea.DataHeaderLength
+	return nil
+}
+func (_gfff *Header) readNumberOfReferredToSegments(_bcbd _fg.StreamReader) (uint64, error) {
+	const _fcfe = "\u0072\u0065\u0061\u0064\u004e\u0075\u006d\u0062\u0065\u0072O\u0066\u0052\u0065\u0066\u0065\u0072\u0072e\u0064\u0054\u006f\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0073"
+	_abdc, _daege := _bcbd.ReadBits(3)
+	if _daege != nil {
+		return 0, _fd.Wrap(_daege, _fcfe, "\u0063\u006f\u0075n\u0074\u0020\u006f\u0066\u0020\u0072\u0074\u0073")
+	}
+	_abdc &= 0xf
+	var _dadef []byte
+	if _abdc <= 4 {
+		_dadef = make([]byte, 5)
+		for _fgcae := 0; _fgcae <= 4; _fgcae++ {
+			_beae, _ggead := _bcbd.ReadBit()
+			if _ggead != nil {
+				return 0, _fd.Wrap(_ggead, _fcfe, "\u0073\u0068\u006fr\u0074\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
+			}
+			_dadef[_fgcae] = byte(_beae)
+		}
+	} else {
+		_abdc, _daege = _bcbd.ReadBits(29)
+		if _daege != nil {
+			return 0, _daege
+		}
+		_abdc &= _f.MaxInt32
+		_gedd := (_abdc + 8) >> 3
+		_gedd <<= 3
+		_dadef = make([]byte, _gedd)
+		var _bgcd uint64
+		for _bgcd = 0; _bgcd < _gedd; _bgcd++ {
+			_ecda, _bgbc := _bcbd.ReadBit()
+			if _bgbc != nil {
+				return 0, _fd.Wrap(_bgbc, _fcfe, "l\u006f\u006e\u0067\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
+			}
+			_dadef[_bgcd] = byte(_ecda)
+		}
+	}
+	return _abdc, nil
+}
+func (_bgec *SymbolDictionary) decodeDirectlyThroughGenericRegion(_dgbf, _ebbe uint32) error {
+	if _bgec._eaeb == nil {
+		_bgec._eaeb = NewGenericRegion(_bgec._bcagf)
+	}
+	_bgec._eaeb.setParametersWithAt(false, byte(_bgec.SdTemplate), false, false, _bgec.SdATX, _bgec.SdATY, _dgbf, _ebbe, _bgec._bagf, _bgec._fffd)
+	return _bgec.addSymbol(_bgec._eaeb)
+}
+func (_fage *SymbolDictionary) setExportedSymbols(_dfdg []int) {
+	for _fdgce := uint32(0); _fdgce < _fage._gbbg+_fage.NumberOfNewSymbols; _fdgce++ {
+		if _dfdg[_fdgce] == 1 {
+			var _ggee *_d.Bitmap
+			if _fdgce < _fage._gbbg {
+				_ggee = _fage._cgfbb[_fdgce]
+			} else {
+				_ggee = _fage._gbga[_fdgce-_fage._gbbg]
+			}
+			_da.Log.Trace("\u005bS\u0059\u004dB\u004f\u004c\u002d\u0044I\u0043\u0054\u0049O\u004e\u0041\u0052\u0059\u005d\u0020\u0041\u0064\u0064 E\u0078\u0070\u006fr\u0074\u0065d\u0053\u0079\u006d\u0062\u006f\u006c:\u0020\u0027%\u0073\u0027", _ggee)
+			_fage._cba = append(_fage._cba, _ggee)
+		}
+	}
+}
+func (_cddba *Header) readDataStartOffset(_edfd _fg.StreamReader, _egbg OrganizationType) {
+	if _egbg == OSequential {
+		_cddba.SegmentDataStartOffset = uint64(_edfd.StreamPosition())
+	}
+}
+func (_ebc *GenericRefinementRegion) decodeTypicalPredictedLine(_gdf, _cfb, _ffb, _fedd, _cdf, _gda int) error {
+	_gdg := _gdf - int(_ebc.ReferenceDY)
+	_dbg := _ebc.ReferenceBitmap.GetByteIndex(0, _gdg)
+	_dcd := _ebc.RegionBitmap.GetByteIndex(0, _gdf)
+	var _gef error
+	switch _ebc.TemplateID {
+	case 0:
+		_gef = _ebc.decodeTypicalPredictedLineTemplate0(_gdf, _cfb, _ffb, _fedd, _cdf, _gda, _dcd, _gdg, _dbg)
+	case 1:
+		_gef = _ebc.decodeTypicalPredictedLineTemplate1(_gdf, _cfb, _ffb, _fedd, _cdf, _gda, _dcd, _gdg, _dbg)
+	}
+	return _gef
+}
+func (_aed *GenericRegion) GetRegionInfo() *RegionSegment { return _aed.RegionSegment }
+func (_fbec *Header) writeReferredToCount(_efea _fg.BinaryWriter) (_dddg int, _gegb error) {
+	const _dged = "w\u0072i\u0074\u0065\u0052\u0065\u0066\u0065\u0072\u0072e\u0064\u0054\u006f\u0043ou\u006e\u0074"
+	_fbec.RTSNumbers = make([]int, len(_fbec.RTSegments))
+	for _feee, _gbg := range _fbec.RTSegments {
+		_fbec.RTSNumbers[_feee] = int(_gbg.SegmentNumber)
+	}
+	if len(_fbec.RTSNumbers) <= 4 {
+		var _eacd byte
+		if len(_fbec.RetainBits) >= 1 {
+			_eacd = _fbec.RetainBits[0]
+		}
+		_eacd |= byte(len(_fbec.RTSNumbers)) << 5
+		if _gegb = _efea.WriteByte(_eacd); _gegb != nil {
+			return 0, _fd.Wrap(_gegb, _dged, "\u0073\u0068\u006fr\u0074\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
+		}
+		return 1, nil
+	}
+	_bac := uint32(len(_fbec.RTSNumbers))
+	_ceff := make([]byte, 4+_ca.Ceil(len(_fbec.RTSNumbers)+1, 8))
+	_bac |= 0x7 << 29
+	_fe.BigEndian.PutUint32(_ceff, _bac)
+	copy(_ceff[1:], _fbec.RetainBits)
+	_dddg, _gegb = _efea.Write(_ceff)
+	if _gegb != nil {
+		return 0, _fd.Wrap(_gegb, _dged, "l\u006f\u006e\u0067\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
+	}
+	return _dddg, nil
+}
+
+type templater interface {
+	form(_eebb, _fabb, _gcge, _cac, _gff int16) int16
+	setIndex(_dfd *_b.DecoderStats)
+}
+
+func (_ggef *TextRegion) decodeStripT() (_deeaf int64, _ccfd error) {
+	if _ggef.IsHuffmanEncoded {
+		if _ggef.SbHuffDT == 3 {
+			if _ggef._gfad == nil {
+				var _cafg int
+				if _ggef.SbHuffFS == 3 {
+					_cafg++
+				}
+				if _ggef.SbHuffDS == 3 {
+					_cafg++
+				}
+				_ggef._gfad, _ccfd = _ggef.getUserTable(_cafg)
+				if _ccfd != nil {
+					return 0, _ccfd
+				}
+			}
+			_deeaf, _ccfd = _ggef._gfad.Decode(_ggef._effb)
+			if _ccfd != nil {
+				return 0, _ccfd
+			}
+		} else {
+			var _deeg _ba.Tabler
+			_deeg, _ccfd = _ba.GetStandardTable(11 + int(_ggef.SbHuffDT))
+			if _ccfd != nil {
+				return 0, _ccfd
+			}
+			_deeaf, _ccfd = _deeg.Decode(_ggef._effb)
+			if _ccfd != nil {
+				return 0, _ccfd
+			}
+		}
+	} else {
+		var _eddda int32
+		_eddda, _ccfd = _ggef._dffe.DecodeInt(_ggef._bgad)
+		if _ccfd != nil {
+			return 0, _ccfd
+		}
+		_deeaf = int64(_eddda)
+	}
+	_deeaf *= int64(-_ggef.SbStrips)
+	return _deeaf, nil
+}
+func (_bebb *TextRegion) decodeRI() (int64, error) {
+	if !_bebb.UseRefinement {
+		return 0, nil
+	}
+	if _bebb.IsHuffmanEncoded {
+		_eaaf, _bagfb := _bebb._effb.ReadBit()
+		return int64(_eaaf), _bagfb
+	}
+	_ecge, _gcfb := _bebb._dffe.DecodeInt(_bebb._gbfge)
+	return int64(_ecge), _gcfb
+}
+func (_edff *PageInformationSegment) encodeStripingInformation(_ddbe _fg.BinaryWriter) (_cfc int, _efgf error) {
+	const _fgee = "\u0065n\u0063\u006f\u0064\u0065S\u0074\u0072\u0069\u0070\u0069n\u0067I\u006ef\u006f\u0072\u006d\u0061\u0074\u0069\u006fn"
+	if !_edff.IsStripe {
+		if _cfc, _efgf = _ddbe.Write([]byte{0x00, 0x00}); _efgf != nil {
+			return 0, _fd.Wrap(_efgf, _fgee, "n\u006f\u0020\u0073\u0074\u0072\u0069\u0070\u0069\u006e\u0067")
+		}
+		return _cfc, nil
+	}
+	_cbd := make([]byte, 2)
+	_fe.BigEndian.PutUint16(_cbd, _edff.MaxStripeSize|1<<15)
+	if _cfc, _efgf = _ddbe.Write(_cbd); _efgf != nil {
+		return 0, _fd.Wrapf(_efgf, _fgee, "\u0073\u0074\u0072i\u0070\u0069\u006e\u0067\u003a\u0020\u0025\u0064", _edff.MaxStripeSize)
+	}
+	return _cfc, nil
+}
+
+type template1 struct{}
+
+func (_effdd *PageInformationSegment) Init(h *Header, r _fg.StreamReader) (_fdec error) {
+	_effdd._ace = r
+	if _fdec = _effdd.parseHeader(); _fdec != nil {
+		return _fd.Wrap(_fdec, "P\u0061\u0067\u0065\u0049\u006e\u0066o\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0053\u0065g\u006d\u0065\u006et\u002eI\u006e\u0069\u0074", "")
+	}
+	return nil
+}
+func (_gcadd *SymbolDictionary) checkInput() error {
+	if _gcadd.SdHuffDecodeHeightSelection == 2 {
+		_da.Log.Debug("\u0053\u0079\u006d\u0062\u006fl\u0020\u0044\u0069\u0063\u0074i\u006fn\u0061\u0072\u0079\u0020\u0044\u0065\u0063\u006f\u0064\u0065\u0020\u0048\u0065\u0069\u0067\u0068\u0074\u0020\u0053e\u006c\u0065\u0063\u0074\u0069\u006f\u006e\u003a\u0020\u0025\u0064\u0020\u0076\u0061\u006c\u0075\u0065\u0020\u006e\u006f\u0074\u0020\u0070\u0065r\u006d\u0069\u0074\u0074\u0065\u0064", _gcadd.SdHuffDecodeHeightSelection)
+	}
+	if _gcadd.SdHuffDecodeWidthSelection == 2 {
+		_da.Log.Debug("\u0053\u0079\u006d\u0062\u006f\u006c\u0020\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079 \u0044\u0065\u0063\u006f\u0064\u0065\u0020\u0057\u0069\u0064t\u0068\u0020\u0053\u0065\u006c\u0065\u0063\u0074\u0069\u006f\u006e\u003a\u0020\u0025\u0064\u0020\u0076\u0061l\u0075\u0065\u0020\u006e\u006f\u0074 \u0070\u0065r\u006d\u0069t\u0074e\u0064", _gcadd.SdHuffDecodeWidthSelection)
+	}
+	if _gcadd.IsHuffmanEncoded {
+		if _gcadd.SdTemplate != 0 {
+			_da.Log.Debug("\u0053\u0044T\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0020\u003d\u0020\u0025\u0064\u0020\u0028\u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0062e \u0030\u0029", _gcadd.SdTemplate)
+		}
+		if !_gcadd.UseRefinementAggregation {
+			if !_gcadd.UseRefinementAggregation {
+				if _gcadd._gdae {
+					_da.Log.Debug("\u0049\u0073\u0043\u006f\u0064\u0069\u006e\u0067C\u006f\u006e\u0074ex\u0074\u0052\u0065\u0074\u0061\u0069n\u0065\u0064\u0020\u003d\u0020\u0074\u0072\u0075\u0065\u0020\u0028\u0073\u0068\u006f\u0075l\u0064\u0020\u0062\u0065\u0020\u0066\u0061\u006cs\u0065\u0029")
+					_gcadd._gdae = false
+				}
+				if _gcadd._gacg {
+					_da.Log.Debug("\u0069s\u0043\u006fd\u0069\u006e\u0067\u0043o\u006e\u0074\u0065x\u0074\u0055\u0073\u0065\u0064\u0020\u003d\u0020\u0074ru\u0065\u0020\u0028s\u0068\u006fu\u006c\u0064\u0020\u0062\u0065\u0020f\u0061\u006cs\u0065\u0029")
+					_gcadd._gacg = false
+				}
+			}
+		}
+	} else {
+		if _gcadd.SdHuffBMSizeSelection != 0 {
+			_da.Log.Debug("\u0053\u0064\u0048\u0075\u0066\u0066B\u004d\u0053\u0069\u007a\u0065\u0053\u0065\u006c\u0065\u0063\u0074\u0069\u006fn\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u0062\u0065\u0020\u0030")
+			_gcadd.SdHuffBMSizeSelection = 0
+		}
+		if _gcadd.SdHuffDecodeWidthSelection != 0 {
+			_da.Log.Debug("\u0053\u0064\u0048\u0075\u0066\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0057\u0069\u0064\u0074\u0068\u0053\u0065\u006c\u0065\u0063\u0074\u0069o\u006e\u0020\u0073\u0068\u006fu\u006c\u0064 \u0062\u0065\u0020\u0030")
+			_gcadd.SdHuffDecodeWidthSelection = 0
+		}
+		if _gcadd.SdHuffDecodeHeightSelection != 0 {
+			_da.Log.Debug("\u0053\u0064\u0048\u0075\u0066\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0048e\u0069\u0067\u0068\u0074\u0053\u0065l\u0065\u0063\u0074\u0069\u006f\u006e\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u0062\u0065\u0020\u0030")
+			_gcadd.SdHuffDecodeHeightSelection = 0
+		}
+	}
+	if !_gcadd.UseRefinementAggregation {
+		if _gcadd.SdrTemplate != 0 {
+			_da.Log.Debug("\u0053\u0044\u0052\u0054\u0065\u006d\u0070\u006c\u0061\u0074e\u0020\u003d\u0020\u0025\u0064\u0020\u0028s\u0068\u006f\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030\u0029", _gcadd.SdrTemplate)
+			_gcadd.SdrTemplate = 0
+		}
+	}
+	if !_gcadd.IsHuffmanEncoded || !_gcadd.UseRefinementAggregation {
+		if _gcadd.SdHuffAggInstanceSelection {
+			_da.Log.Debug("\u0053d\u0048\u0075f\u0066\u0041\u0067g\u0049\u006e\u0073\u0074\u0061\u006e\u0063e\u0053\u0065\u006c\u0065\u0063\u0074i\u006f\u006e\u0020\u003d\u0020\u0025\u0064\u0020\u0028\u0073\u0068o\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030\u0029", _gcadd.SdHuffAggInstanceSelection)
+		}
+	}
+	return nil
+}
+func (_cecb *TextRegion) GetRegionInfo() *RegionSegment { return _cecb.RegionInfo }
+func (_gebe *TextRegion) parseHeader() error {
+	var _bebd error
+	_da.Log.Trace("\u005b\u0054E\u0058\u0054\u0020\u0052E\u0047\u0049O\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045-\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0062\u0065\u0067\u0069n\u0073\u002e\u002e\u002e")
+	defer func() {
+		if _bebd != nil {
+			_da.Log.Trace("\u005b\u0054\u0045\u0058\u0054\u0020\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002d\u0048\u0045\u0041\u0044E\u0052\u005d\u0020\u0066\u0061i\u006c\u0065d\u002e\u0020\u0025\u0076", _bebd)
+		} else {
+			_da.Log.Trace("\u005b\u0054E\u0058\u0054\u0020\u0052E\u0047\u0049O\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045-\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0066\u0069\u006e\u0069s\u0068\u0065\u0064\u002e")
+		}
+	}()
+	if _bebd = _gebe.RegionInfo.parseHeader(); _bebd != nil {
+		return _bebd
+	}
+	if _bebd = _gebe.readRegionFlags(); _bebd != nil {
+		return _bebd
+	}
+	if _gebe.IsHuffmanEncoded {
+		if _bebd = _gebe.readHuffmanFlags(); _bebd != nil {
+			return _bebd
+		}
+	}
+	if _bebd = _gebe.readUseRefinement(); _bebd != nil {
+		return _bebd
+	}
+	if _bebd = _gebe.readAmountOfSymbolInstances(); _bebd != nil {
+		return _bebd
+	}
+	if _bebd = _gebe.getSymbols(); _bebd != nil {
+		return _bebd
+	}
+	if _bebd = _gebe.computeSymbolCodeLength(); _bebd != nil {
+		return _bebd
+	}
+	if _bebd = _gebe.checkInput(); _bebd != nil {
+		return _bebd
+	}
+	_da.Log.Trace("\u0025\u0073", _gebe.String())
+	return nil
+}
+func (_dgbe *TextRegion) setContexts(_cdbee *_b.DecoderStats, _gadb *_b.DecoderStats, _cafbg *_b.DecoderStats, _fcgg *_b.DecoderStats, _cccf *_b.DecoderStats, _bgged *_b.DecoderStats, _cadega *_b.DecoderStats, _dcgfd *_b.DecoderStats, _fgdc *_b.DecoderStats, _cbe *_b.DecoderStats) {
+	_dgbe._bgad = _gadb
+	_dgbe._geaa = _cafbg
+	_dgbe._dafb = _fcgg
+	_dgbe._dace = _cccf
+	_dgbe._egcff = _cadega
+	_dgbe._acgg = _dcgfd
+	_dgbe._beabb = _bgged
+	_dgbe._beda = _fgdc
+	_dgbe._bfbb = _cbe
+	_dgbe._aeed = _cdbee
+}
+func (_abae *TextRegion) computeSymbolCodeLength() error {
+	if _abae.IsHuffmanEncoded {
+		return _abae.symbolIDCodeLengths()
+	}
+	_abae._ebcb = int8(_f.Ceil(_f.Log(float64(_abae.NumberOfSymbols)) / _f.Log(2)))
+	return nil
+}
+func (_cbdf *TextRegion) readRegionFlags() error {
+	var (
+		_eace  int
+		_ffdcg uint64
+		_fcdd  error
+	)
+	_eace, _fcdd = _cbdf._effb.ReadBit()
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.SbrTemplate = int8(_eace)
+	_ffdcg, _fcdd = _cbdf._effb.ReadBits(5)
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.SbDsOffset = int8(_ffdcg)
+	if _cbdf.SbDsOffset > 0x0f {
+		_cbdf.SbDsOffset -= 0x20
+	}
+	_eace, _fcdd = _cbdf._effb.ReadBit()
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.DefaultPixel = int8(_eace)
+	_ffdcg, _fcdd = _cbdf._effb.ReadBits(2)
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.CombinationOperator = _d.CombinationOperator(int(_ffdcg) & 0x3)
+	_eace, _fcdd = _cbdf._effb.ReadBit()
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.IsTransposed = int8(_eace)
+	_ffdcg, _fcdd = _cbdf._effb.ReadBits(2)
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.ReferenceCorner = int16(_ffdcg) & 0x3
+	_ffdcg, _fcdd = _cbdf._effb.ReadBits(2)
+	if _fcdd != nil {
+		return _fcdd
+	}
+	_cbdf.LogSBStrips = int16(_ffdcg) & 0x3
+	_cbdf.SbStrips = 1 << uint(_cbdf.LogSBStrips)
+	_eace, _fcdd = _cbdf._effb.ReadBit()
+	if _fcdd != nil {
+		return _fcdd
+	}
+	if _eace == 1 {
+		_cbdf.UseRefinement = true
+	}
+	_eace, _fcdd = _cbdf._effb.ReadBit()
+	if _fcdd != nil {
+		return _fcdd
+	}
+	if _eace == 1 {
+		_cbdf.IsHuffmanEncoded = true
+	}
+	return nil
+}
+func (_edbc *SymbolDictionary) encodeNumSyms(_acd _fg.BinaryWriter) (_cfgdd int, _cefa error) {
+	const _fceg = "\u0065\u006e\u0063\u006f\u0064\u0065\u004e\u0075\u006d\u0053\u0079\u006d\u0073"
+	_eeag := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_eeag, _edbc.NumberOfExportedSymbols)
+	if _cfgdd, _cefa = _acd.Write(_eeag); _cefa != nil {
+		return _cfgdd, _fd.Wrap(_cefa, _fceg, "\u0065\u0078p\u006f\u0072\u0074e\u0064\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0073")
+	}
+	_fe.BigEndian.PutUint32(_eeag, _edbc.NumberOfNewSymbols)
+	_dcgf, _cefa := _acd.Write(_eeag)
+	if _cefa != nil {
+		return _cfgdd, _fd.Wrap(_cefa, _fceg, "n\u0065\u0077\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0073")
+	}
+	return _cfgdd + _dcgf, nil
+}
+func (_cdag *PageInformationSegment) readDefaultPixelValue() error {
+	_gfgbf, _cbc := _cdag._ace.ReadBit()
+	if _cbc != nil {
+		return _cbc
+	}
+	_cdag.DefaultPixelValue = uint8(_gfgbf & 0xf)
+	return nil
+}
+func (_bda *SymbolDictionary) getUserTable(_dbdf int) (_ba.Tabler, error) {
+	var _abfg int
+	for _, _afec := range _bda.Header.RTSegments {
+		if _afec.Type == 53 {
+			if _abfg == _dbdf {
+				_fbab, _gdeg := _afec.GetSegmentData()
+				if _gdeg != nil {
+					return nil, _gdeg
+				}
+				_fcdce := _fbab.(_ba.BasicTabler)
+				return _ba.NewEncodedTable(_fcdce)
+			}
+			_abfg++
+		}
+	}
+	return nil, nil
+}
+func (_dbcb *SymbolDictionary) addSymbol(_gdad Regioner) error {
+	_fcea, _bfdb := _gdad.GetRegionBitmap()
+	if _bfdb != nil {
+		return _bfdb
+	}
+	_dbcb._gbga[_dbcb._ffa] = _fcea
+	_dbcb._bded = append(_dbcb._bded, _fcea)
+	_da.Log.Trace("\u005b\u0053YM\u0042\u004f\u004c \u0044\u0049\u0043\u0054ION\u0041RY\u005d\u0020\u0041\u0064\u0064\u0065\u0064 s\u0079\u006d\u0062\u006f\u006c\u003a\u0020%\u0073", _fcea)
+	return nil
+}
+func (_dcdg *Header) readHeaderFlags() error {
+	const _fgef = "\u0072e\u0061d\u0048\u0065\u0061\u0064\u0065\u0072\u0046\u006c\u0061\u0067\u0073"
+	_cfeb, _gdfa := _dcdg.Reader.ReadBit()
+	if _gdfa != nil {
+		return _fd.Wrap(_gdfa, _fgef, "r\u0065\u0074\u0061\u0069\u006e\u0020\u0066\u006c\u0061\u0067")
+	}
+	if _cfeb != 0 {
+		_dcdg.RetainFlag = true
+	}
+	_cfeb, _gdfa = _dcdg.Reader.ReadBit()
+	if _gdfa != nil {
+		return _fd.Wrap(_gdfa, _fgef, "\u0070\u0061g\u0065\u0020\u0061s\u0073\u006f\u0063\u0069\u0061\u0074\u0069\u006f\u006e")
+	}
+	if _cfeb != 0 {
+		_dcdg.PageAssociationFieldSize = true
+	}
+	_dbfc, _gdfa := _dcdg.Reader.ReadBits(6)
+	if _gdfa != nil {
+		return _fd.Wrap(_gdfa, _fgef, "\u0073\u0065\u0067m\u0065\u006e\u0074\u0020\u0074\u0079\u0070\u0065")
+	}
+	_dcdg.Type = Type(int(_dbfc))
+	return nil
+}
+func (_fbfg *SymbolDictionary) Encode(w _fg.BinaryWriter) (_bab int, _eaag error) {
+	const _bagae = "\u0053\u0079\u006dbo\u006c\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u002e\u0045\u006e\u0063\u006f\u0064\u0065"
+	if _fbfg == nil {
+		return 0, _fd.Error(_bagae, "\u0073\u0079m\u0062\u006f\u006c\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066in\u0065\u0064")
+	}
+	if _bab, _eaag = _fbfg.encodeFlags(w); _eaag != nil {
+		return _bab, _fd.Wrap(_eaag, _bagae, "")
+	}
+	_gcad, _eaag := _fbfg.encodeATFlags(w)
+	if _eaag != nil {
+		return _bab, _fd.Wrap(_eaag, _bagae, "")
+	}
+	_bab += _gcad
+	if _gcad, _eaag = _fbfg.encodeRefinementATFlags(w); _eaag != nil {
+		return _bab, _fd.Wrap(_eaag, _bagae, "")
+	}
+	_bab += _gcad
+	if _gcad, _eaag = _fbfg.encodeNumSyms(w); _eaag != nil {
+		return _bab, _fd.Wrap(_eaag, _bagae, "")
+	}
+	_bab += _gcad
+	if _gcad, _eaag = _fbfg.encodeSymbols(w); _eaag != nil {
+		return _bab, _fd.Wrap(_eaag, _bagae, "")
+	}
+	_bab += _gcad
+	return _bab, nil
+}
+func (_edf *GenericRegion) overrideAtTemplate1(_afgag, _faga, _dabc, _eddd, _bde int) int {
+	_afgag &= 0x1FF7
+	if _edf.GBAtY[0] == 0 && _edf.GBAtX[0] >= -int8(_bde) {
+		_afgag |= (_eddd >> uint(7-(int8(_bde)+_edf.GBAtX[0])) & 0x1) << 3
+	} else {
+		_afgag |= int(_edf.getPixel(_faga+int(_edf.GBAtX[0]), _dabc+int(_edf.GBAtY[0]))) << 3
+	}
+	return _afgag
+}
+func (_aaca *SymbolDictionary) huffDecodeBmSize() (int64, error) {
+	if _aaca._afea == nil {
+		var (
+			_feca int
+			_faef error
+		)
+		if _aaca.SdHuffDecodeHeightSelection == 3 {
+			_feca++
+		}
+		if _aaca.SdHuffDecodeWidthSelection == 3 {
+			_feca++
+		}
+		_aaca._afea, _faef = _aaca.getUserTable(_feca)
+		if _faef != nil {
+			return 0, _faef
+		}
+	}
+	return _aaca._afea.Decode(_aaca._bcagf)
+}
+func (_ebagf *TextRegion) symbolIDCodeLengths() error {
+	var (
+		_ggff []*_ba.Code
+		_dbff uint64
+		_bcgc _ba.Tabler
+		_eafc error
+	)
+	for _bdcd := 0; _bdcd < 35; _bdcd++ {
+		_dbff, _eafc = _ebagf._effb.ReadBits(4)
+		if _eafc != nil {
+			return _eafc
+		}
+		_egeg := int(_dbff & 0xf)
+		if _egeg > 0 {
+			_ggff = append(_ggff, _ba.NewCode(int32(_egeg), 0, int32(_bdcd), false))
+		}
+	}
+	_bcgc, _eafc = _ba.NewFixedSizeTable(_ggff)
+	if _eafc != nil {
+		return _eafc
+	}
+	var (
+		_bbaa  int64
+		_acff  uint32
+		_edbbd []*_ba.Code
+		_degcc int64
+	)
+	for _acff < _ebagf.NumberOfSymbols {
+		_degcc, _eafc = _bcgc.Decode(_ebagf._effb)
+		if _eafc != nil {
+			return _eafc
+		}
+		if _degcc < 32 {
+			if _degcc > 0 {
+				_edbbd = append(_edbbd, _ba.NewCode(int32(_degcc), 0, int32(_acff), false))
+			}
+			_bbaa = _degcc
+			_acff++
+		} else {
+			var _eacf, _cgef int64
+			switch _degcc {
+			case 32:
+				_dbff, _eafc = _ebagf._effb.ReadBits(2)
+				if _eafc != nil {
+					return _eafc
+				}
+				_eacf = 3 + int64(_dbff)
+				if _acff > 0 {
+					_cgef = _bbaa
+				}
+			case 33:
+				_dbff, _eafc = _ebagf._effb.ReadBits(3)
+				if _eafc != nil {
+					return _eafc
+				}
+				_eacf = 3 + int64(_dbff)
+			case 34:
+				_dbff, _eafc = _ebagf._effb.ReadBits(7)
+				if _eafc != nil {
+					return _eafc
+				}
+				_eacf = 11 + int64(_dbff)
+			}
+			for _gbfe := 0; _gbfe < int(_eacf); _gbfe++ {
+				if _cgef > 0 {
+					_edbbd = append(_edbbd, _ba.NewCode(int32(_cgef), 0, int32(_acff), false))
+				}
+				_acff++
+			}
+		}
+	}
+	_ebagf._effb.Align()
+	_ebagf._gegc, _eafc = _ba.NewFixedSizeTable(_edbbd)
+	return _eafc
+}
+func (_eagg *TextRegion) decodeID() (int64, error) {
+	if _eagg.IsHuffmanEncoded {
+		if _eagg._gegc == nil {
+			_gbbfd, _gcged := _eagg._effb.ReadBits(byte(_eagg._ebcb))
+			return int64(_gbbfd), _gcged
+		}
+		return _eagg._gegc.Decode(_eagg._effb)
+	}
+	return _eagg._dffe.DecodeIAID(uint64(_eagg._ebcb), _eagg._beabb)
+}
+
+type EndOfStripe struct {
+	_dg _fg.StreamReader
+	_dc int
+}
+
+func (_baba *SymbolDictionary) setInSyms() error {
+	if _baba.Header.RTSegments != nil {
+		return _baba.retrieveImportSymbols()
+	}
+	_baba._cgfbb = make([]*_d.Bitmap, 0)
+	return nil
+}
+func (_baa *GenericRefinementRegion) Init(header *Header, r _fg.StreamReader) error {
+	_baa._cdg = header
+	_baa._geg = r
+	_baa.RegionInfo = NewRegionSegment(r)
+	return _baa.parseHeader()
+}
+func (_ggedd *PatternDictionary) parseHeader() error {
+	_da.Log.Trace("\u005b\u0050\u0041\u0054\u0054\u0045\u0052\u004e\u002d\u0044\u0049\u0043\u0054I\u004f\u004e\u0041\u0052\u0059\u005d[\u0070\u0061\u0072\u0073\u0065\u0048\u0065\u0061\u0064\u0065\u0072\u005d\u0020b\u0065\u0067\u0069\u006e")
+	defer func() {
+		_da.Log.Trace("\u005b\u0050\u0041T\u0054\u0045\u0052\u004e\u002d\u0044\u0049\u0043\u0054\u0049\u004f\u004e\u0041\u0052\u0059\u005d\u005b\u0070\u0061\u0072\u0073\u0065\u0048\u0065\u0061\u0064\u0065\u0072\u005d \u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
+	}()
+	_, _fbfd := _ggedd._fbdd.ReadBits(5)
+	if _fbfd != nil {
+		return _fbfd
+	}
+	if _fbfd = _ggedd.readTemplate(); _fbfd != nil {
+		return _fbfd
+	}
+	if _fbfd = _ggedd.readIsMMREncoded(); _fbfd != nil {
+		return _fbfd
+	}
+	if _fbfd = _ggedd.readPatternWidthAndHeight(); _fbfd != nil {
+		return _fbfd
+	}
+	if _fbfd = _ggedd.readGrayMax(); _fbfd != nil {
+		return _fbfd
+	}
+	if _fbfd = _ggedd.computeSegmentDataStructure(); _fbfd != nil {
+		return _fbfd
+	}
+	return _ggedd.checkInput()
+}
+func (_fegg *Header) subInputReader() (_fg.StreamReader, error) {
+	return _fg.NewSubstreamReader(_fegg.Reader, _fegg.SegmentDataStartOffset, _fegg.SegmentDataLength)
+}
+func (_eef *GenericRegion) Encode(w _fg.BinaryWriter) (_cgag int, _fce error) {
+	const _bdc = "G\u0065n\u0065\u0072\u0069\u0063\u0052\u0065\u0067\u0069o\u006e\u002e\u0045\u006eco\u0064\u0065"
+	if _eef.Bitmap == nil {
+		return 0, _fd.Error(_bdc, "\u0070\u0072\u006f\u0076id\u0065\u0064\u0020\u006e\u0069\u006c\u0020\u0062\u0069\u0074\u006d\u0061\u0070")
+	}
+	_cgf, _fce := _eef.RegionSegment.Encode(w)
+	if _fce != nil {
+		return 0, _fd.Wrap(_fce, _bdc, "\u0052\u0065\u0067\u0069\u006f\u006e\u0053\u0065\u0067\u006d\u0065\u006e\u0074")
+	}
+	_cgag += _cgf
+	if _fce = w.SkipBits(4); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "\u0073k\u0069p\u0020\u0072\u0065\u0073\u0065r\u0076\u0065d\u0020\u0062\u0069\u0074\u0073")
+	}
+	var _abd int
+	if _eef.IsTPGDon {
+		_abd = 1
+	}
+	if _fce = w.WriteBit(_abd); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "\u0074\u0070\u0067\u0064\u006f\u006e")
+	}
+	_abd = 0
+	if _fce = w.WriteBit(int(_eef.GBTemplate>>1) & 0x01); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "f\u0069r\u0073\u0074\u0020\u0067\u0062\u0074\u0065\u006dp\u006c\u0061\u0074\u0065 b\u0069\u0074")
+	}
+	if _fce = w.WriteBit(int(_eef.GBTemplate) & 0x01); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "s\u0065\u0063\u006f\u006ed \u0067b\u0074\u0065\u006d\u0070\u006ca\u0074\u0065\u0020\u0062\u0069\u0074")
+	}
+	if _eef.UseMMR {
+		_abd = 1
+	}
+	if _fce = w.WriteBit(_abd); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "u\u0073\u0065\u0020\u004d\u004d\u0052\u0020\u0062\u0069\u0074")
+	}
+	_cgag++
+	if _cgf, _fce = _eef.writeGBAtPixels(w); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "")
+	}
+	_cgag += _cgf
+	_gbbd := _ga.New()
+	if _fce = _gbbd.EncodeBitmap(_eef.Bitmap, _eef.IsTPGDon); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "")
+	}
+	_gbbd.Final()
+	var _ecd int64
+	if _ecd, _fce = _gbbd.WriteTo(w); _fce != nil {
+		return _cgag, _fd.Wrap(_fce, _bdc, "")
+	}
+	_cgag += int(_ecd)
+	return _cgag, nil
+}
+func (_gbb *GenericRefinementRegion) String() string {
+	_dgfad := &_cc.Builder{}
+	_dgfad.WriteString("\u000a[\u0047E\u004e\u0045\u0052\u0049\u0043 \u0052\u0045G\u0049\u004f\u004e\u005d\u000a")
+	_dgfad.WriteString(_gbb.RegionInfo.String() + "\u000a")
+	_dgfad.WriteString(_e.Sprintf("\u0009\u002d \u0049\u0073\u0054P\u0047\u0052\u006f\u006e\u003a\u0020\u0025\u0076\u000a", _gbb.IsTPGROn))
+	_dgfad.WriteString(_e.Sprintf("\u0009-\u0020T\u0065\u006d\u0070\u006c\u0061t\u0065\u0049D\u003a\u0020\u0025\u0076\u000a", _gbb.TemplateID))
+	_dgfad.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0047\u0072\u0041\u0074\u0058\u003a\u0020\u0025\u0076\u000a", _gbb.GrAtX))
+	_dgfad.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0047\u0072\u0041\u0074\u0059\u003a\u0020\u0025\u0076\u000a", _gbb.GrAtY))
+	_dgfad.WriteString(_e.Sprintf("\u0009-\u0020R\u0065\u0066\u0065\u0072\u0065n\u0063\u0065D\u0058\u0020\u0025\u0076\u000a", _gbb.ReferenceDX))
+	_dgfad.WriteString(_e.Sprintf("\u0009\u002d\u0020\u0052ef\u0065\u0072\u0065\u006e\u0063\u0044\u0065\u0059\u003a\u0020\u0025\u0076\u000a", _gbb.ReferenceDY))
+	return _dgfad.String()
+}
+func (_bed *GenericRefinementRegion) setParameters(_dgfa *_b.DecoderStats, _bb *_b.Decoder, _edd int8, _bae, _afe uint32, _gba *_d.Bitmap, _aaa, _daf int32, _caa bool, _cdd []int8, _bagd []int8) {
+	_da.Log.Trace("\u005b\u0047\u0045NE\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052E\u0047I\u004fN\u005d \u0073\u0065\u0074\u0050\u0061\u0072\u0061\u006d\u0065\u0074\u0065\u0072\u0073")
+	if _dgfa != nil {
+		_bed._cdb = _dgfa
+	}
+	if _bb != nil {
+		_bed._gf = _bb
+	}
+	_bed.TemplateID = _edd
+	_bed.RegionInfo.BitmapWidth = _bae
+	_bed.RegionInfo.BitmapHeight = _afe
+	_bed.ReferenceBitmap = _gba
+	_bed.ReferenceDX = _aaa
+	_bed.ReferenceDY = _daf
+	_bed.IsTPGROn = _caa
+	_bed.GrAtX = _cdd
+	_bed.GrAtY = _bagd
+	_bed.RegionBitmap = nil
+	_da.Log.Trace("[\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052E\u0046\u002d\u0052\u0045\u0047\u0049\u004fN]\u0020\u0073\u0065\u0074P\u0061\u0072\u0061\u006d\u0065\u0074\u0065\u0072\u0073 f\u0069\u006ei\u0073\u0068\u0065\u0064\u002e\u0020\u0025\u0073", _bed)
+}
+func (_ccb *SymbolDictionary) encodeRefinementATFlags(_cfac _fg.BinaryWriter) (_eca int, _gbgc error) {
+	const _beb = "\u0065\u006e\u0063od\u0065\u0052\u0065\u0066\u0069\u006e\u0065\u006d\u0065\u006e\u0074\u0041\u0054\u0046\u006c\u0061\u0067\u0073"
+	if !_ccb.UseRefinementAggregation || _ccb.SdrTemplate != 0 {
+		return 0, nil
+	}
+	for _acea := 0; _acea < 2; _acea++ {
+		if _gbgc = _cfac.WriteByte(byte(_ccb.SdrATX[_acea])); _gbgc != nil {
+			return _eca, _fd.Wrapf(_gbgc, _beb, "\u0053\u0064\u0072\u0041\u0054\u0058\u005b\u0025\u0064\u005d", _acea)
+		}
+		_eca++
+		if _gbgc = _cfac.WriteByte(byte(_ccb.SdrATY[_acea])); _gbgc != nil {
+			return _eca, _fd.Wrapf(_gbgc, _beb, "\u0053\u0064\u0072\u0041\u0054\u0059\u005b\u0025\u0064\u005d", _acea)
+		}
+		_eca++
+	}
+	return _eca, nil
+}
+func (_aebga *TextRegion) InitEncode(globalSymbolsMap, localSymbolsMap map[int]int, comps []int, inLL *_d.Points, symbols *_d.Bitmaps, classIDs *_ca.IntSlice, boxes *_d.Boxes, width, height, symBits int) {
+	_aebga.RegionInfo = &RegionSegment{BitmapWidth: uint32(width), BitmapHeight: uint32(height)}
+	_aebga._fegdc = globalSymbolsMap
+	_aebga._cfaa = localSymbolsMap
+	_aebga._ddfbb = comps
+	_aebga._fbc = inLL
+	_aebga._aeee = symbols
+	_aebga._faed = classIDs
+	_aebga._ffbc = boxes
+	_aebga._aagc = symBits
+}
+func (_daeaf *TextRegion) initSymbols() error {
+	const _faeb = "i\u006e\u0069\u0074\u0053\u0079\u006d\u0062\u006f\u006c\u0073"
+	for _, _befd := range _daeaf.Header.RTSegments {
+		if _befd == nil {
+			return _fd.Error(_faeb, "\u006e\u0069\u006c\u0020\u0073\u0065\u0067\u006de\u006e\u0074\u0020pr\u006f\u0076\u0069\u0064\u0065\u0064 \u0066\u006f\u0072\u0020\u0074\u0068\u0065\u0020\u0074\u0065\u0078\u0074\u0020\u0072\u0065g\u0069\u006f\u006e\u0020\u0053\u0079\u006d\u0062o\u006c\u0073")
+		}
+		if _befd.Type == 0 {
+			_ebfe, _edae := _befd.GetSegmentData()
+			if _edae != nil {
+				return _fd.Wrap(_edae, _faeb, "")
+			}
+			_cgcc, _cbfd := _ebfe.(*SymbolDictionary)
+			if !_cbfd {
+				return _fd.Error(_faeb, "\u0072e\u0066\u0065r\u0072\u0065\u0064 \u0054\u006f\u0020\u0053\u0065\u0067\u006de\u006e\u0074\u0020\u0069\u0073\u0020n\u006f\u0074\u0020\u0061\u0020\u0053\u0079\u006d\u0062\u006f\u006cD\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
+			}
+			_cgcc._fac = _daeaf._beabb
+			_eefe, _edae := _cgcc.GetDictionary()
+			if _edae != nil {
+				return _fd.Wrap(_edae, _faeb, "")
+			}
+			_daeaf.Symbols = append(_daeaf.Symbols, _eefe...)
+		}
+	}
+	_daeaf.NumberOfSymbols = uint32(len(_daeaf.Symbols))
+	return nil
+}
+func (_cfgd *PatternDictionary) extractPatterns(_dgeg *_d.Bitmap) error {
+	var _cab int
+	_afcb := make([]*_d.Bitmap, _cfgd.GrayMax+1)
+	for _cab <= int(_cfgd.GrayMax) {
+		_egcg := int(_cfgd.HdpWidth) * _cab
+		_afee := _c.Rect(_egcg, 0, _egcg+int(_cfgd.HdpWidth), int(_cfgd.HdpHeight))
+		_adad, _dgbd := _d.Extract(_afee, _dgeg)
+		if _dgbd != nil {
+			return _dgbd
+		}
+		_afcb[_cab] = _adad
+		_cab++
+	}
+	_cfgd.Patterns = _afcb
+	return nil
+}
+func (_bdbg *TableSegment) Init(h *Header, r _fg.StreamReader) error {
+	_bdbg._defgf = r
+	return _bdbg.parseHeader()
+}
+func (_aecd *PageInformationSegment) readMaxStripeSize() error {
+	_dcce, _ebfd := _aecd._ace.ReadBits(15)
+	if _ebfd != nil {
+		return _ebfd
+	}
+	_aecd.MaxStripeSize = uint16(_dcce & _f.MaxUint16)
+	return nil
+}
+
+type SegmentEncoder interface {
+	Encode(_decc _fg.BinaryWriter) (_fcbb int, _bdg error)
+}
+
+func (_bdec *PageInformationSegment) checkInput() error {
+	if _bdec.PageBMHeight == _f.MaxInt32 {
+		if !_bdec.IsStripe {
+			_da.Log.Debug("P\u0061\u0067\u0065\u0049\u006e\u0066\u006f\u0072\u006da\u0074\u0069\u006f\u006e\u0053\u0065\u0067me\u006e\u0074\u002e\u0049s\u0053\u0074\u0072\u0069\u0070\u0065\u0020\u0073\u0068ou\u006c\u0064 \u0062\u0065\u0020\u0074\u0072\u0075\u0065\u002e")
+		}
+	}
+	return nil
+}
+func (_fdb *Header) parse(_ffd Documenter, _edgb _fg.StreamReader, _cebe int64, _gcgf OrganizationType) (_cade error) {
+	const _gede = "\u0070\u0061\u0072s\u0065"
+	_da.Log.Trace("\u005b\u0053\u0045\u0047\u004d\u0045\u004e\u0054\u002d\u0048E\u0041\u0044\u0045\u0052\u005d\u005b\u0050A\u0052\u0053\u0045\u005d\u0020\u0042\u0065\u0067\u0069\u006e\u0073")
+	defer func() {
+		if _cade != nil {
+			_da.Log.Trace("\u005b\u0053\u0045GM\u0045\u004e\u0054\u002d\u0048\u0045\u0041\u0044\u0045R\u005d[\u0050A\u0052S\u0045\u005d\u0020\u0046\u0061\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0076", _cade)
+		} else {
+			_da.Log.Trace("\u005b\u0053\u0045\u0047\u004d\u0045\u004e\u0054\u002d\u0048\u0045\u0041\u0044\u0045\u0052]\u005bP\u0041\u0052\u0053\u0045\u005d\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
+		}
+	}()
+	_, _cade = _edgb.Seek(_cebe, _gc.SeekStart)
+	if _cade != nil {
+		return _fd.Wrap(_cade, _gede, "\u0073\u0065\u0065\u006b\u0020\u0073\u0074\u0061\u0072\u0074")
+	}
+	if _cade = _fdb.readSegmentNumber(_edgb); _cade != nil {
+		return _fd.Wrap(_cade, _gede, "")
+	}
+	if _cade = _fdb.readHeaderFlags(); _cade != nil {
+		return _fd.Wrap(_cade, _gede, "")
+	}
+	var _dbd uint64
+	_dbd, _cade = _fdb.readNumberOfReferredToSegments(_edgb)
+	if _cade != nil {
+		return _fd.Wrap(_cade, _gede, "")
+	}
+	_fdb.RTSNumbers, _cade = _fdb.readReferredToSegmentNumbers(_edgb, int(_dbd))
+	if _cade != nil {
+		return _fd.Wrap(_cade, _gede, "")
+	}
+	_cade = _fdb.readSegmentPageAssociation(_ffd, _edgb, _dbd, _fdb.RTSNumbers...)
+	if _cade != nil {
+		return _fd.Wrap(_cade, _gede, "")
+	}
+	if _fdb.Type != TEndOfFile {
+		if _cade = _fdb.readSegmentDataLength(_edgb); _cade != nil {
+			return _fd.Wrap(_cade, _gede, "")
+		}
+	}
+	_fdb.readDataStartOffset(_edgb, _gcgf)
+	_fdb.readHeaderLength(_edgb, _cebe)
+	_da.Log.Trace("\u0025\u0073", _fdb)
+	return nil
+}
+func (_adde *TableSegment) HtRS() int32 { return _adde._cgeg }
+func (_eff *GenericRegion) InitEncode(bm *_d.Bitmap, xLoc, yLoc, template int, duplicateLineRemoval bool) error {
+	const _eee = "\u0047e\u006e\u0065\u0072\u0069\u0063\u0052\u0065\u0067\u0069\u006f\u006e.\u0049\u006e\u0069\u0074\u0045\u006e\u0063\u006f\u0064\u0065"
+	if bm == nil {
+		return _fd.Error(_eee, "\u0070\u0072\u006f\u0076id\u0065\u0064\u0020\u006e\u0069\u006c\u0020\u0062\u0069\u0074\u006d\u0061\u0070")
+	}
+	if xLoc < 0 || yLoc < 0 {
+		return _fd.Error(_eee, "\u0078\u0020\u0061\u006e\u0064\u0020\u0079\u0020\u006c\u006f\u0063\u0061\u0074i\u006f\u006e\u0020\u006d\u0075\u0073t\u0020\u0062\u0065\u0020\u0067\u0072\u0065\u0061\u0074\u0065\u0072\u0020\u0074h\u0061\u006e\u0020\u0030")
+	}
+	_eff.Bitmap = bm
+	_eff.GBTemplate = byte(template)
+	switch _eff.GBTemplate {
+	case 0:
+		_eff.GBAtX = []int8{3, -3, 2, -2}
+		_eff.GBAtY = []int8{-1, -1, -2, -2}
+	case 1:
+		_eff.GBAtX = []int8{3}
+		_eff.GBAtY = []int8{-1}
+	case 2, 3:
+		_eff.GBAtX = []int8{2}
+		_eff.GBAtY = []int8{-1}
+	default:
+		return _fd.Errorf(_eee, "\u0070\u0072o\u0076\u0069\u0064\u0065\u0064 \u0074\u0065\u006d\u0070\u006ca\u0074\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006e\u006f\u0074\u0020\u0069\u006e\u0020\u0076\u0061\u006c\u0069\u0064\u0020\u0072\u0061\u006e\u0067\u0065\u0020\u007b\u0030\u002c\u0031\u002c\u0032\u002c\u0033\u007d", template)
+	}
+	_eff.RegionSegment = &RegionSegment{BitmapHeight: uint32(bm.Height), BitmapWidth: uint32(bm.Width), XLocation: uint32(xLoc), YLocation: uint32(yLoc)}
+	_eff.IsTPGDon = duplicateLineRemoval
+	return nil
+}
+func (_gaffc *HalftoneRegion) shiftAndFill(_cef int) int {
+	_cef >>= 8
+	if _cef < 0 {
+		_ggea := int(_f.Log(float64(_dfe(_cef))) / _f.Log(2))
+		_beaf := 31 - _ggea
+		for _gcaf := 1; _gcaf < _beaf; _gcaf++ {
+			_cef |= 1 << uint(31-_gcaf)
+		}
+	}
+	return _cef
 }
 
 type GenericRegion struct {
-	_degf            _g.StreamReader
+	_baf             _fg.StreamReader
 	DataHeaderOffset int64
 	DataHeaderLength int64
 	DataOffset       int64
@@ -2600,1526 +4449,627 @@ type GenericRegion struct {
 	GBAtX            []int8
 	GBAtY            []int8
 	GBAtOverride     []bool
-	_aaaf            bool
-	Bitmap           *_c.Bitmap
-	_ga              *_aa.Decoder
-	_bcae            *_aa.DecoderStats
-	_cgdc            *_ae.Decoder
+	_fgf             bool
+	Bitmap           *_d.Bitmap
+	_acb             *_b.Decoder
+	_aae             *_b.DecoderStats
+	_gcd             *_ad.Decoder
 }
 
-func (_fea *template1) setIndex(_cee *_aa.DecoderStats) { _cee.SetIndex(0x080) }
-func (_eggd *GenericRegion) writeGBAtPixels(_faf _g.BinaryWriter) (_fbag int, _cdc error) {
-	const _aac = "\u0077r\u0069t\u0065\u0047\u0042\u0041\u0074\u0050\u0069\u0078\u0065\u006c\u0073"
-	if _eggd.UseMMR {
-		return 0, nil
-	}
-	_cdcg := 1
-	if _eggd.GBTemplate == 0 {
-		_cdcg = 4
-	} else if _eggd.UseExtTemplates {
-		_cdcg = 12
-	}
-	if len(_eggd.GBAtX) != _cdcg {
-		return 0, _ac.Errorf(_aac, "\u0067\u0062\u0020\u0061\u0074\u0020\u0070\u0061\u0069\u0072\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0020d\u006f\u0065\u0073\u006e\u0027\u0074\u0020m\u0061\u0074\u0063\u0068\u0020\u0074\u006f\u0020\u0047\u0042\u0041t\u0058\u0020\u0073\u006c\u0069\u0063\u0065\u0020\u006c\u0065\u006e")
-	}
-	if len(_eggd.GBAtY) != _cdcg {
-		return 0, _ac.Errorf(_aac, "\u0067\u0062\u0020\u0061\u0074\u0020\u0070\u0061\u0069\u0072\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0020d\u006f\u0065\u0073\u006e\u0027\u0074\u0020m\u0061\u0074\u0063\u0068\u0020\u0074\u006f\u0020\u0047\u0042\u0041t\u0059\u0020\u0073\u006c\u0069\u0063\u0065\u0020\u006c\u0065\u006e")
-	}
-	for _fce := 0; _fce < _cdcg; _fce++ {
-		if _cdc = _faf.WriteByte(byte(_eggd.GBAtX[_fce])); _cdc != nil {
-			return _fbag, _ac.Wrap(_cdc, _aac, "w\u0072\u0069\u0074\u0065\u0020\u0047\u0042\u0041\u0074\u0058")
+func (_fcfed *TableSegment) HtHigh() int32 { return _fcfed._efgd }
+func (_gcf *GenericRefinementRegion) parseHeader() (_aaf error) {
+	_da.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0070\u0061\u0072s\u0069\u006e\u0067\u0020\u0048e\u0061\u0064e\u0072\u002e\u002e\u002e")
+	_dcb := _a.Now()
+	defer func() {
+		if _aaf == nil {
+			_da.Log.Trace("\u005b\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045G\u0049\u004f\u004e\u005d\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020h\u0065\u0061\u0064\u0065\u0072\u0020\u0066\u0069\u006e\u0069\u0073\u0068id\u0020\u0069\u006e\u003a\u0020\u0025\u0064\u0020\u006e\u0073", _a.Since(_dcb).Nanoseconds())
+		} else {
+			_da.Log.Trace("\u005b\u0047E\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0068\u0065\u0061\u0064\u0065\u0072\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0073", _aaf)
 		}
-		_fbag++
-		if _cdc = _faf.WriteByte(byte(_eggd.GBAtY[_fce])); _cdc != nil {
-			return _fbag, _ac.Wrap(_cdc, _aac, "w\u0072\u0069\u0074\u0065\u0020\u0047\u0042\u0041\u0074\u0059")
+	}()
+	if _aaf = _gcf.RegionInfo.parseHeader(); _aaf != nil {
+		return _aaf
+	}
+	_, _aaf = _gcf._geg.ReadBits(6)
+	if _aaf != nil {
+		return _aaf
+	}
+	_gcf.IsTPGROn, _aaf = _gcf._geg.ReadBool()
+	if _aaf != nil {
+		return _aaf
+	}
+	var _daa int
+	_daa, _aaf = _gcf._geg.ReadBit()
+	if _aaf != nil {
+		return _aaf
+	}
+	_gcf.TemplateID = int8(_daa)
+	switch _gcf.TemplateID {
+	case 0:
+		_gcf.Template = _gcf._dae
+		if _aaf = _gcf.readAtPixels(); _aaf != nil {
+			return
 		}
-		_fbag++
-	}
-	return _fbag, nil
-}
-func (_cdcgc *TextRegion) decodeIb(_gceg, _fdddd int64) (*_c.Bitmap, error) {
-	const _dabg = "\u0064\u0065\u0063\u006f\u0064\u0065\u0049\u0062"
-	var (
-		_gced  error
-		_gbgeb *_c.Bitmap
-	)
-	if _gceg == 0 {
-		if int(_fdddd) > len(_cdcgc.Symbols)-1 {
-			return nil, _ac.Error(_dabg, "\u0064\u0065\u0063\u006f\u0064\u0069\u006e\u0067\u0020\u0049\u0042\u0020\u0062\u0069\u0074\u006d\u0061\u0070\u002e\u0020\u0069\u006e\u0064\u0065x\u0020\u006f\u0075\u0074\u0020o\u0066\u0020r\u0061\u006e\u0067\u0065")
-		}
-		return _cdcgc.Symbols[int(_fdddd)], nil
-	}
-	var _fega, _gbee, _bcgg, _bdgb int64
-	_fega, _gced = _cdcgc.decodeRdw()
-	if _gced != nil {
-		return nil, _ac.Wrap(_gced, _dabg, "")
-	}
-	_gbee, _gced = _cdcgc.decodeRdh()
-	if _gced != nil {
-		return nil, _ac.Wrap(_gced, _dabg, "")
-	}
-	_bcgg, _gced = _cdcgc.decodeRdx()
-	if _gced != nil {
-		return nil, _ac.Wrap(_gced, _dabg, "")
-	}
-	_bdgb, _gced = _cdcgc.decodeRdy()
-	if _gced != nil {
-		return nil, _ac.Wrap(_gced, _dabg, "")
-	}
-	if _cdcgc.IsHuffmanEncoded {
-		if _, _gced = _cdcgc.decodeSymInRefSize(); _gced != nil {
-			return nil, _ac.Wrap(_gced, _dabg, "")
-		}
-		_cdcgc._ceegd.Align()
-	}
-	_bcaeb := _cdcgc.Symbols[_fdddd]
-	_eeeg := uint32(_bcaeb.Width)
-	_ecaa := uint32(_bcaeb.Height)
-	_gedd := int32(uint32(_fega)>>1) + int32(_bcgg)
-	_aefc := int32(uint32(_gbee)>>1) + int32(_bdgb)
-	if _cdcgc._baea == nil {
-		_cdcgc._baea = _agfb(_cdcgc._ceegd, nil)
-	}
-	_cdcgc._baea.setParameters(_cdcgc._gfd, _cdcgc._bbcea, _cdcgc.SbrTemplate, _eeeg+uint32(_fega), _ecaa+uint32(_gbee), _bcaeb, _gedd, _aefc, false, _cdcgc.SbrATX, _cdcgc.SbrATY)
-	_gbgeb, _gced = _cdcgc._baea.GetRegionBitmap()
-	if _gced != nil {
-		return nil, _ac.Wrap(_gced, _dabg, "\u0067\u0072\u0066")
-	}
-	if _cdcgc.IsHuffmanEncoded {
-		_cdcgc._ceegd.Align()
-	}
-	return _gbgeb, nil
-}
-func (_egd *RegionSegment) Encode(w _g.BinaryWriter) (_adcc int, _ebaf error) {
-	const _fddd = "R\u0065g\u0069\u006f\u006e\u0053\u0065\u0067\u006d\u0065n\u0074\u002e\u0045\u006eco\u0064\u0065"
-	_cggc := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_cggc, _egd.BitmapWidth)
-	_adcc, _ebaf = w.Write(_cggc)
-	if _ebaf != nil {
-		return 0, _ac.Wrap(_ebaf, _fddd, "\u0057\u0069\u0064t\u0068")
-	}
-	_bc.BigEndian.PutUint32(_cggc, _egd.BitmapHeight)
-	var _gbbd int
-	_gbbd, _ebaf = w.Write(_cggc)
-	if _ebaf != nil {
-		return 0, _ac.Wrap(_ebaf, _fddd, "\u0048\u0065\u0069\u0067\u0068\u0074")
-	}
-	_adcc += _gbbd
-	_bc.BigEndian.PutUint32(_cggc, _egd.XLocation)
-	_gbbd, _ebaf = w.Write(_cggc)
-	if _ebaf != nil {
-		return 0, _ac.Wrap(_ebaf, _fddd, "\u0058L\u006f\u0063\u0061\u0074\u0069\u006fn")
-	}
-	_adcc += _gbbd
-	_bc.BigEndian.PutUint32(_cggc, _egd.YLocation)
-	_gbbd, _ebaf = w.Write(_cggc)
-	if _ebaf != nil {
-		return 0, _ac.Wrap(_ebaf, _fddd, "\u0059L\u006f\u0063\u0061\u0074\u0069\u006fn")
-	}
-	_adcc += _gbbd
-	if _ebaf = w.WriteByte(byte(_egd.CombinaionOperator) & 0x07); _ebaf != nil {
-		return 0, _ac.Wrap(_ebaf, _fddd, "c\u006fm\u0062\u0069\u006e\u0061\u0074\u0069\u006f\u006e \u006f\u0070\u0065\u0072at\u006f\u0072")
-	}
-	_adcc++
-	return _adcc, nil
-}
-func (_fedd *TextRegion) Encode(w _g.BinaryWriter) (_bebf int, _gcag error) {
-	const _cdff = "\u0054\u0065\u0078\u0074\u0052\u0065\u0067\u0069\u006f\u006e\u002e\u0045n\u0063\u006f\u0064\u0065"
-	if _bebf, _gcag = _fedd.RegionInfo.Encode(w); _gcag != nil {
-		return _bebf, _ac.Wrap(_gcag, _cdff, "")
-	}
-	var _eegg int
-	if _eegg, _gcag = _fedd.encodeFlags(w); _gcag != nil {
-		return _bebf, _ac.Wrap(_gcag, _cdff, "")
-	}
-	_bebf += _eegg
-	if _eegg, _gcag = _fedd.encodeSymbols(w); _gcag != nil {
-		return _bebf, _ac.Wrap(_gcag, _cdff, "")
-	}
-	_bebf += _eegg
-	return _bebf, nil
-}
-func (_aee *GenericRefinementRegion) decodeTypicalPredictedLineTemplate0(_gcb, _ecf, _cd, _eg, _fbc, _ege, _dde, _cde, _eaf int) error {
-	var (
-		_bbc, _egef, _dgd, _bfd, _dfe, _gga int
-		_bdf                                byte
-		_dfdg                               error
-	)
-	if _gcb > 0 {
-		_bdf, _dfdg = _aee.RegionBitmap.GetByte(_dde - _cd)
-		if _dfdg != nil {
-			return _dfdg
-		}
-		_dgd = int(_bdf)
-	}
-	if _cde > 0 && _cde <= _aee.ReferenceBitmap.Height {
-		_bdf, _dfdg = _aee.ReferenceBitmap.GetByte(_eaf - _eg + _ege)
-		if _dfdg != nil {
-			return _dfdg
-		}
-		_bfd = int(_bdf) << 4
-	}
-	if _cde >= 0 && _cde < _aee.ReferenceBitmap.Height {
-		_bdf, _dfdg = _aee.ReferenceBitmap.GetByte(_eaf + _ege)
-		if _dfdg != nil {
-			return _dfdg
-		}
-		_dfe = int(_bdf) << 1
-	}
-	if _cde > -2 && _cde < _aee.ReferenceBitmap.Height-1 {
-		_bdf, _dfdg = _aee.ReferenceBitmap.GetByte(_eaf + _eg + _ege)
-		if _dfdg != nil {
-			return _dfdg
-		}
-		_gga = int(_bdf)
-	}
-	_bbc = ((_dgd >> 5) & 0x6) | ((_gga >> 2) & 0x30) | (_dfe & 0x180) | (_bfd & 0xc00)
-	var _gfe int
-	for _aff := 0; _aff < _fbc; _aff = _gfe {
-		var _bde int
-		_gfe = _aff + 8
-		var _gef int
-		if _gef = _ecf - _aff; _gef > 8 {
-			_gef = 8
-		}
-		_ffg := _gfe < _ecf
-		_agg := _gfe < _aee.ReferenceBitmap.Width
-		_dfda := _ege + 1
-		if _gcb > 0 {
-			_bdf = 0
-			if _ffg {
-				_bdf, _dfdg = _aee.RegionBitmap.GetByte(_dde - _cd + 1)
-				if _dfdg != nil {
-					return _dfdg
-				}
-			}
-			_dgd = (_dgd << 8) | int(_bdf)
-		}
-		if _cde > 0 && _cde <= _aee.ReferenceBitmap.Height {
-			var _fbb int
-			if _agg {
-				_bdf, _dfdg = _aee.ReferenceBitmap.GetByte(_eaf - _eg + _dfda)
-				if _dfdg != nil {
-					return _dfdg
-				}
-				_fbb = int(_bdf) << 4
-			}
-			_bfd = (_bfd << 8) | _fbb
-		}
-		if _cde >= 0 && _cde < _aee.ReferenceBitmap.Height {
-			var _abf int
-			if _agg {
-				_bdf, _dfdg = _aee.ReferenceBitmap.GetByte(_eaf + _dfda)
-				if _dfdg != nil {
-					return _dfdg
-				}
-				_abf = int(_bdf) << 1
-			}
-			_dfe = (_dfe << 8) | _abf
-		}
-		if _cde > -2 && _cde < (_aee.ReferenceBitmap.Height-1) {
-			_bdf = 0
-			if _agg {
-				_bdf, _dfdg = _aee.ReferenceBitmap.GetByte(_eaf + _eg + _dfda)
-				if _dfdg != nil {
-					return _dfdg
-				}
-			}
-			_gga = (_gga << 8) | int(_bdf)
-		}
-		for _fdb := 0; _fdb < _gef; _fdb++ {
-			var _eab int
-			_fbd := false
-			_eac := (_bbc >> 4) & 0x1ff
-			if _eac == 0x1ff {
-				_fbd = true
-				_eab = 1
-			} else if _eac == 0x00 {
-				_fbd = true
-			}
-			if !_fbd {
-				if _aee._age {
-					_egef = _aee.overrideAtTemplate0(_bbc, _aff+_fdb, _gcb, _bde, _fdb)
-					_aee._ef.SetIndex(int32(_egef))
-				} else {
-					_aee._ef.SetIndex(int32(_bbc))
-				}
-				_eab, _dfdg = _aee._fb.DecodeBit(_aee._ef)
-				if _dfdg != nil {
-					return _dfdg
-				}
-			}
-			_ecg := uint(7 - _fdb)
-			_bde |= _eab << _ecg
-			_bbc = ((_bbc & 0xdb6) << 1) | _eab | (_dgd>>_ecg+5)&0x002 | ((_gga>>_ecg + 2) & 0x010) | ((_dfe >> _ecg) & 0x080) | ((_bfd >> _ecg) & 0x400)
-		}
-		_dfdg = _aee.RegionBitmap.SetByte(_dde, byte(_bde))
-		if _dfdg != nil {
-			return _dfdg
-		}
-		_dde++
-		_eaf++
+	case 1:
+		_gcf.Template = _gcf._dec
 	}
 	return nil
 }
-func (_bffc *HalftoneRegion) combineGrayscalePlanes(_cbde []*_c.Bitmap, _cdeag int) error {
-	_eadc := 0
-	for _gcbc := 0; _gcbc < _cbde[_cdeag].Height; _gcbc++ {
-		for _faff := 0; _faff < _cbde[_cdeag].Width; _faff += 8 {
-			_gdga, _adfe := _cbde[_cdeag+1].GetByte(_eadc)
-			if _adfe != nil {
-				return _adfe
-			}
-			_ddcb, _adfe := _cbde[_cdeag].GetByte(_eadc)
-			if _adfe != nil {
-				return _adfe
-			}
-			_adfe = _cbde[_cdeag].SetByte(_eadc, _c.CombineBytes(_ddcb, _gdga, _c.CmbOpXor))
-			if _adfe != nil {
-				return _adfe
-			}
-			_eadc++
-		}
+func (_caab *PageInformationSegment) readCombinationOperatorOverrideAllowed() error {
+	_efd, _dgfg := _caab._ace.ReadBit()
+	if _dgfg != nil {
+		return _dgfg
+	}
+	if _efd == 1 {
+		_caab._eae = true
 	}
 	return nil
 }
-func (_dbaf *GenericRefinementRegion) getPixel(_bfb *_c.Bitmap, _cdb, _fge int) int {
-	if _cdb < 0 || _cdb >= _bfb.Width {
+func (_bgecd *SymbolDictionary) readAtPixels(_afce int) error {
+	_bgecd.SdATX = make([]int8, _afce)
+	_bgecd.SdATY = make([]int8, _afce)
+	var (
+		_ccdg byte
+		_fbda error
+	)
+	for _edbcb := 0; _edbcb < _afce; _edbcb++ {
+		_ccdg, _fbda = _bgecd._bcagf.ReadByte()
+		if _fbda != nil {
+			return _fbda
+		}
+		_bgecd.SdATX[_edbcb] = int8(_ccdg)
+		_ccdg, _fbda = _bgecd._bcagf.ReadByte()
+		if _fbda != nil {
+			return _fbda
+		}
+		_bgecd.SdATY[_edbcb] = int8(_ccdg)
+	}
+	return nil
+}
+
+type Type int
+
+func (_dfda *PageInformationSegment) CombinationOperator() _d.CombinationOperator {
+	return _dfda._aefgc
+}
+func (_bdcef *GenericRegion) getPixel(_fffe, _caae int) int8 {
+	if _fffe < 0 || _fffe >= _bdcef.Bitmap.Width {
 		return 0
 	}
-	if _fge < 0 || _fge >= _bfb.Height {
+	if _caae < 0 || _caae >= _bdcef.Bitmap.Height {
 		return 0
 	}
-	if _bfb.GetPixel(_cdb, _fge) {
+	if _bdcef.Bitmap.GetPixel(_fffe, _caae) {
 		return 1
 	}
 	return 0
 }
-func (_fdgc *SymbolDictionary) setRefinementAtPixels() error {
-	if !_fdgc.UseRefinementAggregation || _fdgc.SdrTemplate != 0 {
-		return nil
-	}
-	if _aecdf := _fdgc.readRefinementAtPixels(2); _aecdf != nil {
-		return _aecdf
-	}
-	return nil
-}
-func (_abb *Header) readReferredToSegmentNumbers(_cbba _g.StreamReader, _fbdc int) ([]int, error) {
-	const _dbagg = "\u0072\u0065\u0061\u0064R\u0065\u0066\u0065\u0072\u0072\u0065\u0064\u0054\u006f\u0053e\u0067m\u0065\u006e\u0074\u004e\u0075\u006d\u0062e\u0072\u0073"
-	_aef := make([]int, _fbdc)
-	if _fbdc > 0 {
-		_abb.RTSegments = make([]*Header, _fbdc)
+func (_ffee *Header) readReferredToSegmentNumbers(_cacf _fg.StreamReader, _eeab int) ([]int, error) {
+	const _dcdc = "\u0072\u0065\u0061\u0064R\u0065\u0066\u0065\u0072\u0072\u0065\u0064\u0054\u006f\u0053e\u0067m\u0065\u006e\u0074\u004e\u0075\u006d\u0062e\u0072\u0073"
+	_dgae := make([]int, _eeab)
+	if _eeab > 0 {
+		_ffee.RTSegments = make([]*Header, _eeab)
 		var (
-			_gefb uint64
-			_cfa  error
+			_dbbf uint64
+			_cdfg error
 		)
-		for _dag := 0; _dag < _fbdc; _dag++ {
-			_gefb, _cfa = _cbba.ReadBits(byte(_abb.referenceSize()) << 3)
-			if _cfa != nil {
-				return nil, _ac.Wrapf(_cfa, _dbagg, "\u0027\u0025\u0064\u0027 \u0072\u0065\u0066\u0065\u0072\u0072\u0065\u0064\u0020\u0073e\u0067m\u0065\u006e\u0074\u0020\u006e\u0075\u006db\u0065\u0072", _dag)
+		for _geaf := 0; _geaf < _eeab; _geaf++ {
+			_dbbf, _cdfg = _cacf.ReadBits(byte(_ffee.referenceSize()) << 3)
+			if _cdfg != nil {
+				return nil, _fd.Wrapf(_cdfg, _dcdc, "\u0027\u0025\u0064\u0027 \u0072\u0065\u0066\u0065\u0072\u0072\u0065\u0064\u0020\u0073e\u0067m\u0065\u006e\u0074\u0020\u006e\u0075\u006db\u0065\u0072", _geaf)
 			}
-			_aef[_dag] = int(_gefb & _f.MaxInt32)
+			_dgae[_geaf] = int(_dbbf & _f.MaxInt32)
 		}
 	}
-	return _aef, nil
+	return _dgae, nil
 }
-func (_aaafa *SymbolDictionary) encodeSymbols(_afcc _g.BinaryWriter) (_fdbe int, _dccf error) {
-	const _deefg = "\u0065\u006e\u0063o\u0064\u0065\u0053\u0079\u006d\u0062\u006f\u006c"
-	_eadd := _cg.New()
-	_eadd.Init()
-	_bcgf, _dccf := _aaafa._dfa.SelectByIndexes(_aaafa._eaac)
-	if _dccf != nil {
-		return 0, _ac.Wrap(_dccf, _deefg, "\u0069n\u0069\u0074\u0069\u0061\u006c")
+func (_abdd *SymbolDictionary) InitEncode(symbols *_d.Bitmaps, symbolList []int, symbolMap map[int]int, unborderSymbols bool) error {
+	const _bcefg = "S\u0079\u006d\u0062\u006f\u006c\u0044i\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u002eI\u006e\u0069\u0074E\u006ec\u006f\u0064\u0065"
+	_abdd.SdATX = []int8{3, -3, 2, -2}
+	_abdd.SdATY = []int8{-1, -1, -2, -2}
+	_abdd._dbag = symbols
+	_abdd._fagdd = make([]int, len(symbolList))
+	copy(_abdd._fagdd, symbolList)
+	if len(_abdd._fagdd) != _abdd._dbag.Size() {
+		return _fd.Error(_bcefg, "s\u0079\u006d\u0062\u006f\u006c\u0073\u0020\u0061\u006e\u0064\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u004ci\u0073\u0074\u0020\u006f\u0066\u0020\u0064\u0069\u0066\u0066er\u0065\u006e\u0074 \u0073i\u007a\u0065")
 	}
-	_begg := map[*_c.Bitmap]int{}
-	for _bgaf, _fddgc := range _bcgf.Values {
-		_begg[_fddgc] = _bgaf
-	}
-	_bcgf.SortByHeight()
-	var _fccf, _cdadf int
-	_cdcb, _dccf := _bcgf.GroupByHeight()
-	if _dccf != nil {
-		return 0, _ac.Wrap(_dccf, _deefg, "")
-	}
-	for _, _fcee := range _cdcb.Values {
-		_eeabb := _fcee.Values[0].Height
-		_ffgbe := _eeabb - _fccf
-		if _dccf = _eadd.EncodeInteger(_cg.IADH, _ffgbe); _dccf != nil {
-			return 0, _ac.Wrapf(_dccf, _deefg, "\u0049\u0041\u0044\u0048\u0020\u0066\u006f\u0072\u0020\u0064\u0068\u003a \u0027\u0025\u0064\u0027", _ffgbe)
-		}
-		_fccf = _eeabb
-		_ebfc, _fda := _fcee.GroupByWidth()
-		if _fda != nil {
-			return 0, _ac.Wrapf(_fda, _deefg, "\u0068\u0065\u0069g\u0068\u0074\u003a\u0020\u0027\u0025\u0064\u0027", _eeabb)
-		}
-		var _becg int
-		for _, _bcea := range _ebfc.Values {
-			for _, _aabff := range _bcea.Values {
-				_ceba := _aabff.Width
-				_ggb := _ceba - _becg
-				if _fda = _eadd.EncodeInteger(_cg.IADW, _ggb); _fda != nil {
-					return 0, _ac.Wrapf(_fda, _deefg, "\u0049\u0041\u0044\u0057\u0020\u0066\u006f\u0072\u0020\u0064\u0077\u003a \u0027\u0025\u0064\u0027", _ggb)
-				}
-				_becg += _ggb
-				if _fda = _eadd.EncodeBitmap(_aabff, false); _fda != nil {
-					return 0, _ac.Wrapf(_fda, _deefg, "H\u0065i\u0067\u0068\u0074\u003a\u0020\u0025\u0064\u0020W\u0069\u0064\u0074\u0068: \u0025\u0064", _eeabb, _ceba)
-				}
-				_daae := _begg[_aabff]
-				_aaafa._faeae[_daae] = _cdadf
-				_cdadf++
-			}
-		}
-		if _fda = _eadd.EncodeOOB(_cg.IADW); _fda != nil {
-			return 0, _ac.Wrap(_fda, _deefg, "\u0049\u0041\u0044\u0057")
-		}
-	}
-	if _dccf = _eadd.EncodeInteger(_cg.IAEX, 0); _dccf != nil {
-		return 0, _ac.Wrap(_dccf, _deefg, "\u0065\u0078p\u006f\u0072\u0074e\u0064\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0073")
-	}
-	if _dccf = _eadd.EncodeInteger(_cg.IAEX, len(_aaafa._eaac)); _dccf != nil {
-		return 0, _ac.Wrap(_dccf, _deefg, "\u006e\u0075\u006d\u0062\u0065\u0072\u0020\u006f\u0066\u0020\u0073\u0079m\u0062\u006f\u006c\u0073")
-	}
-	_eadd.Final()
-	_bfg, _dccf := _eadd.WriteTo(_afcc)
-	if _dccf != nil {
-		return 0, _ac.Wrap(_dccf, _deefg, "\u0077\u0072i\u0074\u0069\u006e\u0067 \u0065\u006ec\u006f\u0064\u0065\u0072\u0020\u0063\u006f\u006et\u0065\u0078\u0074\u0020\u0074\u006f\u0020\u0027\u0077\u0027\u0020\u0077r\u0069\u0074\u0065\u0072")
-	}
-	return int(_bfg), nil
-}
-func (_cad *SymbolDictionary) getSbSymCodeLen() int8 {
-	_bfca := int8(_f.Ceil(_f.Log(float64(_cad._fgfc+_cad.NumberOfNewSymbols)) / _f.Log(2)))
-	if _cad.IsHuffmanEncoded && _bfca < 1 {
-		return 1
-	}
-	return _bfca
-}
-func (_cdbgb *TextRegion) decodeSymInRefSize() (int64, error) {
-	const _cfgd = "\u0064e\u0063o\u0064\u0065\u0053\u0079\u006dI\u006e\u0052e\u0066\u0053\u0069\u007a\u0065"
-	if _cdbgb.SbHuffRSize == 0 {
-		_ggfd, _afec := _aag.GetStandardTable(1)
-		if _afec != nil {
-			return 0, _ac.Wrap(_afec, _cfgd, "")
-		}
-		return _ggfd.Decode(_cdbgb._ceegd)
-	}
-	if _cdbgb._ddfff == nil {
-		var (
-			_fbcdd int
-			_ffgda error
-		)
-		if _cdbgb.SbHuffFS == 3 {
-			_fbcdd++
-		}
-		if _cdbgb.SbHuffDS == 3 {
-			_fbcdd++
-		}
-		if _cdbgb.SbHuffDT == 3 {
-			_fbcdd++
-		}
-		if _cdbgb.SbHuffRDWidth == 3 {
-			_fbcdd++
-		}
-		if _cdbgb.SbHuffRDHeight == 3 {
-			_fbcdd++
-		}
-		if _cdbgb.SbHuffRDX == 3 {
-			_fbcdd++
-		}
-		if _cdbgb.SbHuffRDY == 3 {
-			_fbcdd++
-		}
-		_cdbgb._ddfff, _ffgda = _cdbgb.getUserTable(_fbcdd)
-		if _ffgda != nil {
-			return 0, _ac.Wrap(_ffgda, _cfgd, "")
-		}
-	}
-	_cafbg, _fgdbc := _cdbgb._ddfff.Decode(_cdbgb._ceegd)
-	if _fgdbc != nil {
-		return 0, _ac.Wrap(_fgdbc, _cfgd, "")
-	}
-	return _cafbg, nil
-}
-
-type PageInformationSegment struct {
-	_fabba            _g.StreamReader
-	PageBMHeight      int
-	PageBMWidth       int
-	ResolutionX       int
-	ResolutionY       int
-	_bddd             bool
-	_cba              _c.CombinationOperator
-	_cabb             bool
-	DefaultPixelValue uint8
-	_adfb             bool
-	IsLossless        bool
-	IsStripe          bool
-	MaxStripeSize     uint16
-}
-
-func (_dfbf *Header) parse(_gbbf Documenter, _bcfa _g.StreamReader, _bafc int64, _aega OrganizationType) (_egcfb error) {
-	const _afc = "\u0070\u0061\u0072s\u0065"
-	_gb.Log.Trace("\u005b\u0053\u0045\u0047\u004d\u0045\u004e\u0054\u002d\u0048E\u0041\u0044\u0045\u0052\u005d\u005b\u0050A\u0052\u0053\u0045\u005d\u0020\u0042\u0065\u0067\u0069\u006e\u0073")
-	defer func() {
-		if _egcfb != nil {
-			_gb.Log.Trace("\u005b\u0053\u0045GM\u0045\u004e\u0054\u002d\u0048\u0045\u0041\u0044\u0045R\u005d[\u0050A\u0052S\u0045\u005d\u0020\u0046\u0061\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0076", _egcfb)
-		} else {
-			_gb.Log.Trace("\u005b\u0053\u0045\u0047\u004d\u0045\u004e\u0054\u002d\u0048\u0045\u0041\u0044\u0045\u0052]\u005bP\u0041\u0052\u0053\u0045\u005d\u0020\u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064")
-		}
-	}()
-	_, _egcfb = _bcfa.Seek(_bafc, _de.SeekStart)
-	if _egcfb != nil {
-		return _ac.Wrap(_egcfb, _afc, "\u0073\u0065\u0065\u006b\u0020\u0073\u0074\u0061\u0072\u0074")
-	}
-	if _egcfb = _dfbf.readSegmentNumber(_bcfa); _egcfb != nil {
-		return _ac.Wrap(_egcfb, _afc, "")
-	}
-	if _egcfb = _dfbf.readHeaderFlags(); _egcfb != nil {
-		return _ac.Wrap(_egcfb, _afc, "")
-	}
-	var _ebef uint64
-	_ebef, _egcfb = _dfbf.readNumberOfReferredToSegments(_bcfa)
-	if _egcfb != nil {
-		return _ac.Wrap(_egcfb, _afc, "")
-	}
-	_dfbf.RTSNumbers, _egcfb = _dfbf.readReferredToSegmentNumbers(_bcfa, int(_ebef))
-	if _egcfb != nil {
-		return _ac.Wrap(_egcfb, _afc, "")
-	}
-	_egcfb = _dfbf.readSegmentPageAssociation(_gbbf, _bcfa, _ebef, _dfbf.RTSNumbers...)
-	if _egcfb != nil {
-		return _ac.Wrap(_egcfb, _afc, "")
-	}
-	if _dfbf.Type != TEndOfFile {
-		if _egcfb = _dfbf.readSegmentDataLength(_bcfa); _egcfb != nil {
-			return _ac.Wrap(_egcfb, _afc, "")
-		}
-	}
-	_dfbf.readDataStartOffset(_bcfa, _aega)
-	_dfbf.readHeaderLength(_bcfa, _bafc)
-	_gb.Log.Trace("\u0025\u0073", _dfbf)
+	_abdd.NumberOfNewSymbols = uint32(symbols.Size())
+	_abdd.NumberOfExportedSymbols = uint32(symbols.Size())
+	_abdd._dcbf = symbolMap
+	_abdd._cgbf = unborderSymbols
 	return nil
 }
-func (_ebeg *SymbolDictionary) setSymbolsArray() error {
-	if _ebeg._gdc == nil {
-		if _edde := _ebeg.retrieveImportSymbols(); _edde != nil {
-			return _edde
-		}
+func (_bdfb *TextRegion) decodeSymbolInstances() error {
+	_cfgb, _daea := _bdfb.decodeStripT()
+	if _daea != nil {
+		return _daea
 	}
-	if _ebeg._deeb == nil {
-		_ebeg._deeb = append(_ebeg._deeb, _ebeg._gdc...)
-	}
-	return nil
-}
-func (_bcaed *Header) readSegmentPageAssociation(_degbb Documenter, _gbcg _g.StreamReader, _gbg uint64, _ceb ...int) (_dgbd error) {
-	const _feeb = "\u0072\u0065\u0061\u0064\u0053\u0065\u0067\u006d\u0065\u006e\u0074P\u0061\u0067\u0065\u0041\u0073\u0073\u006f\u0063\u0069\u0061t\u0069\u006f\u006e"
-	if !_bcaed.PageAssociationFieldSize {
-		_ebgb, _ddcbc := _gbcg.ReadBits(8)
-		if _ddcbc != nil {
-			return _ac.Wrap(_ddcbc, _feeb, "\u0073\u0068\u006fr\u0074\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
-		}
-		_bcaed.PageAssociation = int(_ebgb & 0xFF)
-	} else {
-		_gaee, _eagef := _gbcg.ReadBits(32)
-		if _eagef != nil {
-			return _ac.Wrap(_eagef, _feeb, "l\u006f\u006e\u0067\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
-		}
-		_bcaed.PageAssociation = int(_gaee & _f.MaxInt32)
-	}
-	if _gbg == 0 {
-		return nil
-	}
-	if _bcaed.PageAssociation != 0 {
-		_bccb, _ddff := _degbb.GetPage(_bcaed.PageAssociation)
-		if _ddff != nil {
-			return _ac.Wrap(_ddff, _feeb, "\u0061s\u0073\u006f\u0063\u0069a\u0074\u0065\u0064\u0020\u0070a\u0067e\u0020n\u006f\u0074\u0020\u0066\u006f\u0075\u006ed")
-		}
-		var _cdbc int
-		for _gacc := uint64(0); _gacc < _gbg; _gacc++ {
-			_cdbc = _ceb[_gacc]
-			_bcaed.RTSegments[_gacc], _ddff = _bccb.GetSegment(_cdbc)
-			if _ddff != nil {
-				var _afdd error
-				_bcaed.RTSegments[_gacc], _afdd = _degbb.GetGlobalSegment(_cdbc)
-				if _afdd != nil {
-					return _ac.Wrapf(_ddff, _feeb, "\u0072\u0065\u0066\u0065\u0072\u0065n\u0063\u0065\u0020s\u0065\u0067\u006de\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075n\u0064\u0020\u0061\u0074\u0020pa\u0067\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006e\u006f\u0072\u0020\u0069\u006e\u0020\u0067\u006c\u006f\u0062\u0061\u006c\u0073", _bcaed.PageAssociation)
-				}
-			}
-		}
-		return nil
-	}
-	for _ffeg := uint64(0); _ffeg < _gbg; _ffeg++ {
-		_bcaed.RTSegments[_ffeg], _dgbd = _degbb.GetGlobalSegment(_ceb[_ffeg])
-		if _dgbd != nil {
-			return _ac.Wrapf(_dgbd, _feeb, "\u0067\u006c\u006f\u0062\u0061\u006c\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u003a\u0020\u0027\u0025d\u0027\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064", _ceb[_ffeg])
-		}
-	}
-	return nil
-}
-func (_debd *PageInformationSegment) readIsLossless() error {
-	_cgbb, _dad := _debd._fabba.ReadBit()
-	if _dad != nil {
-		return _dad
-	}
-	if _cgbb == 1 {
-		_debd.IsLossless = true
-	}
-	return nil
-}
-func (_bdgf *SymbolDictionary) setInSyms() error {
-	if _bdgf.Header.RTSegments != nil {
-		return _bdgf.retrieveImportSymbols()
-	}
-	_bdgf._gdc = make([]*_c.Bitmap, 0)
-	return nil
-}
-
-type TableSegment struct {
-	_fafc  _g.StreamReader
-	_dgecf int32
-	_gagg  int32
-	_fgfe  int32
-	_afgc  int32
-	_bed   int32
-}
-
-func (_bbega *SymbolDictionary) parseHeader() (_cag error) {
-	_gb.Log.Trace("\u005b\u0053\u0059\u004d\u0042\u004f\u004c \u0044\u0049\u0043T\u0049\u004f\u004e\u0041R\u0059\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e")
-	defer func() {
-		if _cag != nil {
-			_gb.Log.Trace("\u005bS\u0059\u004dB\u004f\u004c\u0020\u0044I\u0043\u0054\u0049O\u004e\u0041\u0052\u0059\u005d\u005b\u0050\u0041\u0052SE\u002d\u0048\u0045A\u0044\u0045R\u005d\u0020\u0066\u0061\u0069\u006ce\u0064\u002e \u0025\u0076", _cag)
-		} else {
-			_gb.Log.Trace("\u005b\u0053\u0059\u004d\u0042\u004f\u004c \u0044\u0049\u0043T\u0049\u004f\u004e\u0041R\u0059\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u002e")
-		}
-	}()
-	if _cag = _bbega.readRegionFlags(); _cag != nil {
-		return _cag
-	}
-	if _cag = _bbega.setAtPixels(); _cag != nil {
-		return _cag
-	}
-	if _cag = _bbega.setRefinementAtPixels(); _cag != nil {
-		return _cag
-	}
-	if _cag = _bbega.readNumberOfExportedSymbols(); _cag != nil {
-		return _cag
-	}
-	if _cag = _bbega.readNumberOfNewSymbols(); _cag != nil {
-		return _cag
-	}
-	if _cag = _bbega.setInSyms(); _cag != nil {
-		return _cag
-	}
-	if _bbega._bcce {
-		_dgec := _bbega.Header.RTSegments
-		for _gbed := len(_dgec) - 1; _gbed >= 0; _gbed-- {
-			if _dgec[_gbed].Type == 0 {
-				_fbcc, _dbb := _dgec[_gbed].SegmentData.(*SymbolDictionary)
-				if !_dbb {
-					_cag = _be.Errorf("\u0072\u0065\u006c\u0061\u0074\u0065\u0064\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074:\u0020\u0025\u0076\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020S\u0079\u006d\u0062\u006f\u006c\u0020\u0044\u0069\u0063\u0074\u0069\u006fna\u0072\u0079\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074", _dgec[_gbed])
-					return _cag
-				}
-				if _fbcc._bcce {
-					_bbega.setRetainedCodingContexts(_fbcc)
-				}
-				break
-			}
-		}
-	}
-	if _cag = _bbega.checkInput(); _cag != nil {
-		return _cag
-	}
-	return nil
-}
-func (_agdg *SymbolDictionary) retrieveImportSymbols() error {
-	for _, _dbdg := range _agdg.Header.RTSegments {
-		if _dbdg.Type == 0 {
-			_fgec, _decc := _dbdg.GetSegmentData()
-			if _decc != nil {
-				return _decc
-			}
-			_gfac, _gcad := _fgec.(*SymbolDictionary)
-			if !_gcad {
-				return _be.Errorf("\u0070\u0072\u006f\u0076\u0069\u0064\u0065\u0064\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0044\u0061\u0074a\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0053\u0079\u006d\u0062\u006f\u006c\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u0053\u0065\u0067m\u0065\u006e\u0074\u003a\u0020%\u0054", _fgec)
-			}
-			_gedba, _decc := _gfac.GetDictionary()
-			if _decc != nil {
-				return _be.Errorf("\u0072\u0065\u006c\u0061\u0074\u0065\u0064 \u0073\u0065\u0067m\u0065\u006e\u0074 \u0077\u0069t\u0068\u0020\u0069\u006e\u0064\u0065x\u003a %\u0064\u0020\u0067\u0065\u0074\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0073", _dbdg.SegmentNumber, _decc.Error())
-			}
-			_agdg._gdc = append(_agdg._gdc, _gedba...)
-			_agdg._fgfc += _gfac.NumberOfExportedSymbols
-		}
-	}
-	return nil
-}
-func (_cafb *TextRegion) decodeIds() (int64, error) {
-	const _badca = "\u0064e\u0063\u006f\u0064\u0065\u0049\u0064s"
-	if _cafb.IsHuffmanEncoded {
-		if _cafb.SbHuffDS == 3 {
-			if _cafb._eabed == nil {
-				_bdbe := 0
-				if _cafb.SbHuffFS == 3 {
-					_bdbe++
-				}
-				var _ffgf error
-				_cafb._eabed, _ffgf = _cafb.getUserTable(_bdbe)
-				if _ffgf != nil {
-					return 0, _ac.Wrap(_ffgf, _badca, "")
-				}
-			}
-			return _cafb._eabed.Decode(_cafb._ceegd)
-		}
-		_fadd, _dccbc := _aag.GetStandardTable(8 + int(_cafb.SbHuffDS))
-		if _dccbc != nil {
-			return 0, _ac.Wrap(_dccbc, _badca, "")
-		}
-		return _fadd.Decode(_cafb._ceegd)
-	}
-	_fafe, _dgcb := _cafb._bbcea.DecodeInt(_cafb._bcca)
-	if _dgcb != nil {
-		return 0, _ac.Wrap(_dgcb, _badca, "\u0063\u0078\u0049\u0041\u0044\u0053")
-	}
-	return int64(_fafe), nil
-}
-
-type GenericRefinementRegion struct {
-	_fa             templater
-	_bcab           templater
-	_ea             _g.StreamReader
-	_ff             *Header
-	RegionInfo      *RegionSegment
-	IsTPGROn        bool
-	TemplateID      int8
-	Template        templater
-	GrAtX           []int8
-	GrAtY           []int8
-	RegionBitmap    *_c.Bitmap
-	ReferenceBitmap *_c.Bitmap
-	ReferenceDX     int32
-	ReferenceDY     int32
-	_fb             *_aa.Decoder
-	_ef             *_aa.DecoderStats
-	_age            bool
-	_gbd            []bool
-}
-
-func (_gg *GenericRefinementRegion) decodeOptimized(_gge, _cga, _fae, _ge, _bg, _bfc, _eec int) error {
 	var (
-		_eeb error
-		_eae int
-		_aad int
+		_gfab int64
+		_adfb uint32
 	)
-	_ab := _gge - int(_gg.ReferenceDY)
-	if _fg := int(-_gg.ReferenceDX); _fg > 0 {
-		_eae = _fg
-	}
-	_dbd := _gg.ReferenceBitmap.GetByteIndex(_eae, _ab)
-	if _gg.ReferenceDX > 0 {
-		_aad = int(_gg.ReferenceDX)
-	}
-	_dc := _gg.RegionBitmap.GetByteIndex(_aad, _gge)
-	switch _gg.TemplateID {
-	case 0:
-		_eeb = _gg.decodeTemplate(_gge, _cga, _fae, _ge, _bg, _bfc, _eec, _dc, _ab, _dbd, _gg._fa)
-	case 1:
-		_eeb = _gg.decodeTemplate(_gge, _cga, _fae, _ge, _bg, _bfc, _eec, _dc, _ab, _dbd, _gg._bcab)
-	}
-	return _eeb
-}
-func (_cccb *PageInformationSegment) Init(h *Header, r _g.StreamReader) (_gcd error) {
-	_cccb._fabba = r
-	if _gcd = _cccb.parseHeader(); _gcd != nil {
-		return _ac.Wrap(_gcd, "P\u0061\u0067\u0065\u0049\u006e\u0066o\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0053\u0065g\u006d\u0065\u006et\u002eI\u006e\u0069\u0074", "")
-	}
-	return nil
-}
-
-const (
-	ORandom OrganizationType = iota
-	OSequential
-)
-
-func (_fffg *SymbolDictionary) setRetainedCodingContexts(_bdad *SymbolDictionary) {
-	_fffg._caaa = _bdad._caaa
-	_fffg.IsHuffmanEncoded = _bdad.IsHuffmanEncoded
-	_fffg.UseRefinementAggregation = _bdad.UseRefinementAggregation
-	_fffg.SdTemplate = _bdad.SdTemplate
-	_fffg.SdrTemplate = _bdad.SdrTemplate
-	_fffg.SdATX = _bdad.SdATX
-	_fffg.SdATY = _bdad.SdATY
-	_fffg.SdrATX = _bdad.SdrATX
-	_fffg.SdrATY = _bdad.SdrATY
-	_fffg._ebff = _bdad._ebff
-}
-func (_cace *PatternDictionary) GetDictionary() ([]*_c.Bitmap, error) {
-	if _cace.Patterns != nil {
-		return _cace.Patterns, nil
-	}
-	if !_cace.IsMMREncoded {
-		_cace.setGbAtPixels()
-	}
-	_geeca := NewGenericRegion(_cace._fad)
-	_geeca.setParametersMMR(_cace.IsMMREncoded, _cace.DataOffset, _cace.DataLength, uint32(_cace.HdpHeight), (_cace.GrayMax+1)*uint32(_cace.HdpWidth), _cace.HDTemplate, false, false, _cace.GBAtX, _cace.GBAtY)
-	_cebf, _bgaee := _geeca.GetRegionBitmap()
-	if _bgaee != nil {
-		return nil, _bgaee
-	}
-	if _bgaee = _cace.extractPatterns(_cebf); _bgaee != nil {
-		return nil, _bgaee
-	}
-	return _cace.Patterns, nil
-}
-func (_gddag *SymbolDictionary) decodeAggregate(_daga, _eefb uint32) error {
-	var (
-		_aacf int64
-		_agca error
-	)
-	if _gddag.IsHuffmanEncoded {
-		_aacf, _agca = _gddag.huffDecodeRefAggNInst()
-		if _agca != nil {
-			return _agca
+	for _adfb < _bdfb.NumberOfSymbolInstances {
+		_cffe, _gebb := _bdfb.decodeDT()
+		if _gebb != nil {
+			return _gebb
 		}
-	} else {
-		_ebgbb, _bggd := _gddag._caaa.DecodeInt(_gddag._efab)
-		if _bggd != nil {
-			return _bggd
-		}
-		_aacf = int64(_ebgbb)
-	}
-	if _aacf > 1 {
-		return _gddag.decodeThroughTextRegion(_daga, _eefb, uint32(_aacf))
-	} else if _aacf == 1 {
-		return _gddag.decodeRefinedSymbol(_daga, _eefb)
-	}
-	return nil
-}
-
-var _ _aag.BasicTabler = &TableSegment{}
-
-func (_dbc *PageInformationSegment) parseHeader() (_bcaag error) {
-	_gb.Log.Trace("\u005b\u0050\u0061\u0067\u0065I\u006e\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0053\u0065\u0067m\u0065\u006e\u0074\u005d\u0020\u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0048\u0065\u0061\u0064\u0065\u0072\u002e\u002e\u002e")
-	defer func() {
-		var _bffdb = "[\u0050\u0061\u0067\u0065\u0049\u006e\u0066\u006f\u0072m\u0061\u0074\u0069\u006f\u006e\u0053\u0065gm\u0065\u006e\u0074\u005d \u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0048\u0065ad\u0065\u0072 \u0046\u0069\u006e\u0069\u0073\u0068\u0065\u0064"
-		if _bcaag != nil {
-			_bffdb += "\u0020\u0077\u0069t\u0068\u0020\u0065\u0072\u0072\u006f\u0072\u0020" + _bcaag.Error()
-		} else {
-			_bffdb += "\u0020\u0073\u0075\u0063\u0063\u0065\u0073\u0073\u0066\u0075\u006c\u006c\u0079"
-		}
-		_gb.Log.Trace(_bffdb)
-	}()
-	if _bcaag = _dbc.readWidthAndHeight(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readResolution(); _bcaag != nil {
-		return _bcaag
-	}
-	_, _bcaag = _dbc._fabba.ReadBit()
-	if _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readCombinationOperatorOverrideAllowed(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readRequiresAuxiliaryBuffer(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readCombinationOperator(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readDefaultPixelValue(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readContainsRefinement(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readIsLossless(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readIsStriped(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.readMaxStripeSize(); _bcaag != nil {
-		return _bcaag
-	}
-	if _bcaag = _dbc.checkInput(); _bcaag != nil {
-		return _bcaag
-	}
-	_gb.Log.Trace("\u0025\u0073", _dbc)
-	return nil
-}
-func (_aab *GenericRefinementRegion) Init(header *Header, r _g.StreamReader) error {
-	_aab._ff = header
-	_aab._ea = r
-	_aab.RegionInfo = NewRegionSegment(r)
-	return _aab.parseHeader()
-}
-func (_abef *GenericRegion) Init(h *Header, r _g.StreamReader) error {
-	_abef.RegionSegment = NewRegionSegment(r)
-	_abef._degf = r
-	return _abef.parseHeader()
-}
-func (_ggfgg *PageInformationSegment) readWidthAndHeight() error {
-	_beef, _ffec := _ggfgg._fabba.ReadBits(32)
-	if _ffec != nil {
-		return _ffec
-	}
-	_ggfgg.PageBMWidth = int(_beef & _f.MaxInt32)
-	_beef, _ffec = _ggfgg._fabba.ReadBits(32)
-	if _ffec != nil {
-		return _ffec
-	}
-	_ggfgg.PageBMHeight = int(_beef & _f.MaxInt32)
-	return nil
-}
-func (_ddg *GenericRefinementRegion) decodeTemplate(_bcd, _dabd, _ed, _ecd, _beb, _ggf, _bfeb, _cfb, _bbf, _aed int, _cfg templater) (_ffd error) {
-	var (
-		_ecdc, _cgad, _gfc, _dec, _egc int16
-		_gbc, _bbe, _bfcc, _dcc        int
-		_bcaa                          byte
-	)
-	if _bbf >= 1 && (_bbf-1) < _ddg.ReferenceBitmap.Height {
-		_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed - _ecd)
-		if _ffd != nil {
-			return
-		}
-		_gbc = int(_bcaa)
-	}
-	if _bbf >= 0 && (_bbf) < _ddg.ReferenceBitmap.Height {
-		_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed)
-		if _ffd != nil {
-			return
-		}
-		_bbe = int(_bcaa)
-	}
-	if _bbf >= -1 && (_bbf+1) < _ddg.ReferenceBitmap.Height {
-		_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed + _ecd)
-		if _ffd != nil {
-			return
-		}
-		_bfcc = int(_bcaa)
-	}
-	_aed++
-	if _bcd >= 1 {
-		_bcaa, _ffd = _ddg.RegionBitmap.GetByte(_cfb - _ed)
-		if _ffd != nil {
-			return
-		}
-		_dcc = int(_bcaa)
-	}
-	_cfb++
-	_ddge := _ddg.ReferenceDX % 8
-	_eca := 6 + _ddge
-	_bae := _aed % _ecd
-	if _eca >= 0 {
-		if _eca < 8 {
-			_ecdc = int16(_gbc>>uint(_eca)) & 0x07
-		}
-		if _eca < 8 {
-			_cgad = int16(_bbe>>uint(_eca)) & 0x07
-		}
-		if _eca < 8 {
-			_gfc = int16(_bfcc>>uint(_eca)) & 0x07
-		}
-		if _eca == 6 && _bae > 1 {
-			if _bbf >= 1 && (_bbf-1) < _ddg.ReferenceBitmap.Height {
-				_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed - _ecd - 2)
-				if _ffd != nil {
-					return _ffd
+		_cfgb += _cffe
+		var _cdcb int64
+		_egcd := true
+		_bdfb._fbdbc = 0
+		for {
+			if _egcd {
+				_cdcb, _gebb = _bdfb.decodeDfs()
+				if _gebb != nil {
+					return _gebb
 				}
-				_ecdc |= int16(_bcaa<<2) & 0x04
-			}
-			if _bbf >= 0 && _bbf < _ddg.ReferenceBitmap.Height {
-				_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed - 2)
-				if _ffd != nil {
-					return _ffd
-				}
-				_cgad |= int16(_bcaa<<2) & 0x04
-			}
-			if _bbf >= -1 && _bbf+1 < _ddg.ReferenceBitmap.Height {
-				_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed + _ecd - 2)
-				if _ffd != nil {
-					return _ffd
-				}
-				_gfc |= int16(_bcaa<<2) & 0x04
-			}
-		}
-		if _eca == 0 {
-			_gbc = 0
-			_bbe = 0
-			_bfcc = 0
-			if _bae < _ecd-1 {
-				if _bbf >= 1 && _bbf-1 < _ddg.ReferenceBitmap.Height {
-					_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed - _ecd)
-					if _ffd != nil {
-						return _ffd
-					}
-					_gbc = int(_bcaa)
-				}
-				if _bbf >= 0 && _bbf < _ddg.ReferenceBitmap.Height {
-					_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed)
-					if _ffd != nil {
-						return _ffd
-					}
-					_bbe = int(_bcaa)
-				}
-				if _bbf >= -1 && _bbf+1 < _ddg.ReferenceBitmap.Height {
-					_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed + _ecd)
-					if _ffd != nil {
-						return _ffd
-					}
-					_bfcc = int(_bcaa)
-				}
-			}
-			_aed++
-		}
-	} else {
-		_ecdc = int16(_gbc<<1) & 0x07
-		_cgad = int16(_bbe<<1) & 0x07
-		_gfc = int16(_bfcc<<1) & 0x07
-		_gbc = 0
-		_bbe = 0
-		_bfcc = 0
-		if _bae < _ecd-1 {
-			if _bbf >= 1 && _bbf-1 < _ddg.ReferenceBitmap.Height {
-				_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed - _ecd)
-				if _ffd != nil {
-					return _ffd
-				}
-				_gbc = int(_bcaa)
-			}
-			if _bbf >= 0 && _bbf < _ddg.ReferenceBitmap.Height {
-				_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed)
-				if _ffd != nil {
-					return _ffd
-				}
-				_bbe = int(_bcaa)
-			}
-			if _bbf >= -1 && _bbf+1 < _ddg.ReferenceBitmap.Height {
-				_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed + _ecd)
-				if _ffd != nil {
-					return _ffd
-				}
-				_bfcc = int(_bcaa)
-			}
-			_aed++
-		}
-		_ecdc |= int16((_gbc >> 7) & 0x07)
-		_cgad |= int16((_bbe >> 7) & 0x07)
-		_gfc |= int16((_bfcc >> 7) & 0x07)
-	}
-	_dec = int16(_dcc >> 6)
-	_egc = 0
-	_fbdd := (2 - _ddge) % 8
-	_gbc <<= uint(_fbdd)
-	_bbe <<= uint(_fbdd)
-	_bfcc <<= uint(_fbdd)
-	_dcc <<= 2
-	var _ad int
-	for _add := 0; _add < _dabd; _add++ {
-		_cgf := _add & 0x07
-		_agge := _cfg.form(_ecdc, _cgad, _gfc, _dec, _egc)
-		if _ddg._age {
-			_bcaa, _ffd = _ddg.RegionBitmap.GetByte(_ddg.RegionBitmap.GetByteIndex(_add, _bcd))
-			if _ffd != nil {
-				return _ffd
-			}
-			_ddg._ef.SetIndex(int32(_ddg.overrideAtTemplate0(int(_agge), _add, _bcd, int(_bcaa), _cgf)))
-		} else {
-			_ddg._ef.SetIndex(int32(_agge))
-		}
-		_ad, _ffd = _ddg._fb.DecodeBit(_ddg._ef)
-		if _ffd != nil {
-			return _ffd
-		}
-		if _ffd = _ddg.RegionBitmap.SetPixel(_add, _bcd, byte(_ad)); _ffd != nil {
-			return _ffd
-		}
-		_ecdc = ((_ecdc << 1) | 0x01&int16(_gbc>>7)) & 0x07
-		_cgad = ((_cgad << 1) | 0x01&int16(_bbe>>7)) & 0x07
-		_gfc = ((_gfc << 1) | 0x01&int16(_bfcc>>7)) & 0x07
-		_dec = ((_dec << 1) | 0x01&int16(_dcc>>7)) & 0x07
-		_egc = int16(_ad)
-		if (_add-int(_ddg.ReferenceDX))%8 == 5 {
-			_gbc = 0
-			_bbe = 0
-			_bfcc = 0
-			if ((_add-int(_ddg.ReferenceDX))/8)+1 < _ddg.ReferenceBitmap.RowStride {
-				if _bbf >= 1 && (_bbf-1) < _ddg.ReferenceBitmap.Height {
-					_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed - _ecd)
-					if _ffd != nil {
-						return _ffd
-					}
-					_gbc = int(_bcaa)
-				}
-				if _bbf >= 0 && _bbf < _ddg.ReferenceBitmap.Height {
-					_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed)
-					if _ffd != nil {
-						return _ffd
-					}
-					_bbe = int(_bcaa)
-				}
-				if _bbf >= -1 && (_bbf+1) < _ddg.ReferenceBitmap.Height {
-					_bcaa, _ffd = _ddg.ReferenceBitmap.GetByte(_aed + _ecd)
-					if _ffd != nil {
-						return _ffd
-					}
-					_bfcc = int(_bcaa)
-				}
-			}
-			_aed++
-		} else {
-			_gbc <<= 1
-			_bbe <<= 1
-			_bfcc <<= 1
-		}
-		if _cgf == 5 && _bcd >= 1 {
-			if ((_add >> 3) + 1) >= _ddg.RegionBitmap.RowStride {
-				_dcc = 0
+				_gfab += _cdcb
+				_bdfb._fbdbc = _gfab
+				_egcd = false
 			} else {
-				_bcaa, _ffd = _ddg.RegionBitmap.GetByte(_cfb - _ed)
-				if _ffd != nil {
-					return _ffd
+				_ddea, _dadca := _bdfb.decodeIds()
+				if _cd.Is(_dadca, _gd.ErrOOB) {
+					break
 				}
-				_dcc = int(_bcaa)
+				if _dadca != nil {
+					return _dadca
+				}
+				if _adfb >= _bdfb.NumberOfSymbolInstances {
+					break
+				}
+				_bdfb._fbdbc += _ddea + int64(_bdfb.SbDsOffset)
 			}
-			_cfb++
-		} else {
-			_dcc <<= 1
+			_dggg, _agecd := _bdfb.decodeCurrentT()
+			if _agecd != nil {
+				return _agecd
+			}
+			_gecg := _cfgb + _dggg
+			_fged, _agecd := _bdfb.decodeID()
+			if _agecd != nil {
+				return _agecd
+			}
+			_fcba, _agecd := _bdfb.decodeRI()
+			if _agecd != nil {
+				return _agecd
+			}
+			_dffd, _agecd := _bdfb.decodeIb(_fcba, _fged)
+			if _agecd != nil {
+				return _agecd
+			}
+			if _agecd = _bdfb.blit(_dffd, _gecg); _agecd != nil {
+				return _agecd
+			}
+			_adfb++
 		}
 	}
 	return nil
 }
-
-type EncodeInitializer interface{ InitEncode() }
-
-func (_db *EndOfStripe) Init(h *Header, r _g.StreamReader) error {
-	_db._fd = r
-	return _db.parseHeader(h, r)
-}
-func (_bbge *RegionSegment) Size() int { return 17 }
-func NewHeader(d Documenter, r _g.StreamReader, offset int64, organizationType OrganizationType) (*Header, error) {
-	_ffgab := &Header{Reader: r}
-	if _cgeg := _ffgab.parse(d, r, offset, organizationType); _cgeg != nil {
-		return nil, _ac.Wrap(_cgeg, "\u004ee\u0077\u0048\u0065\u0061\u0064\u0065r", "")
+func (_acae *TextRegion) Encode(w _fg.BinaryWriter) (_dagc int, _ebgc error) {
+	const _efef = "\u0054\u0065\u0078\u0074\u0052\u0065\u0067\u0069\u006f\u006e\u002e\u0045n\u0063\u006f\u0064\u0065"
+	if _dagc, _ebgc = _acae.RegionInfo.Encode(w); _ebgc != nil {
+		return _dagc, _fd.Wrap(_ebgc, _efef, "")
 	}
-	return _ffgab, nil
-}
-
-type Segmenter interface {
-	Init(_gbe *Header, _gedf _g.StreamReader) error
-}
-
-func (_cfee *TableSegment) HtHigh() int32 { return _cfee._bed }
-func (_geed *TextRegion) readAmountOfSymbolInstances() error {
-	_geddc, _bfcgc := _geed._ceegd.ReadBits(32)
-	if _bfcgc != nil {
-		return _bfcgc
+	var _aefa int
+	if _aefa, _ebgc = _acae.encodeFlags(w); _ebgc != nil {
+		return _dagc, _fd.Wrap(_ebgc, _efef, "")
 	}
-	_geed.NumberOfSymbolInstances = uint32(_geddc & _f.MaxUint32)
-	_bdceg := _geed.RegionInfo.BitmapWidth * _geed.RegionInfo.BitmapHeight
-	if _bdceg < _geed.NumberOfSymbolInstances {
-		_gb.Log.Debug("\u004c\u0069\u006d\u0069t\u0069\u006e\u0067\u0020t\u0068\u0065\u0020n\u0075\u006d\u0062\u0065\u0072\u0020o\u0066\u0020d\u0065\u0063\u006f\u0064e\u0064\u0020\u0073\u0079m\u0062\u006f\u006c\u0020\u0069n\u0073\u0074\u0061\u006e\u0063\u0065\u0073 \u0074\u006f\u0020\u006f\u006ee\u0020\u0070\u0065\u0072\u0020\u0070\u0069\u0078\u0065l\u0020\u0028\u0020\u0025\u0064\u0020\u0069\u006e\u0073\u0074\u0065\u0061\u0064\u0020\u006f\u0066\u0020\u0025\u0064\u0029", _bdceg, _geed.NumberOfSymbolInstances)
-		_geed.NumberOfSymbolInstances = _bdceg
+	_dagc += _aefa
+	if _aefa, _ebgc = _acae.encodeSymbols(w); _ebgc != nil {
+		return _dagc, _fd.Wrap(_ebgc, _efef, "")
+	}
+	_dagc += _aefa
+	return _dagc, nil
+}
+func (_gged *GenericRegion) setParameters(_cdfb bool, _ada, _badg int64, _gffa, _ffc uint32) {
+	_gged.IsMMREncoded = _cdfb
+	_gged.DataOffset = _ada
+	_gged.DataLength = _badg
+	_gged.RegionSegment.BitmapHeight = _gffa
+	_gged.RegionSegment.BitmapWidth = _ffc
+	_gged._gcd = nil
+	_gged.Bitmap = nil
+}
+func (_gafa *PatternDictionary) checkInput() error {
+	if _gafa.HdpHeight < 1 || _gafa.HdpWidth < 1 {
+		return _ge.New("in\u0076\u0061l\u0069\u0064\u0020\u0048\u0065\u0061\u0064\u0065\u0072 \u0056\u0061\u006c\u0075\u0065\u003a\u0020\u0057\u0069\u0064\u0074\u0068\u002f\u0048\u0065\u0069\u0067\u0068\u0074\u0020\u006d\u0075\u0073\u0074\u0020\u0062\u0065\u0020g\u0072e\u0061\u0074\u0065\u0072\u0020\u0074\u0068\u0061n\u0020z\u0065\u0072o")
+	}
+	if _gafa.IsMMREncoded {
+		if _gafa.HDTemplate != 0 {
+			_da.Log.Debug("\u0076\u0061\u0072\u0069\u0061\u0062\u006c\u0065\u0020\u0048\u0044\u0054\u0065\u006d\u0070\u006c\u0061\u0074e\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u006e\u006f\u0074\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e \u0074\u0068\u0065\u0020\u0076\u0061\u006c\u0075\u0065\u0020\u0030")
+		}
 	}
 	return nil
 }
-func (_ddfdd *SymbolDictionary) decodeRefinedSymbol(_cfca, _cacde uint32) error {
+func (_ffcb *TextRegion) readHuffmanFlags() error {
 	var (
-		_fcefe       int
-		_ebag, _edfg int32
+		_ecde int
+		_fecc uint64
+		_bee  error
 	)
-	if _ddfdd.IsHuffmanEncoded {
-		_gbfg, _ggga := _ddfdd._aege.ReadBits(byte(_ddfdd._ebafc))
-		if _ggga != nil {
-			return _ggga
-		}
-		_fcefe = int(_gbfg)
-		_fcdd, _ggga := _aag.GetStandardTable(15)
-		if _ggga != nil {
-			return _ggga
-		}
-		_cbae, _ggga := _fcdd.Decode(_ddfdd._aege)
-		if _ggga != nil {
-			return _ggga
-		}
-		_ebag = int32(_cbae)
-		_cbae, _ggga = _fcdd.Decode(_ddfdd._aege)
-		if _ggga != nil {
-			return _ggga
-		}
-		_edfg = int32(_cbae)
-		_fcdd, _ggga = _aag.GetStandardTable(1)
-		if _ggga != nil {
-			return _ggga
-		}
-		if _, _ggga = _fcdd.Decode(_ddfdd._aege); _ggga != nil {
-			return _ggga
-		}
-		_ddfdd._aege.Align()
-	} else {
-		_cgbgc, _cfbc := _ddfdd._caaa.DecodeIAID(uint64(_ddfdd._ebafc), _ddfdd._dcfa)
-		if _cfbc != nil {
-			return _cfbc
-		}
-		_fcefe = int(_cgbgc)
-		_ebag, _cfbc = _ddfdd._caaa.DecodeInt(_ddfdd._bcb)
-		if _cfbc != nil {
-			return _cfbc
-		}
-		_edfg, _cfbc = _ddfdd._caaa.DecodeInt(_ddfdd._gebb)
-		if _cfbc != nil {
-			return _cfbc
-		}
+	_, _bee = _ffcb._effb.ReadBit()
+	if _bee != nil {
+		return _bee
 	}
-	if _egcfbf := _ddfdd.setSymbolsArray(); _egcfbf != nil {
-		return _egcfbf
+	_ecde, _bee = _ffcb._effb.ReadBit()
+	if _bee != nil {
+		return _bee
 	}
-	_bdfgf := _ddfdd._deeb[_fcefe]
-	if _egccb := _ddfdd.decodeNewSymbols(_cfca, _cacde, _bdfgf, _ebag, _edfg); _egccb != nil {
-		return _egccb
+	_ffcb.SbHuffRSize = int8(_ecde)
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
 	}
-	if _ddfdd.IsHuffmanEncoded {
-		_ddfdd._aege.Align()
+	_ffcb.SbHuffRDY = int8(_fecc) & 0xf
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
 	}
+	_ffcb.SbHuffRDX = int8(_fecc) & 0xf
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
+	}
+	_ffcb.SbHuffRDHeight = int8(_fecc) & 0xf
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
+	}
+	_ffcb.SbHuffRDWidth = int8(_fecc) & 0xf
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
+	}
+	_ffcb.SbHuffDT = int8(_fecc) & 0xf
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
+	}
+	_ffcb.SbHuffDS = int8(_fecc) & 0xf
+	_fecc, _bee = _ffcb._effb.ReadBits(2)
+	if _bee != nil {
+		return _bee
+	}
+	_ffcb.SbHuffFS = int8(_fecc) & 0xf
 	return nil
 }
 
-var _ templater = &template1{}
+type PatternDictionary struct {
+	_fbdd            _fg.StreamReader
+	DataHeaderOffset int64
+	DataHeaderLength int64
+	DataOffset       int64
+	DataLength       int64
+	GBAtX            []int8
+	GBAtY            []int8
+	IsMMREncoded     bool
+	HDTemplate       byte
+	HdpWidth         byte
+	HdpHeight        byte
+	Patterns         []*_d.Bitmap
+	GrayMax          uint32
+}
 
-func (_deb *EndOfStripe) LineNumber() int { return _deb._bf }
-func (_dgdf *template0) form(_gbf, _debb, _abd, _gbaef, _geg int16) int16 {
-	return (_gbf << 10) | (_debb << 7) | (_abd << 4) | (_gbaef << 1) | _geg
-}
-func (_dabe *GenericRegion) overrideAtTemplate3(_ageg, _eaad, _aeb, _eee, _dgb int) int {
-	_ageg &= 0x3EF
-	if _dabe.GBAtY[0] == 0 && _dabe.GBAtX[0] >= -int8(_dgb) {
-		_ageg |= (_eee >> uint(7-(int8(_dgb)+_dabe.GBAtX[0])) & 0x1) << 4
-	} else {
-		_ageg |= int(_dabe.getPixel(_eaad+int(_dabe.GBAtX[0]), _aeb+int(_dabe.GBAtY[0]))) << 4
+func (_daff *PatternDictionary) readTemplate() error {
+	_dbfg, _dgbb := _daff._fbdd.ReadBits(2)
+	if _dgbb != nil {
+		return _dgbb
 	}
-	return _ageg
-}
-func (_ba *EndOfStripe) parseHeader(_e *Header, _af _g.StreamReader) error {
-	_deg, _afd := _ba._fd.ReadBits(32)
-	if _afd != nil {
-		return _afd
-	}
-	_ba._bf = int(_deg & _f.MaxInt32)
+	_daff.HDTemplate = byte(_dbfg)
 	return nil
 }
-
-type OrganizationType uint8
-
-func (_debf *TextRegion) checkInput() error {
-	const _cbeef = "\u0063\u0068\u0065\u0063\u006b\u0049\u006e\u0070\u0075\u0074"
-	if !_debf.UseRefinement {
-		if _debf.SbrTemplate != 0 {
-			_gb.Log.Debug("\u0053\u0062\u0072Te\u006d\u0070\u006c\u0061\u0074\u0065\u0020\u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030")
-			_debf.SbrTemplate = 0
-		}
+func (_gaec *PatternDictionary) readGrayMax() error {
+	_aced, _abde := _gaec._fbdd.ReadBits(32)
+	if _abde != nil {
+		return _abde
 	}
-	if _debf.SbHuffFS == 2 || _debf.SbHuffRDWidth == 2 || _debf.SbHuffRDHeight == 2 || _debf.SbHuffRDX == 2 || _debf.SbHuffRDY == 2 {
-		return _ac.Error(_cbeef, "h\u0075\u0066\u0066\u006d\u0061\u006e \u0066\u006c\u0061\u0067\u0020\u0076a\u006c\u0075\u0065\u0020\u0069\u0073\u0020n\u006f\u0074\u0020\u0070\u0065\u0072\u006d\u0069\u0074\u0074e\u0064")
-	}
-	if !_debf.UseRefinement {
-		if _debf.SbHuffRSize != 0 {
-			_gb.Log.Debug("\u0053\u0062\u0048uf\u0066\u0052\u0053\u0069\u007a\u0065\u0020\u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030")
-			_debf.SbHuffRSize = 0
-		}
-		if _debf.SbHuffRDY != 0 {
-			_gb.Log.Debug("S\u0062\u0048\u0075\u0066fR\u0044Y\u0020\u0073\u0068\u006f\u0075l\u0064\u0020\u0062\u0065\u0020\u0030")
-			_debf.SbHuffRDY = 0
-		}
-		if _debf.SbHuffRDX != 0 {
-			_gb.Log.Debug("S\u0062\u0048\u0075\u0066fR\u0044X\u0020\u0073\u0068\u006f\u0075l\u0064\u0020\u0062\u0065\u0020\u0030")
-			_debf.SbHuffRDX = 0
-		}
-		if _debf.SbHuffRDWidth != 0 {
-			_gb.Log.Debug("\u0053b\u0048\u0075\u0066\u0066R\u0044\u0057\u0069\u0064\u0074h\u0020s\u0068o\u0075\u006c\u0064\u0020\u0062\u0065\u00200")
-			_debf.SbHuffRDWidth = 0
-		}
-		if _debf.SbHuffRDHeight != 0 {
-			_gb.Log.Debug("\u0053\u0062\u0048\u0075\u0066\u0066\u0052\u0044\u0048\u0065\u0069g\u0068\u0074\u0020\u0073\u0068\u006f\u0075\u006c\u0064\u0020b\u0065\u0020\u0030")
-			_debf.SbHuffRDHeight = 0
-		}
-	}
+	_gaec.GrayMax = uint32(_aced & _f.MaxUint32)
 	return nil
 }
-
-var (
-	_bggb Segmenter
-	_geb  = map[Type]func() Segmenter{TSymbolDictionary: func() Segmenter { return &SymbolDictionary{} }, TIntermediateTextRegion: func() Segmenter { return &TextRegion{} }, TImmediateTextRegion: func() Segmenter { return &TextRegion{} }, TImmediateLosslessTextRegion: func() Segmenter { return &TextRegion{} }, TPatternDictionary: func() Segmenter { return &PatternDictionary{} }, TIntermediateHalftoneRegion: func() Segmenter { return &HalftoneRegion{} }, TImmediateHalftoneRegion: func() Segmenter { return &HalftoneRegion{} }, TImmediateLosslessHalftoneRegion: func() Segmenter { return &HalftoneRegion{} }, TIntermediateGenericRegion: func() Segmenter { return &GenericRegion{} }, TImmediateGenericRegion: func() Segmenter { return &GenericRegion{} }, TImmediateLosslessGenericRegion: func() Segmenter { return &GenericRegion{} }, TIntermediateGenericRefinementRegion: func() Segmenter { return &GenericRefinementRegion{} }, TImmediateGenericRefinementRegion: func() Segmenter { return &GenericRefinementRegion{} }, TImmediateLosslessGenericRefinementRegion: func() Segmenter { return &GenericRefinementRegion{} }, TPageInformation: func() Segmenter { return &PageInformationSegment{} }, TEndOfPage: func() Segmenter { return _bggb }, TEndOfStrip: func() Segmenter { return &EndOfStripe{} }, TEndOfFile: func() Segmenter { return _bggb }, TProfiles: func() Segmenter { return _bggb }, TTables: func() Segmenter { return &TableSegment{} }, TExtension: func() Segmenter { return _bggb }, TBitmap: func() Segmenter { return _bggb }}
-)
-
-func (_feec *PatternDictionary) readPatternWidthAndHeight() error {
-	_eega, _bdcg := _feec._fad.ReadByte()
-	if _bdcg != nil {
-		return _bdcg
+func (_gbgb *PatternDictionary) readPatternWidthAndHeight() error {
+	_fbac, _daddf := _gbgb._fbdd.ReadByte()
+	if _daddf != nil {
+		return _daddf
 	}
-	_feec.HdpWidth = _eega
-	_eega, _bdcg = _feec._fad.ReadByte()
-	if _bdcg != nil {
-		return _bdcg
+	_gbgb.HdpWidth = _fbac
+	_fbac, _daddf = _gbgb._fbdd.ReadByte()
+	if _daddf != nil {
+		return _daddf
 	}
-	_feec.HdpHeight = _eega
+	_gbgb.HdpHeight = _fbac
 	return nil
 }
-func (_gdee *SymbolDictionary) decodeDirectlyThroughGenericRegion(_dbda, _dadg uint32) error {
-	if _gdee._eaed == nil {
-		_gdee._eaed = NewGenericRegion(_gdee._aege)
-	}
-	_gdee._eaed.setParametersWithAt(false, byte(_gdee.SdTemplate), false, false, _gdee.SdATX, _gdee.SdATY, _dbda, _dadg, _gdee._ebff, _gdee._caaa)
-	return _gdee.addSymbol(_gdee._eaed)
-}
-func (_agfg *PageInformationSegment) encodeStripingInformation(_addb _g.BinaryWriter) (_dcaa int, _bbeda error) {
-	const _ffgd = "\u0065n\u0063\u006f\u0064\u0065S\u0074\u0072\u0069\u0070\u0069n\u0067I\u006ef\u006f\u0072\u006d\u0061\u0074\u0069\u006fn"
-	if !_agfg.IsStripe {
-		if _dcaa, _bbeda = _addb.Write([]byte{0x00, 0x00}); _bbeda != nil {
-			return 0, _ac.Wrap(_bbeda, _ffgd, "n\u006f\u0020\u0073\u0074\u0072\u0069\u0070\u0069\u006e\u0067")
+func (_gbed *TableSegment) StreamReader() _fg.StreamReader { return _gbed._defgf }
+func (_gdcd *TextRegion) checkInput() error {
+	const _bbec = "\u0063\u0068\u0065\u0063\u006b\u0049\u006e\u0070\u0075\u0074"
+	if !_gdcd.UseRefinement {
+		if _gdcd.SbrTemplate != 0 {
+			_da.Log.Debug("\u0053\u0062\u0072Te\u006d\u0070\u006c\u0061\u0074\u0065\u0020\u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030")
+			_gdcd.SbrTemplate = 0
 		}
-		return _dcaa, nil
 	}
-	_cbee := make([]byte, 2)
-	_bc.BigEndian.PutUint16(_cbee, _agfg.MaxStripeSize|1<<15)
-	if _dcaa, _bbeda = _addb.Write(_cbee); _bbeda != nil {
-		return 0, _ac.Wrapf(_bbeda, _ffgd, "\u0073\u0074\u0072i\u0070\u0069\u006e\u0067\u003a\u0020\u0025\u0064", _agfg.MaxStripeSize)
+	if _gdcd.SbHuffFS == 2 || _gdcd.SbHuffRDWidth == 2 || _gdcd.SbHuffRDHeight == 2 || _gdcd.SbHuffRDX == 2 || _gdcd.SbHuffRDY == 2 {
+		return _fd.Error(_bbec, "h\u0075\u0066\u0066\u006d\u0061\u006e \u0066\u006c\u0061\u0067\u0020\u0076a\u006c\u0075\u0065\u0020\u0069\u0073\u0020n\u006f\u0074\u0020\u0070\u0065\u0072\u006d\u0069\u0074\u0074e\u0064")
 	}
-	return _dcaa, nil
-}
-func (_dee *HalftoneRegion) computeX(_edfd, _ede int) int {
-	return _dee.shiftAndFill(int(_dee.HGridX) + _edfd*int(_dee.HRegionY) + _ede*int(_dee.HRegionX))
-}
-func (_defc *TextRegion) decodeRdw() (int64, error) {
-	const _abaa = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064w"
-	if _defc.IsHuffmanEncoded {
-		if _defc.SbHuffRDWidth == 3 {
-			if _defc._cdcgd == nil {
-				var (
-					_fffcg int
-					_febe  error
-				)
-				if _defc.SbHuffFS == 3 {
-					_fffcg++
-				}
-				if _defc.SbHuffDS == 3 {
-					_fffcg++
-				}
-				if _defc.SbHuffDT == 3 {
-					_fffcg++
-				}
-				_defc._cdcgd, _febe = _defc.getUserTable(_fffcg)
-				if _febe != nil {
-					return 0, _ac.Wrap(_febe, _abaa, "")
-				}
-			}
-			return _defc._cdcgd.Decode(_defc._ceegd)
+	if !_gdcd.UseRefinement {
+		if _gdcd.SbHuffRSize != 0 {
+			_da.Log.Debug("\u0053\u0062\u0048uf\u0066\u0052\u0053\u0069\u007a\u0065\u0020\u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0062\u0065\u0020\u0030")
+			_gdcd.SbHuffRSize = 0
 		}
-		_eaab, _gecgb := _aag.GetStandardTable(14 + int(_defc.SbHuffRDWidth))
-		if _gecgb != nil {
-			return 0, _ac.Wrap(_gecgb, _abaa, "")
+		if _gdcd.SbHuffRDY != 0 {
+			_da.Log.Debug("S\u0062\u0048\u0075\u0066fR\u0044Y\u0020\u0073\u0068\u006f\u0075l\u0064\u0020\u0062\u0065\u0020\u0030")
+			_gdcd.SbHuffRDY = 0
 		}
-		return _eaab.Decode(_defc._ceegd)
-	}
-	_bbdg, _ffbcd := _defc._bbcea.DecodeInt(_defc._bbgdf)
-	if _ffbcd != nil {
-		return 0, _ac.Wrap(_ffbcd, _abaa, "")
-	}
-	return int64(_bbdg), nil
-}
-
-var _ SegmentEncoder = &RegionSegment{}
-
-func (_edc *Header) CleanSegmentData() {
-	if _edc.SegmentData != nil {
-		_edc.SegmentData = nil
-	}
-}
-func (_dbfc *TextRegion) Init(header *Header, r _g.StreamReader) error {
-	_dbfc.Header = header
-	_dbfc._ceegd = r
-	_dbfc.RegionInfo = NewRegionSegment(_dbfc._ceegd)
-	return _dbfc.parseHeader()
-}
-func (_bagd *HalftoneRegion) renderPattern(_aebb [][]int) (_fdde error) {
-	var _gfecd, _eefa int
-	for _daff := 0; _daff < int(_bagd.HGridHeight); _daff++ {
-		for _gfgb := 0; _gfgb < int(_bagd.HGridWidth); _gfgb++ {
-			_gfecd = _bagd.computeX(_daff, _gfgb)
-			_eefa = _bagd.computeY(_daff, _gfgb)
-			_efg := _bagd.Patterns[_aebb[_daff][_gfgb]]
-			if _fdde = _c.Blit(_efg, _bagd.HalftoneRegionBitmap, _gfecd+int(_bagd.HGridX), _eefa+int(_bagd.HGridY), _bagd.CombinationOperator); _fdde != nil {
-				return _fdde
-			}
+		if _gdcd.SbHuffRDX != 0 {
+			_da.Log.Debug("S\u0062\u0048\u0075\u0066fR\u0044X\u0020\u0073\u0068\u006f\u0075l\u0064\u0020\u0062\u0065\u0020\u0030")
+			_gdcd.SbHuffRDX = 0
+		}
+		if _gdcd.SbHuffRDWidth != 0 {
+			_da.Log.Debug("\u0053b\u0048\u0075\u0066\u0066R\u0044\u0057\u0069\u0064\u0074h\u0020s\u0068o\u0075\u006c\u0064\u0020\u0062\u0065\u00200")
+			_gdcd.SbHuffRDWidth = 0
+		}
+		if _gdcd.SbHuffRDHeight != 0 {
+			_da.Log.Debug("\u0053\u0062\u0048\u0075\u0066\u0066\u0052\u0044\u0048\u0065\u0069g\u0068\u0074\u0020\u0073\u0068\u006f\u0075\u006c\u0064\u0020b\u0065\u0020\u0030")
+			_gdcd.SbHuffRDHeight = 0
 		}
 	}
 	return nil
 }
-func (_dcgc *PatternDictionary) readIsMMREncoded() error {
-	_gab, _ccd := _dcgc._fad.ReadBit()
-	if _ccd != nil {
-		return _ccd
-	}
-	if _gab != 0 {
-		_dcgc.IsMMREncoded = true
-	}
-	return nil
-}
-func (_bdfg *SymbolDictionary) encodeRefinementATFlags(_fbcd _g.BinaryWriter) (_dffe int, _dacdf error) {
-	const _bgdd = "\u0065\u006e\u0063od\u0065\u0052\u0065\u0066\u0069\u006e\u0065\u006d\u0065\u006e\u0074\u0041\u0054\u0046\u006c\u0061\u0067\u0073"
-	if !_bdfg.UseRefinementAggregation || _bdfg.SdrTemplate != 0 {
-		return 0, nil
-	}
-	for _dfac := 0; _dfac < 2; _dfac++ {
-		if _dacdf = _fbcd.WriteByte(byte(_bdfg.SdrATX[_dfac])); _dacdf != nil {
-			return _dffe, _ac.Wrapf(_dacdf, _bgdd, "\u0053\u0064\u0072\u0041\u0054\u0058\u005b\u0025\u0064\u005d", _dfac)
-		}
-		_dffe++
-		if _dacdf = _fbcd.WriteByte(byte(_bdfg.SdrATY[_dfac])); _dacdf != nil {
-			return _dffe, _ac.Wrapf(_dacdf, _bgdd, "\u0053\u0064\u0072\u0041\u0054\u0059\u005b\u0025\u0064\u005d", _dfac)
-		}
-		_dffe++
-	}
-	return _dffe, nil
-}
-func (_cge *GenericRegion) decodeTemplate3(_aadbg, _cabd, _dbag int, _beea, _ddc int) (_eef error) {
-	const _bgf = "\u0064e\u0063o\u0064\u0065\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0033"
+func (_gafe *Header) writeReferredToSegments(_gagd _fg.BinaryWriter) (_cdegd int, _feec error) {
+	const _abbb = "\u0077\u0072\u0069te\u0052\u0065\u0066\u0065\u0072\u0072\u0065\u0064\u0054\u006f\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0073"
 	var (
-		_ged, _dcce   int
-		_cbbc         int
-		_fdg          byte
-		_dfdac, _gddf int
+		_egf  uint16
+		_dfdc uint32
 	)
-	if _aadbg >= 1 {
-		_fdg, _eef = _cge.Bitmap.GetByte(_ddc)
-		if _eef != nil {
-			return _ac.Wrap(_eef, _bgf, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
+	_cbg := _gafe.referenceSize()
+	_eaae := 1
+	_bgg := make([]byte, _cbg)
+	for _, _gcgff := range _gafe.RTSNumbers {
+		switch _cbg {
+		case 4:
+			_dfdc = uint32(_gcgff)
+			_fe.BigEndian.PutUint32(_bgg, _dfdc)
+			_eaae, _feec = _gagd.Write(_bgg)
+			if _feec != nil {
+				return 0, _fd.Wrap(_feec, _abbb, "u\u0069\u006e\u0074\u0033\u0032\u0020\u0073\u0069\u007a\u0065")
+			}
+		case 2:
+			_egf = uint16(_gcgff)
+			_fe.BigEndian.PutUint16(_bgg, _egf)
+			_eaae, _feec = _gagd.Write(_bgg)
+			if _feec != nil {
+				return 0, _fd.Wrap(_feec, _abbb, "\u0075\u0069\u006e\u0074\u0031\u0036")
+			}
+		default:
+			if _feec = _gagd.WriteByte(byte(_gcgff)); _feec != nil {
+				return 0, _fd.Wrap(_feec, _abbb, "\u0075\u0069\u006et\u0038")
+			}
 		}
-		_cbbc = int(_fdg)
+		_cdegd += _eaae
 	}
-	_ged = (_cbbc >> 1) & 0x70
-	for _gdf := 0; _gdf < _dbag; _gdf = _dfdac {
-		var (
-			_fff  byte
-			_gcbb int
-		)
-		_dfdac = _gdf + 8
-		if _gaeb := _cabd - _gdf; _gaeb > 8 {
-			_gcbb = 8
-		} else {
-			_gcbb = _gaeb
-		}
-		if _aadbg >= 1 {
-			_cbbc <<= 8
-			if _dfdac < _cabd {
-				_fdg, _eef = _cge.Bitmap.GetByte(_ddc + 1)
-				if _eef != nil {
-					return _ac.Wrap(_eef, _bgf, "\u0069\u006e\u006e\u0065\u0072\u0020\u002d\u0020\u006c\u0069\u006e\u0065 \u003e\u003d\u0020\u0031")
-				}
-				_cbbc |= int(_fdg)
-			}
-		}
-		for _fddb := 0; _fddb < _gcbb; _fddb++ {
-			if _cge._aaaf {
-				_dcce = _cge.overrideAtTemplate3(_ged, _gdf+_fddb, _aadbg, int(_fff), _fddb)
-				_cge._bcae.SetIndex(int32(_dcce))
-			} else {
-				_cge._bcae.SetIndex(int32(_ged))
-			}
-			_gddf, _eef = _cge._ga.DecodeBit(_cge._bcae)
-			if _eef != nil {
-				return _ac.Wrap(_eef, _bgf, "")
-			}
-			_fff |= byte(_gddf) << byte(7-_fddb)
-			_ged = ((_ged & 0x1f7) << 1) | _gddf | ((_cbbc >> uint(8-_fddb)) & 0x010)
-		}
-		if _ebb := _cge.Bitmap.SetByte(_beea, _fff); _ebb != nil {
-			return _ac.Wrap(_ebb, _bgf, "")
-		}
-		_beea++
-		_ddc++
+	return _cdegd, nil
+}
+func (_cae *Header) readSegmentNumber(_bbf _fg.StreamReader) error {
+	const _ebcg = "\u0072\u0065\u0061\u0064\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u004eu\u006d\u0062\u0065\u0072"
+	_bbbb := make([]byte, 4)
+	_, _gddf := _bbf.Read(_bbbb)
+	if _gddf != nil {
+		return _fd.Wrap(_gddf, _ebcg, "")
 	}
+	_cae.SegmentNumber = _fe.BigEndian.Uint32(_bbbb)
 	return nil
 }
-func (_fcef *SymbolDictionary) String() string {
-	_affff := &_bb.Builder{}
-	_affff.WriteString("\n\u005b\u0053\u0059\u004dBO\u004c-\u0044\u0049\u0043\u0054\u0049O\u004e\u0041\u0052\u0059\u005d\u000a")
-	_affff.WriteString(_be.Sprintf("\u0009-\u0020S\u0064\u0072\u0054\u0065\u006dp\u006c\u0061t\u0065\u0020\u0025\u0076\u000a", _fcef.SdrTemplate))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0054\u0065\u006d\u0070\u006c\u0061\u0074e\u0020\u0025\u0076\u000a", _fcef.SdTemplate))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0069\u0073\u0043\u006f\u0064\u0069\u006eg\u0043\u006f\u006e\u0074\u0065\u0078\u0074R\u0065\u0074\u0061\u0069\u006e\u0065\u0064\u0020\u0025\u0076\u000a", _fcef._bebbf))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0069\u0073\u0043\u006f\u0064\u0069\u006e\u0067C\u006f\u006e\u0074\u0065\u0078\u0074\u0055\u0073\u0065\u0064 \u0025\u0076\u000a", _fcef._bcce))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0048u\u0066\u0066\u0041\u0067\u0067\u0049\u006e\u0073\u0074\u0061\u006e\u0063\u0065S\u0065\u006c\u0065\u0063\u0074\u0069\u006fn\u0020\u0025\u0076\u000a", _fcef.SdHuffAggInstanceSelection))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053d\u0048\u0075\u0066\u0066\u0042\u004d\u0053\u0069\u007a\u0065S\u0065l\u0065\u0063\u0074\u0069\u006f\u006e\u0020%\u0076\u000a", _fcef.SdHuffBMSizeSelection))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0048u\u0066\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0057\u0069\u0064\u0074\u0068S\u0065\u006c\u0065\u0063\u0074\u0069\u006fn\u0020\u0025\u0076\u000a", _fcef.SdHuffDecodeWidthSelection))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020Sd\u0048\u0075\u0066\u0066\u0044\u0065\u0063\u006f\u0064e\u0048e\u0069g\u0068t\u0053\u0065\u006c\u0065\u0063\u0074\u0069\u006f\u006e\u0020\u0025\u0076\u000a", _fcef.SdHuffDecodeHeightSelection))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020U\u0073\u0065\u0052\u0065f\u0069\u006e\u0065\u006d\u0065\u006e\u0074A\u0067\u0067\u0072\u0065\u0067\u0061\u0074\u0069\u006f\u006e\u0020\u0025\u0076\u000a", _fcef.UseRefinementAggregation))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020is\u0048\u0075\u0066\u0066\u006d\u0061\u006e\u0045\u006e\u0063\u006f\u0064\u0065\u0064\u0020\u0025\u0076\u000a", _fcef.IsHuffmanEncoded))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020S\u0064\u0041\u0054\u0058\u0020\u0025\u0076\u000a", _fcef.SdATX))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020S\u0064\u0041\u0054\u0059\u0020\u0025\u0076\u000a", _fcef.SdATY))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0072\u0041\u0054\u0058\u0020\u0025\u0076\u000a", _fcef.SdrATX))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0064\u0072\u0041\u0054\u0059\u0020\u0025\u0076\u000a", _fcef.SdrATY))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u004e\u0075\u006d\u0062\u0065\u0072\u004ff\u0045\u0078\u0070\u006f\u0072\u0074\u0065d\u0053\u0079\u006d\u0062\u006f\u006c\u0073\u0020\u0025\u0076\u000a", _fcef.NumberOfExportedSymbols))
-	_affff.WriteString(_be.Sprintf("\u0009-\u0020\u004e\u0075\u006db\u0065\u0072\u004f\u0066\u004ee\u0077S\u0079m\u0062\u006f\u006c\u0073\u0020\u0025\u0076\n", _fcef.NumberOfNewSymbols))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u004ff\u0049\u006d\u0070\u006f\u0072\u0074\u0065d\u0053\u0079\u006d\u0062\u006f\u006c\u0073\u0020\u0025\u0076\u000a", _fcef._fgfc))
-	_affff.WriteString(_be.Sprintf("\u0009\u002d \u006e\u0075\u006d\u0062\u0065\u0072\u004f\u0066\u0044\u0065\u0063\u006f\u0064\u0065\u0064\u0053\u0079\u006d\u0062\u006f\u006c\u0073 %\u0076\u000a", _fcef._geba))
-	return _affff.String()
+func (_cafb *Header) writeSegmentNumber(_agcc _fg.BinaryWriter) (_bcda int, _eccc error) {
+	_ggeb := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_ggeb, _cafb.SegmentNumber)
+	if _bcda, _eccc = _agcc.Write(_ggeb); _eccc != nil {
+		return 0, _fd.Wrap(_eccc, "\u0048e\u0061\u0064\u0065\u0072.\u0077\u0072\u0069\u0074\u0065S\u0065g\u006de\u006e\u0074\u004e\u0075\u006d\u0062\u0065r", "")
+	}
+	return _bcda, nil
 }
-func (_gfgc *GenericRefinementRegion) updateOverride() error {
-	if _gfgc.GrAtX == nil || _gfgc.GrAtY == nil {
-		return _ag.New("\u0041\u0054\u0020\u0070\u0069\u0078\u0065\u006c\u0073\u0020\u006e\u006ft\u0020\u0073\u0065\u0074")
+func (_fbddg *TextRegion) decodeIds() (int64, error) {
+	const _defa = "\u0064e\u0063\u006f\u0064\u0065\u0049\u0064s"
+	if _fbddg.IsHuffmanEncoded {
+		if _fbddg.SbHuffDS == 3 {
+			if _fbddg._cadeg == nil {
+				_cagc := 0
+				if _fbddg.SbHuffFS == 3 {
+					_cagc++
+				}
+				var _ccaf error
+				_fbddg._cadeg, _ccaf = _fbddg.getUserTable(_cagc)
+				if _ccaf != nil {
+					return 0, _fd.Wrap(_ccaf, _defa, "")
+				}
+			}
+			return _fbddg._cadeg.Decode(_fbddg._effb)
+		}
+		_ccagd, _bcgfc := _ba.GetStandardTable(8 + int(_fbddg.SbHuffDS))
+		if _bcgfc != nil {
+			return 0, _fd.Wrap(_bcgfc, _defa, "")
+		}
+		return _ccagd.Decode(_fbddg._effb)
 	}
-	if len(_gfgc.GrAtX) != len(_gfgc.GrAtY) {
-		return _ag.New("A\u0054\u0020\u0070\u0069xe\u006c \u0069\u006e\u0063\u006f\u006es\u0069\u0073\u0074\u0065\u006e\u0074")
+	_fafcb, _degg := _fbddg._dffe.DecodeInt(_fbddg._dafb)
+	if _degg != nil {
+		return 0, _fd.Wrap(_degg, _defa, "\u0063\u0078\u0049\u0041\u0044\u0053")
 	}
-	_gfgc._gbd = make([]bool, len(_gfgc.GrAtX))
-	switch _gfgc.TemplateID {
+	return int64(_fafcb), nil
+}
+func (_ddd *GenericRefinementRegion) decodeSLTP() (int, error) {
+	_ddd.Template.setIndex(_ddd._cdb)
+	return _ddd._gf.DecodeBit(_ddd._cdb)
+}
+func (_ccgb *RegionSegment) Encode(w _fg.BinaryWriter) (_fddf int, _ffcd error) {
+	const _ebdg = "R\u0065g\u0069\u006f\u006e\u0053\u0065\u0067\u006d\u0065n\u0074\u002e\u0045\u006eco\u0064\u0065"
+	_cdegb := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_cdegb, _ccgb.BitmapWidth)
+	_fddf, _ffcd = w.Write(_cdegb)
+	if _ffcd != nil {
+		return 0, _fd.Wrap(_ffcd, _ebdg, "\u0057\u0069\u0064t\u0068")
+	}
+	_fe.BigEndian.PutUint32(_cdegb, _ccgb.BitmapHeight)
+	var _fgge int
+	_fgge, _ffcd = w.Write(_cdegb)
+	if _ffcd != nil {
+		return 0, _fd.Wrap(_ffcd, _ebdg, "\u0048\u0065\u0069\u0067\u0068\u0074")
+	}
+	_fddf += _fgge
+	_fe.BigEndian.PutUint32(_cdegb, _ccgb.XLocation)
+	_fgge, _ffcd = w.Write(_cdegb)
+	if _ffcd != nil {
+		return 0, _fd.Wrap(_ffcd, _ebdg, "\u0058L\u006f\u0063\u0061\u0074\u0069\u006fn")
+	}
+	_fddf += _fgge
+	_fe.BigEndian.PutUint32(_cdegb, _ccgb.YLocation)
+	_fgge, _ffcd = w.Write(_cdegb)
+	if _ffcd != nil {
+		return 0, _fd.Wrap(_ffcd, _ebdg, "\u0059L\u006f\u0063\u0061\u0074\u0069\u006fn")
+	}
+	_fddf += _fgge
+	if _ffcd = w.WriteByte(byte(_ccgb.CombinaionOperator) & 0x07); _ffcd != nil {
+		return 0, _fd.Wrap(_ffcd, _ebdg, "c\u006fm\u0062\u0069\u006e\u0061\u0074\u0069\u006f\u006e \u006f\u0070\u0065\u0072at\u006f\u0072")
+	}
+	_fddf++
+	return _fddf, nil
+}
+func (_ffgf *RegionSegment) Size() int { return 17 }
+
+type Documenter interface {
+	GetPage(int) (Pager, error)
+	GetGlobalSegment(int) (*Header, error)
+}
+
+func (_daddc *TextRegion) readUseRefinement() error {
+	if !_daddc.UseRefinement || _daddc.SbrTemplate != 0 {
+		return nil
+	}
+	var (
+		_cgcba byte
+		_geea  error
+	)
+	_daddc.SbrATX = make([]int8, 2)
+	_daddc.SbrATY = make([]int8, 2)
+	_cgcba, _geea = _daddc._effb.ReadByte()
+	if _geea != nil {
+		return _geea
+	}
+	_daddc.SbrATX[0] = int8(_cgcba)
+	_cgcba, _geea = _daddc._effb.ReadByte()
+	if _geea != nil {
+		return _geea
+	}
+	_daddc.SbrATY[0] = int8(_cgcba)
+	_cgcba, _geea = _daddc._effb.ReadByte()
+	if _geea != nil {
+		return _geea
+	}
+	_daddc.SbrATX[1] = int8(_cgcba)
+	_cgcba, _geea = _daddc._effb.ReadByte()
+	if _geea != nil {
+		return _geea
+	}
+	_daddc.SbrATY[1] = int8(_cgcba)
+	return nil
+}
+func (_eadg *PatternDictionary) setGbAtPixels() {
+	if _eadg.HDTemplate == 0 {
+		_eadg.GBAtX = make([]int8, 4)
+		_eadg.GBAtY = make([]int8, 4)
+		_eadg.GBAtX[0] = -int8(_eadg.HdpWidth)
+		_eadg.GBAtY[0] = 0
+		_eadg.GBAtX[1] = -3
+		_eadg.GBAtY[1] = -1
+		_eadg.GBAtX[2] = 2
+		_eadg.GBAtY[2] = -2
+		_eadg.GBAtX[3] = -2
+		_eadg.GBAtY[3] = -2
+	} else {
+		_eadg.GBAtX = []int8{-int8(_eadg.HdpWidth)}
+		_eadg.GBAtY = []int8{0}
+	}
+}
+func (_gag *GenericRegion) decodeLine(_abe, _fafd, _bfc int) error {
+	const _ecdg = "\u0064\u0065\u0063\u006f\u0064\u0065\u004c\u0069\u006e\u0065"
+	_ggga := _gag.Bitmap.GetByteIndex(0, _abe)
+	_ebg := _ggga - _gag.Bitmap.RowStride
+	switch _gag.GBTemplate {
 	case 0:
-		if _gfgc.GrAtX[0] != -1 && _gfgc.GrAtY[0] != -1 {
-			_gfgc._gbd[0] = true
-			_gfgc._age = true
+		if !_gag.UseExtTemplates {
+			return _gag.decodeTemplate0a(_abe, _fafd, _bfc, _ggga, _ebg)
 		}
-		if _gfgc.GrAtX[1] != -1 && _gfgc.GrAtY[1] != -1 {
-			_gfgc._gbd[1] = true
-			_gfgc._age = true
-		}
+		return _gag.decodeTemplate0b(_abe, _fafd, _bfc, _ggga, _ebg)
 	case 1:
-		_gfgc._age = false
+		return _gag.decodeTemplate1(_abe, _fafd, _bfc, _ggga, _ebg)
+	case 2:
+		return _gag.decodeTemplate2(_abe, _fafd, _bfc, _ggga, _ebg)
+	case 3:
+		return _gag.decodeTemplate3(_abe, _fafd, _bfc, _ggga, _ebg)
+	}
+	return _fd.Errorf(_ecdg, "\u0069\u006e\u0076a\u006c\u0069\u0064\u0020G\u0042\u0054\u0065\u006d\u0070\u006c\u0061t\u0065\u0020\u0070\u0072\u006f\u0076\u0069\u0064\u0065\u0064\u003a\u0020\u0025\u0064", _gag.GBTemplate)
+}
+func (_de *EndOfStripe) Init(h *Header, r _fg.StreamReader) error {
+	_de._dg = r
+	return _de.parseHeader(h, r)
+}
+func (_ecbbg *PageInformationSegment) CombinationOperatorOverrideAllowed() bool { return _ecbbg._eae }
+func (_gdfb *Header) readSegmentPageAssociation(_aga Documenter, _dde _fg.StreamReader, _eddg uint64, _agcg ...int) (_cggd error) {
+	const _gdfbf = "\u0072\u0065\u0061\u0064\u0053\u0065\u0067\u006d\u0065\u006e\u0074P\u0061\u0067\u0065\u0041\u0073\u0073\u006f\u0063\u0069\u0061t\u0069\u006f\u006e"
+	if !_gdfb.PageAssociationFieldSize {
+		_bedc, _adda := _dde.ReadBits(8)
+		if _adda != nil {
+			return _fd.Wrap(_adda, _gdfbf, "\u0073\u0068\u006fr\u0074\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
+		}
+		_gdfb.PageAssociation = int(_bedc & 0xFF)
+	} else {
+		_aba, _ffce := _dde.ReadBits(32)
+		if _ffce != nil {
+			return _fd.Wrap(_ffce, _gdfbf, "l\u006f\u006e\u0067\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
+		}
+		_gdfb.PageAssociation = int(_aba & _f.MaxInt32)
+	}
+	if _eddg == 0 {
+		return nil
+	}
+	if _gdfb.PageAssociation != 0 {
+		_gecb, _degb := _aga.GetPage(_gdfb.PageAssociation)
+		if _degb != nil {
+			return _fd.Wrap(_degb, _gdfbf, "\u0061s\u0073\u006f\u0063\u0069a\u0074\u0065\u0064\u0020\u0070a\u0067e\u0020n\u006f\u0074\u0020\u0066\u006f\u0075\u006ed")
+		}
+		var _eagd int
+		for _bfb := uint64(0); _bfb < _eddg; _bfb++ {
+			_eagd = _agcg[_bfb]
+			_gdfb.RTSegments[_bfb], _degb = _gecb.GetSegment(_eagd)
+			if _degb != nil {
+				var _eegc error
+				_gdfb.RTSegments[_bfb], _eegc = _aga.GetGlobalSegment(_eagd)
+				if _eegc != nil {
+					return _fd.Wrapf(_degb, _gdfbf, "\u0072\u0065\u0066\u0065\u0072\u0065n\u0063\u0065\u0020s\u0065\u0067\u006de\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075n\u0064\u0020\u0061\u0074\u0020pa\u0067\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006e\u006f\u0072\u0020\u0069\u006e\u0020\u0067\u006c\u006f\u0062\u0061\u006c\u0073", _gdfb.PageAssociation)
+				}
+			}
+		}
+		return nil
+	}
+	for _gaed := uint64(0); _gaed < _eddg; _gaed++ {
+		_gdfb.RTSegments[_gaed], _cggd = _aga.GetGlobalSegment(_agcg[_gaed])
+		if _cggd != nil {
+			return _fd.Wrapf(_cggd, _gdfbf, "\u0067\u006c\u006f\u0062\u0061\u006c\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u003a\u0020\u0027\u0025d\u0027\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064", _agcg[_gaed])
+		}
 	}
 	return nil
 }
-func (_abc *PageInformationSegment) String() string {
-	_edad := &_bb.Builder{}
-	_edad.WriteString("\u000a\u005b\u0050\u0041G\u0045\u002d\u0049\u004e\u0046\u004f\u0052\u004d\u0041\u0054I\u004fN\u002d\u0053\u0045\u0047\u004d\u0045\u004eT\u005d\u000a")
-	_edad.WriteString(_be.Sprintf("\u0009\u002d \u0042\u004d\u0048e\u0069\u0067\u0068\u0074\u003a\u0020\u0025\u0064\u000a", _abc.PageBMHeight))
-	_edad.WriteString(_be.Sprintf("\u0009-\u0020B\u004d\u0057\u0069\u0064\u0074\u0068\u003a\u0020\u0025\u0064\u000a", _abc.PageBMWidth))
-	_edad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0052es\u006f\u006c\u0075\u0074\u0069\u006f\u006e\u0058\u003a\u0020\u0025\u0064\u000a", _abc.ResolutionX))
-	_edad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0052es\u006f\u006c\u0075\u0074\u0069\u006f\u006e\u0059\u003a\u0020\u0025\u0064\u000a", _abc.ResolutionY))
-	_edad.WriteString(_be.Sprintf("\t\u002d\u0020\u0043\u006f\u006d\u0062i\u006e\u0061\u0074\u0069\u006f\u006e\u004f\u0070\u0065r\u0061\u0074\u006fr\u003a \u0025\u0073\u000a", _abc._cba))
-	_edad.WriteString(_be.Sprintf("\t\u002d\u0020\u0043\u006f\u006d\u0062i\u006e\u0061\u0074\u0069\u006f\u006eO\u0070\u0065\u0072\u0061\u0074\u006f\u0072O\u0076\u0065\u0072\u0072\u0069\u0064\u0065\u003a\u0020\u0025v\u000a", _abc._bddd))
-	_edad.WriteString(_be.Sprintf("\u0009-\u0020I\u0073\u004c\u006f\u0073\u0073l\u0065\u0073s\u003a\u0020\u0025\u0076\u000a", _abc.IsLossless))
-	_edad.WriteString(_be.Sprintf("\u0009\u002d\u0020R\u0065\u0071\u0075\u0069r\u0065\u0073\u0041\u0075\u0078\u0069\u006ci\u0061\u0072\u0079\u0042\u0075\u0066\u0066\u0065\u0072\u003a\u0020\u0025\u0076\u000a", _abc._cabb))
-	_edad.WriteString(_be.Sprintf("\u0009\u002d\u0020M\u0069\u0067\u0068\u0074C\u006f\u006e\u0074\u0061\u0069\u006e\u0052e\u0066\u0069\u006e\u0065\u006d\u0065\u006e\u0074\u0073\u003a\u0020\u0025\u0076\u000a", _abc._adfb))
-	_edad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0049\u0073\u0053\u0074\u0072\u0069\u0070\u0065\u0064:\u0020\u0025\u0076\u000a", _abc.IsStripe))
-	_edad.WriteString(_be.Sprintf("\t\u002d\u0020\u004d\u0061xS\u0074r\u0069\u0070\u0065\u0053\u0069z\u0065\u003a\u0020\u0025\u0076\u000a", _abc.MaxStripeSize))
-	return _edad.String()
-}
-func (_aec *PageInformationSegment) readDefaultPixelValue() error {
-	_adde, _ebae := _aec._fabba.ReadBit()
-	if _ebae != nil {
-		return _ebae
+func (_faefd *TextRegion) getSymbols() error {
+	if _faefd.Header.RTSegments != nil {
+		return _faefd.initSymbols()
 	}
-	_aec.DefaultPixelValue = uint8(_adde & 0xf)
 	return nil
-}
-func (_gcge *TableSegment) Init(h *Header, r _g.StreamReader) error {
-	_gcge._fafc = r
-	return _gcge.parseHeader()
 }
 
 type SymbolDictionary struct {
-	_aege                       _g.StreamReader
+	_bcagf                      _fg.StreamReader
 	SdrTemplate                 int8
 	SdTemplate                  int8
-	_bebbf                      bool
-	_bcce                       bool
+	_gdae                       bool
+	_gacg                       bool
 	SdHuffAggInstanceSelection  bool
 	SdHuffBMSizeSelection       int8
 	SdHuffDecodeWidthSelection  int8
@@ -4133,1595 +5083,651 @@ type SymbolDictionary struct {
 	NumberOfExportedSymbols     uint32
 	NumberOfNewSymbols          uint32
 	Header                      *Header
-	_fgfc                       uint32
-	_gdc                        []*_c.Bitmap
-	_geba                       uint32
-	_gbeb                       []*_c.Bitmap
-	_bdgc                       _aag.Tabler
-	_dgff                       _aag.Tabler
-	_cacb                       _aag.Tabler
-	_ece                        _aag.Tabler
-	_abab                       []*_c.Bitmap
-	_deeb                       []*_c.Bitmap
-	_caaa                       *_aa.Decoder
-	_cfcd                       *TextRegion
-	_eaed                       *GenericRegion
-	_abdfc                      *GenericRefinementRegion
-	_ebff                       *_aa.DecoderStats
-	_fcbe                       *_aa.DecoderStats
-	_bba                        *_aa.DecoderStats
-	_efab                       *_aa.DecoderStats
-	_fddg                       *_aa.DecoderStats
-	_bcb                        *_aa.DecoderStats
-	_gebb                       *_aa.DecoderStats
-	_ddfd                       *_aa.DecoderStats
-	_dcfa                       *_aa.DecoderStats
-	_ebafc                      int8
-	_dfa                        *_c.Bitmaps
-	_eaac                       []int
-	_faeae                      map[int]int
-	_fadf                       bool
+	_gbbg                       uint32
+	_cgfbb                      []*_d.Bitmap
+	_ffa                        uint32
+	_gbga                       []*_d.Bitmap
+	_dgecb                      _ba.Tabler
+	_agdg                       _ba.Tabler
+	_afea                       _ba.Tabler
+	_fggec                      _ba.Tabler
+	_cba                        []*_d.Bitmap
+	_bded                       []*_d.Bitmap
+	_fffd                       *_b.Decoder
+	_begf                       *TextRegion
+	_eaeb                       *GenericRegion
+	_debeg                      *GenericRefinementRegion
+	_bagf                       *_b.DecoderStats
+	_aabg                       *_b.DecoderStats
+	_aafa                       *_b.DecoderStats
+	_eagcd                      *_b.DecoderStats
+	_gabe                       *_b.DecoderStats
+	_abag                       *_b.DecoderStats
+	_dfb                        *_b.DecoderStats
+	_eegg                       *_b.DecoderStats
+	_fac                        *_b.DecoderStats
+	_cff                        int8
+	_dbag                       *_d.Bitmaps
+	_fagdd                      []int
+	_dcbf                       map[int]int
+	_cgbf                       bool
 }
 
-func (_fdea *SymbolDictionary) encodeFlags(_fed _g.BinaryWriter) (_agfa int, _eceg error) {
-	const _agbg = "e\u006e\u0063\u006f\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
-	if _eceg = _fed.SkipBits(3); _eceg != nil {
-		return 0, _ac.Wrap(_eceg, _agbg, "\u0065\u006d\u0070\u0074\u0079\u0020\u0062\u0069\u0074\u0073")
+func (_bcgg *PageInformationSegment) readIsStriped() error {
+	_ggfb, _cdc := _bcgg._ace.ReadBit()
+	if _cdc != nil {
+		return _cdc
 	}
-	var _fcff int
-	if _fdea.SdrTemplate > 0 {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "s\u0064\u0072\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
-	}
-	_fcff = 0
-	if _fdea.SdTemplate > 1 {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
-	}
-	_fcff = 0
-	if _fdea.SdTemplate == 1 || _fdea.SdTemplate == 3 {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065")
-	}
-	_fcff = 0
-	if _fdea._bebbf {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0063\u006f\u0064in\u0067\u0020\u0063\u006f\u006e\u0074\u0065\u0078\u0074\u0020\u0072\u0065\u0074\u0061\u0069\u006e\u0065\u0064")
-	}
-	_fcff = 0
-	if _fdea._bcce {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0063\u006f\u0064\u0069ng\u0020\u0063\u006f\u006e\u0074\u0065\u0078\u0074\u0020\u0075\u0073\u0065\u0064")
-	}
-	_fcff = 0
-	if _fdea.SdHuffAggInstanceSelection {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0048\u0075\u0066\u0066\u0041\u0067\u0067\u0049\u006e\u0073\u0074")
-	}
-	_fcff = int(_fdea.SdHuffBMSizeSelection)
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0048u\u0066\u0066\u0042\u006d\u0053\u0069\u007a\u0065")
-	}
-	_fcff = 0
-	if _fdea.SdHuffDecodeWidthSelection > 1 {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "s\u0064\u0048\u0075\u0066\u0066\u0057\u0069\u0064\u0074\u0068")
-	}
-	_fcff = 0
-	switch _fdea.SdHuffDecodeWidthSelection {
-	case 1, 3:
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "s\u0064\u0048\u0075\u0066\u0066\u0057\u0069\u0064\u0074\u0068")
-	}
-	_fcff = 0
-	if _fdea.SdHuffDecodeHeightSelection > 1 {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0048u\u0066\u0066\u0048\u0065\u0069\u0067\u0068\u0074")
-	}
-	_fcff = 0
-	switch _fdea.SdHuffDecodeHeightSelection {
-	case 1, 3:
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0048u\u0066\u0066\u0048\u0065\u0069\u0067\u0068\u0074")
-	}
-	_fcff = 0
-	if _fdea.UseRefinementAggregation {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0052\u0065\u0066\u0041\u0067\u0067")
-	}
-	_fcff = 0
-	if _fdea.IsHuffmanEncoded {
-		_fcff = 1
-	}
-	if _eceg = _fed.WriteBit(_fcff); _eceg != nil {
-		return _agfa, _ac.Wrap(_eceg, _agbg, "\u0073\u0064\u0048\u0075\u0066\u0066")
-	}
-	return 2, nil
-}
-func (_bfcg *SymbolDictionary) readRefinementAtPixels(_gcbce int) error {
-	_bfcg.SdrATX = make([]int8, _gcbce)
-	_bfcg.SdrATY = make([]int8, _gcbce)
-	var (
-		_afbeg byte
-		_acdc  error
-	)
-	for _fffd := 0; _fffd < _gcbce; _fffd++ {
-		_afbeg, _acdc = _bfcg._aege.ReadByte()
-		if _acdc != nil {
-			return _acdc
-		}
-		_bfcg.SdrATX[_fffd] = int8(_afbeg)
-		_afbeg, _acdc = _bfcg._aege.ReadByte()
-		if _acdc != nil {
-			return _acdc
-		}
-		_bfcg.SdrATY[_fffd] = int8(_afbeg)
+	if _ggfb == 1 {
+		_bcgg.IsStripe = true
 	}
 	return nil
 }
-func (_eaacc *TextRegion) readRegionFlags() error {
-	var (
-		_aadbcg int
-		_fgab   uint64
-		_ebage  error
-	)
-	_aadbcg, _ebage = _eaacc._ceegd.ReadBit()
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.SbrTemplate = int8(_aadbcg)
-	_fgab, _ebage = _eaacc._ceegd.ReadBits(5)
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.SbDsOffset = int8(_fgab)
-	if _eaacc.SbDsOffset > 0x0f {
-		_eaacc.SbDsOffset -= 0x20
-	}
-	_aadbcg, _ebage = _eaacc._ceegd.ReadBit()
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.DefaultPixel = int8(_aadbcg)
-	_fgab, _ebage = _eaacc._ceegd.ReadBits(2)
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.CombinationOperator = _c.CombinationOperator(int(_fgab) & 0x3)
-	_aadbcg, _ebage = _eaacc._ceegd.ReadBit()
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.IsTransposed = int8(_aadbcg)
-	_fgab, _ebage = _eaacc._ceegd.ReadBits(2)
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.ReferenceCorner = int16(_fgab) & 0x3
-	_fgab, _ebage = _eaacc._ceegd.ReadBits(2)
-	if _ebage != nil {
-		return _ebage
-	}
-	_eaacc.LogSBStrips = int16(_fgab) & 0x3
-	_eaacc.SbStrips = 1 << uint(_eaacc.LogSBStrips)
-	_aadbcg, _ebage = _eaacc._ceegd.ReadBit()
-	if _ebage != nil {
-		return _ebage
-	}
-	if _aadbcg == 1 {
-		_eaacc.UseRefinement = true
-	}
-	_aadbcg, _ebage = _eaacc._ceegd.ReadBit()
-	if _ebage != nil {
-		return _ebage
-	}
-	if _aadbcg == 1 {
-		_eaacc.IsHuffmanEncoded = true
-	}
-	return nil
-}
-func (_ffb *GenericRefinementRegion) decodeSLTP() (int, error) {
-	_ffb.Template.setIndex(_ffb._ef)
-	return _ffb._fb.DecodeBit(_ffb._ef)
-}
-func (_ecfdd *TableSegment) HtLow() int32                                      { return _ecfdd._afgc }
-func (_afag *PageInformationSegment) CombinationOperatorOverrideAllowed() bool { return _afag._bddd }
-
-type template0 struct{}
-
-func (_afae *SymbolDictionary) decodeHeightClassCollectiveBitmap(_gdag int64, _bbca, _cbab uint32) (*_c.Bitmap, error) {
-	if _gdag == 0 {
-		_gfgbd := _c.New(int(_cbab), int(_bbca))
-		var (
-			_edgb byte
-			_baa  error
-		)
-		for _aebgf := 0; _aebgf < len(_gfgbd.Data); _aebgf++ {
-			_edgb, _baa = _afae._aege.ReadByte()
-			if _baa != nil {
-				return nil, _baa
-			}
-			if _baa = _gfgbd.SetByte(_aebgf, _edgb); _baa != nil {
-				return nil, _baa
-			}
-		}
-		return _gfgbd, nil
-	}
-	if _afae._eaed == nil {
-		_afae._eaed = NewGenericRegion(_afae._aege)
-	}
-	_afae._eaed.setParameters(true, _afae._aege.StreamPosition(), _gdag, _bbca, _cbab)
-	_cgade, _cbfgd := _afae._eaed.GetRegionBitmap()
-	if _cbfgd != nil {
-		return nil, _cbfgd
-	}
-	return _cgade, nil
-}
-func (_cegef *TextRegion) decodeDT() (_gabe int64, _dcaaa error) {
-	if _cegef.IsHuffmanEncoded {
-		if _cegef.SbHuffDT == 3 {
-			_gabe, _dcaaa = _cegef._afeb.Decode(_cegef._ceegd)
-			if _dcaaa != nil {
-				return 0, _dcaaa
-			}
-		} else {
-			var _caab _aag.Tabler
-			_caab, _dcaaa = _aag.GetStandardTable(11 + int(_cegef.SbHuffDT))
-			if _dcaaa != nil {
-				return 0, _dcaaa
-			}
-			_gabe, _dcaaa = _caab.Decode(_cegef._ceegd)
-			if _dcaaa != nil {
-				return 0, _dcaaa
-			}
-		}
+func (_ggca *GenericRegion) overrideAtTemplate3(_aee, _edbg, _gca, _gacf, _fgbfc int) int {
+	_aee &= 0x3EF
+	if _ggca.GBAtY[0] == 0 && _ggca.GBAtX[0] >= -int8(_fgbfc) {
+		_aee |= (_gacf >> uint(7-(int8(_fgbfc)+_ggca.GBAtX[0])) & 0x1) << 4
 	} else {
-		var _dgde int32
-		_dgde, _dcaaa = _cegef._bbcea.DecodeInt(_cegef._fdfbf)
-		if _dcaaa != nil {
-			return
-		}
-		_gabe = int64(_dgde)
+		_aee |= int(_ggca.getPixel(_edbg+int(_ggca.GBAtX[0]), _gca+int(_ggca.GBAtY[0]))) << 4
 	}
-	_gabe *= int64(_cegef.SbStrips)
-	return _gabe, nil
+	return _aee
 }
-
-type Documenter interface {
-	GetPage(int) (Pager, error)
-	GetGlobalSegment(int) (*Header, error)
-}
-
-func (_gbafd *TextRegion) decodeID() (int64, error) {
-	if _gbafd.IsHuffmanEncoded {
-		if _gbafd._gaead == nil {
-			_bbab, _ffegb := _gbafd._ceegd.ReadBits(byte(_gbafd._bfa))
-			return int64(_bbab), _ffegb
-		}
-		return _gbafd._gaead.Decode(_gbafd._ceegd)
-	}
-	return _gbafd._bbcea.DecodeIAID(uint64(_gbafd._bfa), _gbafd._bcfb)
-}
-
-var _ templater = &template0{}
-
-func (_cea *TableSegment) HtRS() int32 { return _cea._fgfe }
-func (_dega *HalftoneRegion) computeY(_cgaf, _bdfb int) int {
-	return _dega.shiftAndFill(int(_dega.HGridY) + _cgaf*int(_dega.HRegionX) - _bdfb*int(_dega.HRegionY))
-}
-func _ggad(_gbcf _g.StreamReader, _fccag *Header) *TextRegion {
-	_edcd := &TextRegion{_ceegd: _gbcf, Header: _fccag, RegionInfo: NewRegionSegment(_gbcf)}
-	return _edcd
-}
-
-type EndOfStripe struct {
-	_fd _g.StreamReader
-	_bf int
-}
-
-func (_eb *GenericRefinementRegion) getGrReference() (*_c.Bitmap, error) {
-	segments := _eb._ff.RTSegments
-	if len(segments) == 0 {
-		return nil, _ag.New("\u0052\u0065f\u0065\u0072\u0065\u006e\u0063\u0065\u0064\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0065\u0078is\u0074\u0073")
-	}
-	_df, _ca := segments[0].GetSegmentData()
-	if _ca != nil {
-		return nil, _ca
-	}
-	_dfd, _eeab := _df.(Regioner)
-	if !_eeab {
-		return nil, _be.Errorf("\u0072\u0065\u0066\u0065\u0072r\u0065\u0064\u0020\u0074\u006f\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074 \u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0052\u0065\u0067\u0069\u006f\u006e\u0065\u0072\u003a\u0020\u0025\u0054", _df)
-	}
-	return _dfd.GetRegionBitmap()
-}
-func NewGenericRegion(r _g.StreamReader) *GenericRegion {
-	return &GenericRegion{RegionSegment: NewRegionSegment(r), _degf: r}
-}
-func (_cagd *TextRegion) InitEncode(globalSymbolsMap, localSymbolsMap map[int]int, comps []int, inLL *_c.Points, symbols *_c.Bitmaps, classIDs *_cb.IntSlice, boxes *_c.Boxes, width, height, symBits int) {
-	_cagd.RegionInfo = &RegionSegment{BitmapWidth: uint32(width), BitmapHeight: uint32(height)}
-	_cagd._afcf = globalSymbolsMap
-	_cagd._dbe = localSymbolsMap
-	_cagd._babe = comps
-	_cagd._edded = inLL
-	_cagd._ebde = symbols
-	_cagd._dcfb = classIDs
-	_cagd._bfab = boxes
-	_cagd._fadfc = symBits
-}
-func (_gbcgg *TextRegion) decodeRdy() (int64, error) {
-	const _agdb = "\u0064e\u0063\u006f\u0064\u0065\u0052\u0064y"
-	if _gbcgg.IsHuffmanEncoded {
-		if _gbcgg.SbHuffRDY == 3 {
-			if _gbcgg._ecgf == nil {
-				var (
-					_dggb int
-					_aabc error
-				)
-				if _gbcgg.SbHuffFS == 3 {
-					_dggb++
-				}
-				if _gbcgg.SbHuffDS == 3 {
-					_dggb++
-				}
-				if _gbcgg.SbHuffDT == 3 {
-					_dggb++
-				}
-				if _gbcgg.SbHuffRDWidth == 3 {
-					_dggb++
-				}
-				if _gbcgg.SbHuffRDHeight == 3 {
-					_dggb++
-				}
-				if _gbcgg.SbHuffRDX == 3 {
-					_dggb++
-				}
-				_gbcgg._ecgf, _aabc = _gbcgg.getUserTable(_dggb)
-				if _aabc != nil {
-					return 0, _ac.Wrap(_aabc, _agdb, "")
-				}
-			}
-			return _gbcgg._ecgf.Decode(_gbcgg._ceegd)
-		}
-		_cggg, _edgf := _aag.GetStandardTable(14 + int(_gbcgg.SbHuffRDY))
-		if _edgf != nil {
-			return 0, _edgf
-		}
-		return _cggg.Decode(_gbcgg._ceegd)
-	}
-	_cbg, _cbfgg := _gbcgg._bbcea.DecodeInt(_gbcgg._badb)
-	if _cbfgg != nil {
-		return 0, _ac.Wrap(_cbfgg, _agdb, "")
-	}
-	return int64(_cbg), nil
-}
-func (_dd *GenericRefinementRegion) GetRegionBitmap() (*_c.Bitmap, error) {
-	var _ee error
-	_gb.Log.Trace("\u005b\u0047E\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0047\u0065\u0074\u0052\u0065\u0067\u0069\u006f\u006e\u0042\u0069\u0074\u006d\u0061\u0070\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e")
-	defer func() {
-		if _ee != nil {
-			_gb.Log.Trace("[\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052E\u0046\u002d\u0052\u0045\u0047\u0049\u004fN]\u0020\u0047\u0065\u0074R\u0065\u0067\u0069\u006f\u006e\u0042\u0069\u0074\u006dap\u0020\u0066a\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0076", _ee)
-		} else {
-			_gb.Log.Trace("\u005b\u0047E\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0047\u0065\u0074\u0052\u0065\u0067\u0069\u006f\u006e\u0042\u0069\u0074\u006d\u0061\u0070\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u002e")
-		}
-	}()
-	if _dd.RegionBitmap != nil {
-		return _dd.RegionBitmap, nil
-	}
-	_fag := 0
-	if _dd.ReferenceBitmap == nil {
-		_dd.ReferenceBitmap, _ee = _dd.getGrReference()
-		if _ee != nil {
-			return nil, _ee
-		}
-	}
-	if _dd._fb == nil {
-		_dd._fb, _ee = _aa.New(_dd._ea)
-		if _ee != nil {
-			return nil, _ee
-		}
-	}
-	if _dd._ef == nil {
-		_dd._ef = _aa.NewStats(8192, 1)
-	}
-	_dd.RegionBitmap = _c.New(int(_dd.RegionInfo.BitmapWidth), int(_dd.RegionInfo.BitmapHeight))
-	if _dd.TemplateID == 0 {
-		if _ee = _dd.updateOverride(); _ee != nil {
-			return nil, _ee
-		}
-	}
-	_eea := (_dd.RegionBitmap.Width + 7) & -8
-	var _bd int
-	if _dd.IsTPGROn {
-		_bd = int(-_dd.ReferenceDY) * _dd.ReferenceBitmap.RowStride
-	}
-	_ec := _bd + 1
-	for _dg := 0; _dg < _dd.RegionBitmap.Height; _dg++ {
-		if _dd.IsTPGROn {
-			_eff, _cf := _dd.decodeSLTP()
-			if _cf != nil {
-				return nil, _cf
-			}
-			_fag ^= _eff
-		}
-		if _fag == 0 {
-			_ee = _dd.decodeOptimized(_dg, _dd.RegionBitmap.Width, _dd.RegionBitmap.RowStride, _dd.ReferenceBitmap.RowStride, _eea, _bd, _ec)
-			if _ee != nil {
-				return nil, _ee
-			}
-		} else {
-			_ee = _dd.decodeTypicalPredictedLine(_dg, _dd.RegionBitmap.Width, _dd.RegionBitmap.RowStride, _dd.ReferenceBitmap.RowStride, _eea, _bd)
-			if _ee != nil {
-				return nil, _ee
-			}
-		}
-	}
-	return _dd.RegionBitmap, nil
-}
-func (_dcaf *GenericRegion) computeSegmentDataStructure() error {
-	_dcaf.DataOffset = _dcaf._degf.StreamPosition()
-	_dcaf.DataHeaderLength = _dcaf.DataOffset - _dcaf.DataHeaderOffset
-	_dcaf.DataLength = int64(_dcaf._degf.Length()) - _dcaf.DataHeaderLength
-	return nil
-}
-func (_eggg *TextRegion) decodeRI() (int64, error) {
-	if !_eggg.UseRefinement {
-		return 0, nil
-	}
-	if _eggg.IsHuffmanEncoded {
-		_gfgbg, _feba := _eggg._ceegd.ReadBit()
-		return int64(_gfgbg), _feba
-	}
-	_gebbd, _fcdc := _eggg._bbcea.DecodeInt(_eggg._feaceb)
-	return int64(_gebbd), _fcdc
-}
-func (_ggc *HalftoneRegion) GetRegionInfo() *RegionSegment { return _ggc.RegionSegment }
-func (_egcd *Header) GetSegmentData() (Segmenter, error) {
-	var _fgfd Segmenter
-	if _egcd.SegmentData != nil {
-		_fgfd = _egcd.SegmentData
-	}
-	if _fgfd == nil {
-		_fcfg, _cgee := _geb[_egcd.Type]
-		if !_cgee {
-			return nil, _be.Errorf("\u0074\u0079\u0070\u0065\u003a\u0020\u0025\u0073\u002f\u0020\u0025\u0064\u0020\u0063\u0072e\u0061t\u006f\u0072\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u002e\u0020", _egcd.Type, _egcd.Type)
-		}
-		_fgfd = _fcfg()
-		_gb.Log.Trace("\u005b\u0053E\u0047\u004d\u0045\u004e\u0054-\u0048\u0045\u0041\u0044\u0045R\u005d\u005b\u0023\u0025\u0064\u005d\u0020\u0047\u0065\u0074\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0044\u0061\u0074\u0061\u0020\u0061\u0074\u0020\u004f\u0066\u0066\u0073\u0065\u0074\u003a\u0020\u0025\u0030\u0034\u0058", _egcd.SegmentNumber, _egcd.SegmentDataStartOffset)
-		_aaeg, _aeg := _egcd.subInputReader()
-		if _aeg != nil {
-			return nil, _aeg
-		}
-		if _daba := _fgfd.Init(_egcd, _aaeg); _daba != nil {
-			_gb.Log.Debug("\u0049\u006e\u0069\u0074 \u0066\u0061\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0076 \u0066o\u0072\u0020\u0074\u0079\u0070\u0065\u003a \u0025\u0054", _daba, _fgfd)
-			return nil, _daba
-		}
-		_egcd.SegmentData = _fgfd
-	}
-	return _fgfd, nil
-}
-func (_fccg *Header) subInputReader() (_g.StreamReader, error) {
-	return _g.NewSubstreamReader(_fccg.Reader, _fccg.SegmentDataStartOffset, _fccg.SegmentDataLength)
-}
-func (_bede *TextRegion) decodeSymbolInstances() error {
-	_gfcef, _fgcf := _bede.decodeStripT()
-	if _fgcf != nil {
-		return _fgcf
-	}
-	var (
-		_fgca int64
-		_cega uint32
-	)
-	for _cega < _bede.NumberOfSymbolInstances {
-		_ffbc, _bdcea := _bede.decodeDT()
-		if _bdcea != nil {
-			return _bdcea
-		}
-		_gfcef += _ffbc
-		var _cgdd int64
-		_cgfa := true
-		_bede._dgee = 0
-		for {
-			if _cgfa {
-				_cgdd, _bdcea = _bede.decodeDfs()
-				if _bdcea != nil {
-					return _bdcea
-				}
-				_fgca += _cgdd
-				_bede._dgee = _fgca
-				_cgfa = false
-			} else {
-				_ggag, _begge := _bede.decodeIds()
-				if _fc.Is(_begge, _bca.ErrOOB) {
-					break
-				}
-				if _begge != nil {
-					return _begge
-				}
-				if _cega >= _bede.NumberOfSymbolInstances {
-					break
-				}
-				_bede._dgee += _ggag + int64(_bede.SbDsOffset)
-			}
-			_gdfa, _bbcg := _bede.decodeCurrentT()
-			if _bbcg != nil {
-				return _bbcg
-			}
-			_deee := _gfcef + _gdfa
-			_ddfe, _bbcg := _bede.decodeID()
-			if _bbcg != nil {
-				return _bbcg
-			}
-			_abbge, _bbcg := _bede.decodeRI()
-			if _bbcg != nil {
-				return _bbcg
-			}
-			_bbcc, _bbcg := _bede.decodeIb(_abbge, _ddfe)
-			if _bbcg != nil {
-				return _bbcg
-			}
-			if _bbcg = _bede.blit(_bbcc, _deee); _bbcg != nil {
-				return _bbcg
-			}
-			_cega++
-		}
-	}
-	return nil
-}
-func (_fgb *HalftoneRegion) checkInput() error {
-	if _fgb.IsMMREncoded {
-		if _fgb.HTemplate != 0 {
-			_gb.Log.Debug("\u0048\u0054\u0065\u006d\u0070l\u0061\u0074\u0065\u0020\u003d\u0020\u0025\u0064\u0020\u0073\u0068\u006f\u0075l\u0064\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e\u0020\u0074\u0068\u0065\u0020\u0076\u0061\u006c\u0075\u0065\u0020\u0030", _fgb.HTemplate)
-		}
-		if _fgb.HSkipEnabled {
-			_gb.Log.Debug("\u0048\u0053\u006b\u0069\u0070\u0045\u006e\u0061\u0062\u006c\u0065\u0064\u0020\u0030\u0020\u0025\u0076\u0020(\u0073\u0068\u006f\u0075\u006c\u0064\u0020c\u006f\u006e\u0074\u0061\u0069\u006e\u0020\u0074\u0068\u0065\u0020v\u0061\u006c\u0075\u0065\u0020\u0066\u0061\u006c\u0073\u0065\u0029", _fgb.HSkipEnabled)
-		}
-	}
-	return nil
-}
-func (_bbfc *SymbolDictionary) setAtPixels() error {
-	if _bbfc.IsHuffmanEncoded {
-		return nil
-	}
-	_aefe := 1
-	if _bbfc.SdTemplate == 0 {
-		_aefe = 4
-	}
-	if _fgbc := _bbfc.readAtPixels(_aefe); _fgbc != nil {
-		return _fgbc
-	}
-	return nil
-}
-
-var _ SegmentEncoder = &GenericRegion{}
-
-func (_dede *PatternDictionary) readTemplate() error {
-	_ddcbe, _gbdf := _dede._fad.ReadBits(2)
-	if _gbdf != nil {
-		return _gbdf
-	}
-	_dede.HDTemplate = byte(_ddcbe)
-	return nil
-}
-func (_bbcb *GenericRefinementRegion) decodeTypicalPredictedLineTemplate1(_cc, _cab, _aabf, _gee, _fbbd, _bfe, _fde, _da, _bga int) (_bee error) {
-	var (
-		_ce, _cda  int
-		_bcee, _fe int
-		_agb, _cce int
-		_fba       byte
-	)
-	if _cc > 0 {
-		_fba, _bee = _bbcb.RegionBitmap.GetByte(_fde - _aabf)
-		if _bee != nil {
-			return
-		}
-		_bcee = int(_fba)
-	}
-	if _da > 0 && _da <= _bbcb.ReferenceBitmap.Height {
-		_fba, _bee = _bbcb.ReferenceBitmap.GetByte(_bga - _gee + _bfe)
-		if _bee != nil {
-			return
-		}
-		_fe = int(_fba) << 2
-	}
-	if _da >= 0 && _da < _bbcb.ReferenceBitmap.Height {
-		_fba, _bee = _bbcb.ReferenceBitmap.GetByte(_bga + _bfe)
-		if _bee != nil {
-			return
-		}
-		_agb = int(_fba)
-	}
-	if _da > -2 && _da < _bbcb.ReferenceBitmap.Height-1 {
-		_fba, _bee = _bbcb.ReferenceBitmap.GetByte(_bga + _gee + _bfe)
-		if _bee != nil {
-			return
-		}
-		_cce = int(_fba)
-	}
-	_ce = ((_bcee >> 5) & 0x6) | ((_cce >> 2) & 0x30) | (_agb & 0xc0) | (_fe & 0x200)
-	_cda = ((_cce >> 2) & 0x70) | (_agb & 0xc0) | (_fe & 0x700)
-	var _dba int
-	for _acd := 0; _acd < _fbbd; _acd = _dba {
-		var (
-			_daf int
-			_gfg int
-		)
-		_dba = _acd + 8
-		if _daf = _cab - _acd; _daf > 8 {
-			_daf = 8
-		}
-		_eaff := _dba < _cab
-		_efa := _dba < _bbcb.ReferenceBitmap.Width
-		_bea := _bfe + 1
-		if _cc > 0 {
-			_fba = 0
-			if _eaff {
-				_fba, _bee = _bbcb.RegionBitmap.GetByte(_fde - _aabf + 1)
-				if _bee != nil {
-					return
-				}
-			}
-			_bcee = (_bcee << 8) | int(_fba)
-		}
-		if _da > 0 && _da <= _bbcb.ReferenceBitmap.Height {
-			var _gba int
-			if _efa {
-				_fba, _bee = _bbcb.ReferenceBitmap.GetByte(_bga - _gee + _bea)
-				if _bee != nil {
-					return
-				}
-				_gba = int(_fba) << 2
-			}
-			_fe = (_fe << 8) | _gba
-		}
-		if _da >= 0 && _da < _bbcb.ReferenceBitmap.Height {
-			_fba = 0
-			if _efa {
-				_fba, _bee = _bbcb.ReferenceBitmap.GetByte(_bga + _bea)
-				if _bee != nil {
-					return
-				}
-			}
-			_agb = (_agb << 8) | int(_fba)
-		}
-		if _da > -2 && _da < (_bbcb.ReferenceBitmap.Height-1) {
-			_fba = 0
-			if _efa {
-				_fba, _bee = _bbcb.ReferenceBitmap.GetByte(_bga + _gee + _bea)
-				if _bee != nil {
-					return
-				}
-			}
-			_cce = (_cce << 8) | int(_fba)
-		}
-		for _gbae := 0; _gbae < _daf; _gbae++ {
-			var _fdc int
-			_agf := (_cda >> 4) & 0x1ff
-			switch _agf {
-			case 0x1ff:
-				_fdc = 1
-			case 0x00:
-				_fdc = 0
-			default:
-				_bbcb._ef.SetIndex(int32(_ce))
-				_fdc, _bee = _bbcb._fb.DecodeBit(_bbcb._ef)
-				if _bee != nil {
-					return
-				}
-			}
-			_dab := uint(7 - _gbae)
-			_gfg |= _fdc << _dab
-			_ce = ((_ce & 0x0d6) << 1) | _fdc | (_bcee>>_dab+5)&0x002 | ((_cce>>_dab + 2) & 0x010) | ((_agb >> _dab) & 0x040) | ((_fe >> _dab) & 0x200)
-			_cda = ((_cda & 0xdb) << 1) | ((_cce>>_dab + 2) & 0x010) | ((_agb >> _dab) & 0x080) | ((_fe >> _dab) & 0x400)
-		}
-		_bee = _bbcb.RegionBitmap.SetByte(_fde, byte(_gfg))
-		if _bee != nil {
-			return
-		}
-		_fde++
-		_bga++
-	}
-	return nil
-}
-func (_agbd *HalftoneRegion) computeGrayScalePlanes(_gacd []*_c.Bitmap, _ddb int) ([][]int, error) {
-	_bbed := make([][]int, _agbd.HGridHeight)
-	for _bbda := 0; _bbda < len(_bbed); _bbda++ {
-		_bbed[_bbda] = make([]int, _agbd.HGridWidth)
-	}
-	for _ebbf := 0; _ebbf < int(_agbd.HGridHeight); _ebbf++ {
-		for _ceg := 0; _ceg < int(_agbd.HGridWidth); _ceg += 8 {
-			var _abeg int
-			if _agec := int(_agbd.HGridWidth) - _ceg; _agec > 8 {
-				_abeg = 8
-			} else {
-				_abeg = _agec
-			}
-			_ffff := _gacd[0].GetByteIndex(_ceg, _ebbf)
-			for _dcb := 0; _dcb < _abeg; _dcb++ {
-				_fee := _dcb + _ceg
-				_bbed[_ebbf][_fee] = 0
-				for _dcee := 0; _dcee < _ddb; _dcee++ {
-					_eage, _egac := _gacd[_dcee].GetByte(_ffff)
-					if _egac != nil {
-						return nil, _egac
-					}
-					_edda := _eage >> uint(7-_fee&7)
-					_fceg := _edda & 1
-					_gbbc := 1 << uint(_dcee)
-					_bbb := int(_fceg) * _gbbc
-					_bbed[_ebbf][_fee] += _bbb
-				}
-			}
-		}
-	}
-	return _bbed, nil
-}
-func (_egbe *SymbolDictionary) getSymbol(_eggc int) (*_c.Bitmap, error) {
-	const _bdga = "\u0067e\u0074\u0053\u0079\u006d\u0062\u006fl"
-	_bbac, _ecda := _egbe._dfa.GetBitmap(_egbe._eaac[_eggc])
-	if _ecda != nil {
-		return nil, _ac.Wrap(_ecda, _bdga, "\u0063\u0061n\u0027\u0074\u0020g\u0065\u0074\u0020\u0073\u0079\u006d\u0062\u006f\u006c")
-	}
-	return _bbac, nil
-}
-func (_adfc *GenericRegion) decodeTemplate0b(_fagg, _ead, _effd int, _bfdd, _cfdg int) (_fca error) {
-	const _gefc = "\u0064\u0065c\u006f\u0064\u0065T\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0030\u0062"
-	var (
-		_eaa, _fbab int
-		_dae, _adc  int
-		_dcdd       byte
-		_gfa        int
-	)
-	if _fagg >= 1 {
-		_dcdd, _fca = _adfc.Bitmap.GetByte(_cfdg)
-		if _fca != nil {
-			return _ac.Wrap(_fca, _gefc, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00201")
-		}
-		_dae = int(_dcdd)
-	}
-	if _fagg >= 2 {
-		_dcdd, _fca = _adfc.Bitmap.GetByte(_cfdg - _adfc.Bitmap.RowStride)
-		if _fca != nil {
-			return _ac.Wrap(_fca, _gefc, "\u006ci\u006e\u0065\u0020\u003e\u003d\u00202")
-		}
-		_adc = int(_dcdd) << 6
-	}
-	_eaa = (_dae & 0xf0) | (_adc & 0x3800)
-	for _agcc := 0; _agcc < _effd; _agcc = _gfa {
-		var (
-			_eba  byte
-			_fdbc int
-		)
-		_gfa = _agcc + 8
-		if _gdg := _ead - _agcc; _gdg > 8 {
-			_fdbc = 8
-		} else {
-			_fdbc = _gdg
-		}
-		if _fagg > 0 {
-			_dae <<= 8
-			if _gfa < _ead {
-				_dcdd, _fca = _adfc.Bitmap.GetByte(_cfdg + 1)
-				if _fca != nil {
-					return _ac.Wrap(_fca, _gefc, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0030")
-				}
-				_dae |= int(_dcdd)
-			}
-		}
-		if _fagg > 1 {
-			_adc <<= 8
-			if _gfa < _ead {
-				_dcdd, _fca = _adfc.Bitmap.GetByte(_cfdg - _adfc.Bitmap.RowStride + 1)
-				if _fca != nil {
-					return _ac.Wrap(_fca, _gefc, "\u006c\u0069\u006e\u0065\u0020\u003e\u0020\u0031")
-				}
-				_adc |= int(_dcdd) << 6
-			}
-		}
-		for _afg := 0; _afg < _fdbc; _afg++ {
-			_bcg := uint(7 - _afg)
-			if _adfc._aaaf {
-				_fbab = _adfc.overrideAtTemplate0b(_eaa, _agcc+_afg, _fagg, int(_eba), _afg, int(_bcg))
-				_adfc._bcae.SetIndex(int32(_fbab))
-			} else {
-				_adfc._bcae.SetIndex(int32(_eaa))
-			}
-			var _eag int
-			_eag, _fca = _adfc._ga.DecodeBit(_adfc._bcae)
-			if _fca != nil {
-				return _ac.Wrap(_fca, _gefc, "")
-			}
-			_eba |= byte(_eag << _bcg)
-			_eaa = ((_eaa & 0x7bf7) << 1) | _eag | ((_dae >> _bcg) & 0x10) | ((_adc >> _bcg) & 0x800)
-		}
-		if _gcgd := _adfc.Bitmap.SetByte(_bfdd, _eba); _gcgd != nil {
-			return _ac.Wrap(_gcgd, _gefc, "")
-		}
-		_bfdd++
-		_cfdg++
-	}
-	return nil
-}
-func (_egefa *GenericRefinementRegion) String() string {
-	_fcc := &_bb.Builder{}
-	_fcc.WriteString("\u000a[\u0047E\u004e\u0045\u0052\u0049\u0043 \u0052\u0045G\u0049\u004f\u004e\u005d\u000a")
-	_fcc.WriteString(_egefa.RegionInfo.String() + "\u000a")
-	_fcc.WriteString(_be.Sprintf("\u0009\u002d \u0049\u0073\u0054P\u0047\u0052\u006f\u006e\u003a\u0020\u0025\u0076\u000a", _egefa.IsTPGROn))
-	_fcc.WriteString(_be.Sprintf("\u0009-\u0020T\u0065\u006d\u0070\u006c\u0061t\u0065\u0049D\u003a\u0020\u0025\u0076\u000a", _egefa.TemplateID))
-	_fcc.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0047\u0072\u0041\u0074\u0058\u003a\u0020\u0025\u0076\u000a", _egefa.GrAtX))
-	_fcc.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0047\u0072\u0041\u0074\u0059\u003a\u0020\u0025\u0076\u000a", _egefa.GrAtY))
-	_fcc.WriteString(_be.Sprintf("\u0009-\u0020R\u0065\u0066\u0065\u0072\u0065n\u0063\u0065D\u0058\u0020\u0025\u0076\u000a", _egefa.ReferenceDX))
-	_fcc.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0052ef\u0065\u0072\u0065\u006e\u0063\u0044\u0065\u0059\u003a\u0020\u0025\u0076\u000a", _egefa.ReferenceDY))
-	return _fcc.String()
-}
-func (_bbeg *PageInformationSegment) encodeFlags(_afgg _g.BinaryWriter) (_caac error) {
-	const _ecdb = "e\u006e\u0063\u006f\u0064\u0065\u0046\u006c\u0061\u0067\u0073"
-	if _caac = _afgg.SkipBits(1); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0072\u0065\u0073e\u0072\u0076\u0065\u0064\u0020\u0062\u0069\u0074")
-	}
-	var _eeg int
-	if _bbeg.CombinationOperatorOverrideAllowed() {
-		_eeg = 1
-	}
-	if _caac = _afgg.WriteBit(_eeg); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0063\u006f\u006db\u0069\u006e\u0061\u0074i\u006f\u006e\u0020\u006f\u0070\u0065\u0072a\u0074\u006f\u0072\u0020\u006f\u0076\u0065\u0072\u0072\u0069\u0064\u0064\u0065\u006e")
-	}
-	_eeg = 0
-	if _bbeg._cabb {
-		_eeg = 1
-	}
-	if _caac = _afgg.WriteBit(_eeg); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0072e\u0071\u0075\u0069\u0072e\u0073\u0020\u0061\u0075\u0078i\u006ci\u0061r\u0079\u0020\u0062\u0075\u0066\u0066\u0065r")
-	}
-	if _caac = _afgg.WriteBit((int(_bbeg._cba) >> 1) & 0x01); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0063\u006f\u006d\u0062\u0069\u006e\u0061\u0074\u0069\u006fn\u0020\u006f\u0070\u0065\u0072\u0061\u0074o\u0072\u0020\u0066\u0069\u0072\u0073\u0074\u0020\u0062\u0069\u0074")
-	}
-	if _caac = _afgg.WriteBit(int(_bbeg._cba) & 0x01); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0063\u006f\u006db\u0069\u006e\u0061\u0074i\u006f\u006e\u0020\u006f\u0070\u0065\u0072a\u0074\u006f\u0072\u0020\u0073\u0065\u0063\u006f\u006e\u0064\u0020\u0062\u0069\u0074")
-	}
-	_eeg = int(_bbeg.DefaultPixelValue)
-	if _caac = _afgg.WriteBit(_eeg); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0064e\u0066\u0061\u0075\u006c\u0074\u0020\u0070\u0061\u0067\u0065\u0020p\u0069\u0078\u0065\u006c\u0020\u0076\u0061\u006c\u0075\u0065")
-	}
-	_eeg = 0
-	if _bbeg._adfb {
-		_eeg = 1
-	}
-	if _caac = _afgg.WriteBit(_eeg); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "\u0063\u006f\u006e\u0074ai\u006e\u0073\u0020\u0072\u0065\u0066\u0069\u006e\u0065\u006d\u0065\u006e\u0074")
-	}
-	_eeg = 0
-	if _bbeg.IsLossless {
-		_eeg = 1
-	}
-	if _caac = _afgg.WriteBit(_eeg); _caac != nil {
-		return _ac.Wrap(_caac, _ecdb, "p\u0061\u0067\u0065\u0020\u0069\u0073 \u0065\u0076\u0065\u006e\u0074\u0075\u0061\u006c\u006cy\u0020\u006c\u006fs\u0073l\u0065\u0073\u0073")
-	}
-	return nil
-}
-func (_ggff *PageInformationSegment) Size() int { return 19 }
-func (_bbdbb *TextRegion) parseHeader() error {
-	var _bfgb error
-	_gb.Log.Trace("\u005b\u0054E\u0058\u0054\u0020\u0052E\u0047\u0049O\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045-\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0062\u0065\u0067\u0069n\u0073\u002e\u002e\u002e")
-	defer func() {
-		if _bfgb != nil {
-			_gb.Log.Trace("\u005b\u0054\u0045\u0058\u0054\u0020\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002d\u0048\u0045\u0041\u0044E\u0052\u005d\u0020\u0066\u0061i\u006c\u0065d\u002e\u0020\u0025\u0076", _bfgb)
-		} else {
-			_gb.Log.Trace("\u005b\u0054E\u0058\u0054\u0020\u0052E\u0047\u0049O\u004e\u005d\u005b\u0050\u0041\u0052\u0053\u0045-\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0066\u0069\u006e\u0069s\u0068\u0065\u0064\u002e")
-		}
-	}()
-	if _bfgb = _bbdbb.RegionInfo.parseHeader(); _bfgb != nil {
-		return _bfgb
-	}
-	if _bfgb = _bbdbb.readRegionFlags(); _bfgb != nil {
-		return _bfgb
-	}
-	if _bbdbb.IsHuffmanEncoded {
-		if _bfgb = _bbdbb.readHuffmanFlags(); _bfgb != nil {
-			return _bfgb
-		}
-	}
-	if _bfgb = _bbdbb.readUseRefinement(); _bfgb != nil {
-		return _bfgb
-	}
-	if _bfgb = _bbdbb.readAmountOfSymbolInstances(); _bfgb != nil {
-		return _bfgb
-	}
-	if _bfgb = _bbdbb.getSymbols(); _bfgb != nil {
-		return _bfgb
-	}
-	if _bfgb = _bbdbb.computeSymbolCodeLength(); _bfgb != nil {
-		return _bfgb
-	}
-	if _bfgb = _bbdbb.checkInput(); _bfgb != nil {
-		return _bfgb
-	}
-	_gb.Log.Trace("\u0025\u0073", _bbdbb.String())
-	return nil
-}
-func (_bag *GenericRegion) overrideAtTemplate1(_cabg, _fab, _gfec, _aga, _bbgb int) int {
-	_cabg &= 0x1FF7
-	if _bag.GBAtY[0] == 0 && _bag.GBAtX[0] >= -int8(_bbgb) {
-		_cabg |= (_aga >> uint(7-(int8(_bbgb)+_bag.GBAtX[0])) & 0x1) << 3
-	} else {
-		_cabg |= int(_bag.getPixel(_fab+int(_bag.GBAtX[0]), _gfec+int(_bag.GBAtY[0]))) << 3
-	}
-	return _cabg
-}
-func (_dbdb *HalftoneRegion) GetPatterns() ([]*_c.Bitmap, error) {
-	var (
-		_agea []*_c.Bitmap
-		_afga error
-	)
-	for _, _cgfg := range _dbdb._bdeg.RTSegments {
-		var _gffc Segmenter
-		_gffc, _afga = _cgfg.GetSegmentData()
-		if _afga != nil {
-			_gb.Log.Debug("\u0047e\u0074\u0053\u0065\u0067m\u0065\u006e\u0074\u0044\u0061t\u0061 \u0066a\u0069\u006c\u0065\u0064\u003a\u0020\u0025v", _afga)
-			return nil, _afga
-		}
-		_dbdf, _ebfe := _gffc.(*PatternDictionary)
-		if !_ebfe {
-			_afga = _be.Errorf("\u0072e\u006c\u0061t\u0065\u0064\u0020\u0073e\u0067\u006d\u0065n\u0074\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0070at\u0074\u0065\u0072n\u0020\u0064i\u0063\u0074\u0069\u006f\u006e\u0061r\u0079\u003a \u0025\u0054", _gffc)
-			return nil, _afga
-		}
-		var _fgf []*_c.Bitmap
-		_fgf, _afga = _dbdf.GetDictionary()
-		if _afga != nil {
-			_gb.Log.Debug("\u0070\u0061\u0074\u0074\u0065\u0072\u006e\u0020\u0047\u0065\u0074\u0044\u0069\u0063\u0074i\u006fn\u0061\u0072\u0079\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0076", _afga)
-			return nil, _afga
-		}
-		_agea = append(_agea, _fgf...)
-	}
-	return _agea, nil
-}
-func (_bdcd *GenericRegion) overrideAtTemplate2(_aagb, _gce, _bcc, _fbde, _cgab int) int {
-	_aagb &= 0x3FB
-	if _bdcd.GBAtY[0] == 0 && _bdcd.GBAtX[0] >= -int8(_cgab) {
-		_aagb |= (_fbde >> uint(7-(int8(_cgab)+_bdcd.GBAtX[0])) & 0x1) << 2
-	} else {
-		_aagb |= int(_bdcd.getPixel(_gce+int(_bdcd.GBAtX[0]), _bcc+int(_bdcd.GBAtY[0]))) << 2
-	}
-	return _aagb
-}
-func (_edg *PageInformationSegment) readRequiresAuxiliaryBuffer() error {
-	_dffa, _bcgd := _edg._fabba.ReadBit()
-	if _bcgd != nil {
-		return _bcgd
-	}
-	if _dffa == 1 {
-		_edg._cabb = true
-	}
-	return nil
-}
-func (_ceea *Header) readSegmentDataLength(_ggfg _g.StreamReader) (_fdf error) {
-	_ceea.SegmentDataLength, _fdf = _ggfg.ReadBits(32)
-	if _fdf != nil {
-		return _fdf
-	}
-	_ceea.SegmentDataLength &= _f.MaxInt32
-	return nil
-}
-func (_cdeg *SymbolDictionary) readRegionFlags() error {
-	var (
-		_abea uint64
-		_cgfe int
-	)
-	_, _aedg := _cdeg._aege.ReadBits(3)
-	if _aedg != nil {
-		return _aedg
-	}
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	_cdeg.SdrTemplate = int8(_cgfe)
-	_abea, _aedg = _cdeg._aege.ReadBits(2)
-	if _aedg != nil {
-		return _aedg
-	}
-	_cdeg.SdTemplate = int8(_abea & 0xf)
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	if _cgfe == 1 {
-		_cdeg._bebbf = true
-	}
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	if _cgfe == 1 {
-		_cdeg._bcce = true
-	}
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	if _cgfe == 1 {
-		_cdeg.SdHuffAggInstanceSelection = true
-	}
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	_cdeg.SdHuffBMSizeSelection = int8(_cgfe)
-	_abea, _aedg = _cdeg._aege.ReadBits(2)
-	if _aedg != nil {
-		return _aedg
-	}
-	_cdeg.SdHuffDecodeWidthSelection = int8(_abea & 0xf)
-	_abea, _aedg = _cdeg._aege.ReadBits(2)
-	if _aedg != nil {
-		return _aedg
-	}
-	_cdeg.SdHuffDecodeHeightSelection = int8(_abea & 0xf)
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	if _cgfe == 1 {
-		_cdeg.UseRefinementAggregation = true
-	}
-	_cgfe, _aedg = _cdeg._aege.ReadBit()
-	if _aedg != nil {
-		return _aedg
-	}
-	if _cgfe == 1 {
-		_cdeg.IsHuffmanEncoded = true
-	}
-	return nil
-}
-func (_debef *TableSegment) HtOOB() int32 { return _debef._dgecf }
-func (_dadag *SymbolDictionary) setExportedSymbols(_abba []int) {
-	for _dcgcb := uint32(0); _dcgcb < _dadag._fgfc+_dadag.NumberOfNewSymbols; _dcgcb++ {
-		if _abba[_dcgcb] == 1 {
-			var _ddce *_c.Bitmap
-			if _dcgcb < _dadag._fgfc {
-				_ddce = _dadag._gdc[_dcgcb]
-			} else {
-				_ddce = _dadag._gbeb[_dcgcb-_dadag._fgfc]
-			}
-			_gb.Log.Trace("\u005bS\u0059\u004dB\u004f\u004c\u002d\u0044I\u0043\u0054\u0049O\u004e\u0041\u0052\u0059\u005d\u0020\u0041\u0064\u0064 E\u0078\u0070\u006fr\u0074\u0065d\u0053\u0079\u006d\u0062\u006f\u006c:\u0020\u0027%\u0073\u0027", _ddce)
-			_dadag._abab = append(_dadag._abab, _ddce)
-		}
-	}
-}
-func (_afgf *GenericRegion) getPixel(_gdb, _gaed int) int8 {
-	if _gdb < 0 || _gdb >= _afgf.Bitmap.Width {
-		return 0
-	}
-	if _gaed < 0 || _gaed >= _afgf.Bitmap.Height {
-		return 0
-	}
-	if _afgf.Bitmap.GetPixel(_gdb, _gaed) {
-		return 1
-	}
-	return 0
-}
-func (_fcda *SymbolDictionary) encodeNumSyms(_ggce _g.BinaryWriter) (_fgbdc int, _ccea error) {
-	const _gbge = "\u0065\u006e\u0063\u006f\u0064\u0065\u004e\u0075\u006d\u0053\u0079\u006d\u0073"
-	_agcb := make([]byte, 4)
-	_bc.BigEndian.PutUint32(_agcb, _fcda.NumberOfExportedSymbols)
-	if _fgbdc, _ccea = _ggce.Write(_agcb); _ccea != nil {
-		return _fgbdc, _ac.Wrap(_ccea, _gbge, "\u0065\u0078p\u006f\u0072\u0074e\u0064\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0073")
-	}
-	_bc.BigEndian.PutUint32(_agcb, _fcda.NumberOfNewSymbols)
-	_dfea, _ccea := _ggce.Write(_agcb)
-	if _ccea != nil {
-		return _fgbdc, _ac.Wrap(_ccea, _gbge, "n\u0065\u0077\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0073")
-	}
-	return _fgbdc + _dfea, nil
+func (_dfaf *HalftoneRegion) computeX(_gcdf, _bbed int) int {
+	return _dfaf.shiftAndFill(int(_dfaf.HGridX) + _gcdf*int(_dfaf.HRegionY) + _bbed*int(_dfaf.HRegionX))
 }
 
 type RegionSegment struct {
-	_ffade             _g.StreamReader
+	_dbge              _fg.StreamReader
 	BitmapWidth        uint32
 	BitmapHeight       uint32
 	XLocation          uint32
 	YLocation          uint32
-	CombinaionOperator _c.CombinationOperator
+	CombinaionOperator _d.CombinationOperator
 }
 
-func (_agd *Header) writeFlags(_cdbd _g.BinaryWriter) (_bgac error) {
-	const _egae = "\u0048\u0065\u0061\u0064\u0065\u0072\u002e\u0077\u0072\u0069\u0074\u0065F\u006c\u0061\u0067\u0073"
-	_bge := byte(_agd.Type)
-	if _bgac = _cdbd.WriteByte(_bge); _bgac != nil {
-		return _ac.Wrap(_bgac, _egae, "\u0077\u0072\u0069ti\u006e\u0067\u0020\u0073\u0065\u0067\u006d\u0065\u006et\u0020t\u0079p\u0065 \u006e\u0075\u006d\u0062\u0065\u0072\u0020\u0066\u0061\u0069\u006c\u0065\u0064")
+func (_acfbd *SymbolDictionary) parseHeader() (_dfcbf error) {
+	_da.Log.Trace("\u005b\u0053\u0059\u004d\u0042\u004f\u004c \u0044\u0049\u0043T\u0049\u004f\u004e\u0041R\u0059\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e")
+	defer func() {
+		if _dfcbf != nil {
+			_da.Log.Trace("\u005bS\u0059\u004dB\u004f\u004c\u0020\u0044I\u0043\u0054\u0049O\u004e\u0041\u0052\u0059\u005d\u005b\u0050\u0041\u0052SE\u002d\u0048\u0045A\u0044\u0045R\u005d\u0020\u0066\u0061\u0069\u006ce\u0064\u002e \u0025\u0076", _dfcbf)
+		} else {
+			_da.Log.Trace("\u005b\u0053\u0059\u004d\u0042\u004f\u004c \u0044\u0049\u0043T\u0049\u004f\u004e\u0041R\u0059\u005d\u005b\u0050\u0041\u0052\u0053\u0045\u002d\u0048\u0045\u0041\u0044\u0045\u0052\u005d\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u002e")
+		}
+	}()
+	if _dfcbf = _acfbd.readRegionFlags(); _dfcbf != nil {
+		return _dfcbf
 	}
-	if !_agd.RetainFlag && !_agd.PageAssociationFieldSize {
+	if _dfcbf = _acfbd.setAtPixels(); _dfcbf != nil {
+		return _dfcbf
+	}
+	if _dfcbf = _acfbd.setRefinementAtPixels(); _dfcbf != nil {
+		return _dfcbf
+	}
+	if _dfcbf = _acfbd.readNumberOfExportedSymbols(); _dfcbf != nil {
+		return _dfcbf
+	}
+	if _dfcbf = _acfbd.readNumberOfNewSymbols(); _dfcbf != nil {
+		return _dfcbf
+	}
+	if _dfcbf = _acfbd.setInSyms(); _dfcbf != nil {
+		return _dfcbf
+	}
+	if _acfbd._gacg {
+		_eeac := _acfbd.Header.RTSegments
+		for _fcfa := len(_eeac) - 1; _fcfa >= 0; _fcfa-- {
+			if _eeac[_fcfa].Type == 0 {
+				_gbba, _cgcf := _eeac[_fcfa].SegmentData.(*SymbolDictionary)
+				if !_cgcf {
+					_dfcbf = _e.Errorf("\u0072\u0065\u006c\u0061\u0074\u0065\u0064\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074:\u0020\u0025\u0076\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020S\u0079\u006d\u0062\u006f\u006c\u0020\u0044\u0069\u0063\u0074\u0069\u006fna\u0072\u0079\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074", _eeac[_fcfa])
+					return _dfcbf
+				}
+				if _gbba._gacg {
+					_acfbd.setRetainedCodingContexts(_gbba)
+				}
+				break
+			}
+		}
+	}
+	if _dfcbf = _acfbd.checkInput(); _dfcbf != nil {
+		return _dfcbf
+	}
+	return nil
+}
+func (_bbcf *SymbolDictionary) getSymbol(_edfde int) (*_d.Bitmap, error) {
+	const _cgde = "\u0067e\u0074\u0053\u0079\u006d\u0062\u006fl"
+	_ebaa, _cbcc := _bbcf._dbag.GetBitmap(_bbcf._fagdd[_edfde])
+	if _cbcc != nil {
+		return nil, _fd.Wrap(_cbcc, _cgde, "\u0063\u0061n\u0027\u0074\u0020g\u0065\u0074\u0020\u0073\u0079\u006d\u0062\u006f\u006c")
+	}
+	return _ebaa, nil
+}
+func (_cafa *GenericRefinementRegion) readAtPixels() error {
+	_cafa.GrAtX = make([]int8, 2)
+	_cafa.GrAtY = make([]int8, 2)
+	_ggd, _ceb := _cafa._geg.ReadByte()
+	if _ceb != nil {
+		return _ceb
+	}
+	_cafa.GrAtX[0] = int8(_ggd)
+	_ggd, _ceb = _cafa._geg.ReadByte()
+	if _ceb != nil {
+		return _ceb
+	}
+	_cafa.GrAtY[0] = int8(_ggd)
+	_ggd, _ceb = _cafa._geg.ReadByte()
+	if _ceb != nil {
+		return _ceb
+	}
+	_cafa.GrAtX[1] = int8(_ggd)
+	_ggd, _ceb = _cafa._geg.ReadByte()
+	if _ceb != nil {
+		return _ceb
+	}
+	_cafa.GrAtY[1] = int8(_ggd)
+	return nil
+}
+func (_dd *EndOfStripe) parseHeader(_fc *Header, _aa _fg.StreamReader) error {
+	_adb, _gab := _dd._dg.ReadBits(32)
+	if _gab != nil {
+		return _gab
+	}
+	_dd._dc = int(_adb & _f.MaxInt32)
+	return nil
+}
+func (_gbcb *TextRegion) decodeCurrentT() (int64, error) {
+	if _gbcb.SbStrips != 1 {
+		if _gbcb.IsHuffmanEncoded {
+			_abcf, _faca := _gbcb._effb.ReadBits(byte(_gbcb.LogSBStrips))
+			return int64(_abcf), _faca
+		}
+		_fef, _ecg := _gbcb._dffe.DecodeInt(_gbcb._dace)
+		if _ecg != nil {
+			return 0, _ecg
+		}
+		return int64(_fef), nil
+	}
+	return 0, nil
+}
+func (_fgbfg *HalftoneRegion) parseHeader() error {
+	if _efeb := _fgbfg.RegionSegment.parseHeader(); _efeb != nil {
+		return _efeb
+	}
+	_ddac, _edeg := _fgbfg._gdfe.ReadBit()
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HDefaultPixel = int8(_ddac)
+	_gegd, _edeg := _fgbfg._gdfe.ReadBits(3)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.CombinationOperator = _d.CombinationOperator(_gegd & 0xf)
+	_ddac, _edeg = _fgbfg._gdfe.ReadBit()
+	if _edeg != nil {
+		return _edeg
+	}
+	if _ddac == 1 {
+		_fgbfg.HSkipEnabled = true
+	}
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(2)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HTemplate = byte(_gegd & 0xf)
+	_ddac, _edeg = _fgbfg._gdfe.ReadBit()
+	if _edeg != nil {
+		return _edeg
+	}
+	if _ddac == 1 {
+		_fgbfg.IsMMREncoded = true
+	}
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(32)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HGridWidth = uint32(_gegd & _f.MaxUint32)
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(32)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HGridHeight = uint32(_gegd & _f.MaxUint32)
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(32)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HGridX = int32(_gegd & _f.MaxInt32)
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(32)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HGridY = int32(_gegd & _f.MaxInt32)
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(16)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HRegionX = uint16(_gegd & _f.MaxUint16)
+	_gegd, _edeg = _fgbfg._gdfe.ReadBits(16)
+	if _edeg != nil {
+		return _edeg
+	}
+	_fgbfg.HRegionY = uint16(_gegd & _f.MaxUint16)
+	if _edeg = _fgbfg.computeSegmentDataStructure(); _edeg != nil {
+		return _edeg
+	}
+	return _fgbfg.checkInput()
+}
+func (_eagc *Header) referenceSize() uint {
+	switch {
+	case _eagc.SegmentNumber <= 255:
+		return 1
+	case _eagc.SegmentNumber <= 65535:
+		return 2
+	default:
+		return 4
+	}
+}
+func (_efga *TextRegion) getUserTable(_ggbb int) (_ba.Tabler, error) {
+	const _dbcc = "\u0067\u0065\u0074U\u0073\u0065\u0072\u0054\u0061\u0062\u006c\u0065"
+	var _ccga int
+	for _, _fbdac := range _efga.Header.RTSegments {
+		if _fbdac.Type == 53 {
+			if _ccga == _ggbb {
+				_cege, _eaca := _fbdac.GetSegmentData()
+				if _eaca != nil {
+					return nil, _eaca
+				}
+				_abac, _aceg := _cege.(*TableSegment)
+				if !_aceg {
+					_da.Log.Debug(_e.Sprintf("\u0073\u0065\u0067\u006d\u0065\u006e\u0074 \u0077\u0069\u0074h\u0020\u0054\u0079p\u0065\u00205\u0033\u0020\u002d\u0020\u0061\u006ed\u0020in\u0064\u0065\u0078\u003a\u0020\u0025\u0064\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0054\u0061\u0062\u006c\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074", _fbdac.SegmentNumber))
+					return nil, _fd.Error(_dbcc, "\u0073\u0065\u0067\u006d\u0065\u006e\u0074 \u0077\u0069\u0074h\u0020\u0054\u0079\u0070e\u0020\u0035\u0033\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u002a\u0054\u0061\u0062\u006c\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074")
+				}
+				return _ba.NewEncodedTable(_abac)
+			}
+			_ccga++
+		}
+	}
+	return nil, nil
+}
+
+var _ SegmentEncoder = &GenericRegion{}
+
+func (_abbgc *GenericRegion) readGBAtPixels(_fca int) error {
+	const _edad = "\u0072\u0065\u0061\u0064\u0047\u0042\u0041\u0074\u0050i\u0078\u0065\u006c\u0073"
+	_abbgc.GBAtX = make([]int8, _fca)
+	_abbgc.GBAtY = make([]int8, _fca)
+	for _gaeg := 0; _gaeg < _fca; _gaeg++ {
+		_fcf, _gacfe := _abbgc._baf.ReadByte()
+		if _gacfe != nil {
+			return _fd.Wrapf(_gacfe, _edad, "\u0058\u0020\u0061t\u0020\u0069\u003a\u0020\u0027\u0025\u0064\u0027", _gaeg)
+		}
+		_abbgc.GBAtX[_gaeg] = int8(_fcf)
+		_fcf, _gacfe = _abbgc._baf.ReadByte()
+		if _gacfe != nil {
+			return _fd.Wrapf(_gacfe, _edad, "\u0059\u0020\u0061t\u0020\u0069\u003a\u0020\u0027\u0025\u0064\u0027", _gaeg)
+		}
+		_abbgc.GBAtY[_gaeg] = int8(_fcf)
+	}
+	return nil
+}
+func (_fae *Header) CleanSegmentData() {
+	if _fae.SegmentData != nil {
+		_fae.SegmentData = nil
+	}
+}
+func (_daba *TextRegion) decodeIb(_cddd, _egec int64) (*_d.Bitmap, error) {
+	const _gcbb = "\u0064\u0065\u0063\u006f\u0064\u0065\u0049\u0062"
+	var (
+		_bdfbe error
+		_cceb  *_d.Bitmap
+	)
+	if _cddd == 0 {
+		if int(_egec) > len(_daba.Symbols)-1 {
+			return nil, _fd.Error(_gcbb, "\u0064\u0065\u0063\u006f\u0064\u0069\u006e\u0067\u0020\u0049\u0042\u0020\u0062\u0069\u0074\u006d\u0061\u0070\u002e\u0020\u0069\u006e\u0064\u0065x\u0020\u006f\u0075\u0074\u0020o\u0066\u0020r\u0061\u006e\u0067\u0065")
+		}
+		return _daba.Symbols[int(_egec)], nil
+	}
+	var _baae, _eaaga, _acaf, _eggab int64
+	_baae, _bdfbe = _daba.decodeRdw()
+	if _bdfbe != nil {
+		return nil, _fd.Wrap(_bdfbe, _gcbb, "")
+	}
+	_eaaga, _bdfbe = _daba.decodeRdh()
+	if _bdfbe != nil {
+		return nil, _fd.Wrap(_bdfbe, _gcbb, "")
+	}
+	_acaf, _bdfbe = _daba.decodeRdx()
+	if _bdfbe != nil {
+		return nil, _fd.Wrap(_bdfbe, _gcbb, "")
+	}
+	_eggab, _bdfbe = _daba.decodeRdy()
+	if _bdfbe != nil {
+		return nil, _fd.Wrap(_bdfbe, _gcbb, "")
+	}
+	if _daba.IsHuffmanEncoded {
+		if _, _bdfbe = _daba.decodeSymInRefSize(); _bdfbe != nil {
+			return nil, _fd.Wrap(_bdfbe, _gcbb, "")
+		}
+		_daba._effb.Align()
+	}
+	_dgbfe := _daba.Symbols[_egec]
+	_effac := uint32(_dgbfe.Width)
+	_dfbgb := uint32(_dgbfe.Height)
+	_ccdd := int32(uint32(_baae)>>1) + int32(_acaf)
+	_efba := int32(uint32(_eaaga)>>1) + int32(_eggab)
+	if _daba._edge == nil {
+		_daba._edge = _cda(_daba._effb, nil)
+	}
+	_daba._edge.setParameters(_daba._aeed, _daba._dffe, _daba.SbrTemplate, _effac+uint32(_baae), _dfbgb+uint32(_eaaga), _dgbfe, _ccdd, _efba, false, _daba.SbrATX, _daba.SbrATY)
+	_cceb, _bdfbe = _daba._edge.GetRegionBitmap()
+	if _bdfbe != nil {
+		return nil, _fd.Wrap(_bdfbe, _gcbb, "\u0067\u0072\u0066")
+	}
+	if _daba.IsHuffmanEncoded {
+		_daba._effb.Align()
+	}
+	return _cceb, nil
+}
+func (_ec *GenericRefinementRegion) GetRegionBitmap() (*_d.Bitmap, error) {
+	var _bc error
+	_da.Log.Trace("\u005b\u0047E\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0047\u0065\u0074\u0052\u0065\u0067\u0069\u006f\u006e\u0042\u0069\u0074\u006d\u0061\u0070\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e")
+	defer func() {
+		if _bc != nil {
+			_da.Log.Trace("[\u0047\u0045\u004e\u0045\u0052\u0049\u0043\u002d\u0052E\u0046\u002d\u0052\u0045\u0047\u0049\u004fN]\u0020\u0047\u0065\u0074R\u0065\u0067\u0069\u006f\u006e\u0042\u0069\u0074\u006dap\u0020\u0066a\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0076", _bc)
+		} else {
+			_da.Log.Trace("\u005b\u0047E\u004e\u0045\u0052\u0049\u0043\u002d\u0052\u0045\u0046\u002d\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u0020\u0047\u0065\u0074\u0052\u0065\u0067\u0069\u006f\u006e\u0042\u0069\u0074\u006d\u0061\u0070\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u002e")
+		}
+	}()
+	if _ec.RegionBitmap != nil {
+		return _ec.RegionBitmap, nil
+	}
+	_dgb := 0
+	if _ec.ReferenceBitmap == nil {
+		_ec.ReferenceBitmap, _bc = _ec.getGrReference()
+		if _bc != nil {
+			return nil, _bc
+		}
+	}
+	if _ec._gf == nil {
+		_ec._gf, _bc = _b.New(_ec._geg)
+		if _bc != nil {
+			return nil, _bc
+		}
+	}
+	if _ec._cdb == nil {
+		_ec._cdb = _b.NewStats(8192, 1)
+	}
+	_ec.RegionBitmap = _d.New(int(_ec.RegionInfo.BitmapWidth), int(_ec.RegionInfo.BitmapHeight))
+	if _ec.TemplateID == 0 {
+		if _bc = _ec.updateOverride(); _bc != nil {
+			return nil, _bc
+		}
+	}
+	_fed := (_ec.RegionBitmap.Width + 7) & -8
+	var _ag int
+	if _ec.IsTPGROn {
+		_ag = int(-_ec.ReferenceDY) * _ec.ReferenceBitmap.RowStride
+	}
+	_dbb := _ag + 1
+	for _dee := 0; _dee < _ec.RegionBitmap.Height; _dee++ {
+		if _ec.IsTPGROn {
+			_eb, _agc := _ec.decodeSLTP()
+			if _agc != nil {
+				return nil, _agc
+			}
+			_dgb ^= _eb
+		}
+		if _dgb == 0 {
+			_bc = _ec.decodeOptimized(_dee, _ec.RegionBitmap.Width, _ec.RegionBitmap.RowStride, _ec.ReferenceBitmap.RowStride, _fed, _ag, _dbb)
+			if _bc != nil {
+				return nil, _bc
+			}
+		} else {
+			_bc = _ec.decodeTypicalPredictedLine(_dee, _ec.RegionBitmap.Width, _ec.RegionBitmap.RowStride, _ec.ReferenceBitmap.RowStride, _fed, _ag)
+			if _bc != nil {
+				return nil, _bc
+			}
+		}
+	}
+	return _ec.RegionBitmap, nil
+}
+func (_gffg *HalftoneRegion) Init(hd *Header, r _fg.StreamReader) error {
+	_gffg._gdfe = r
+	_gffg._fdag = hd
+	_gffg.RegionSegment = NewRegionSegment(r)
+	return _gffg.parseHeader()
+}
+
+type OrganizationType uint8
+
+func (_ebgb *SymbolDictionary) decodeHeightClassDeltaHeightWithHuffman() (int64, error) {
+	switch _ebgb.SdHuffDecodeHeightSelection {
+	case 0:
+		_gedc, _ebag := _ba.GetStandardTable(4)
+		if _ebag != nil {
+			return 0, _ebag
+		}
+		return _gedc.Decode(_ebgb._bcagf)
+	case 1:
+		_edfg, _affdf := _ba.GetStandardTable(5)
+		if _affdf != nil {
+			return 0, _affdf
+		}
+		return _edfg.Decode(_ebgb._bcagf)
+	case 3:
+		if _ebgb._dgecb == nil {
+			_afgd, _fcbbd := _ba.GetStandardTable(0)
+			if _fcbbd != nil {
+				return 0, _fcbbd
+			}
+			_ebgb._dgecb = _afgd
+		}
+		return _ebgb._dgecb.Decode(_ebgb._bcagf)
+	}
+	return 0, nil
+}
+func (_effe *GenericRegion) decodeSLTP() (int, error) {
+	switch _effe.GBTemplate {
+	case 0:
+		_effe._aae.SetIndex(0x9B25)
+	case 1:
+		_effe._aae.SetIndex(0x795)
+	case 2:
+		_effe._aae.SetIndex(0xE5)
+	case 3:
+		_effe._aae.SetIndex(0x195)
+	}
+	return _effe._acb.DecodeBit(_effe._aae)
+}
+func (_dbe *TextRegion) setCodingStatistics() error {
+	if _dbe._bgad == nil {
+		_dbe._bgad = _b.NewStats(512, 1)
+	}
+	if _dbe._geaa == nil {
+		_dbe._geaa = _b.NewStats(512, 1)
+	}
+	if _dbe._dafb == nil {
+		_dbe._dafb = _b.NewStats(512, 1)
+	}
+	if _dbe._dace == nil {
+		_dbe._dace = _b.NewStats(512, 1)
+	}
+	if _dbe._gbfge == nil {
+		_dbe._gbfge = _b.NewStats(512, 1)
+	}
+	if _dbe._egcff == nil {
+		_dbe._egcff = _b.NewStats(512, 1)
+	}
+	if _dbe._acgg == nil {
+		_dbe._acgg = _b.NewStats(512, 1)
+	}
+	if _dbe._beabb == nil {
+		_dbe._beabb = _b.NewStats(1<<uint(_dbe._ebcb), 1)
+	}
+	if _dbe._beda == nil {
+		_dbe._beda = _b.NewStats(512, 1)
+	}
+	if _dbe._bfbb == nil {
+		_dbe._bfbb = _b.NewStats(512, 1)
+	}
+	if _dbe._dffe == nil {
+		var _ddcf error
+		_dbe._dffe, _ddcf = _b.New(_dbe._effb)
+		if _ddcf != nil {
+			return _ddcf
+		}
+	}
+	return nil
+}
+func (_fgd *Header) GetSegmentData() (Segmenter, error) {
+	var _dagf Segmenter
+	if _fgd.SegmentData != nil {
+		_dagf = _fgd.SegmentData
+	}
+	if _dagf == nil {
+		_bdfg, _ccge := _ffdg[_fgd.Type]
+		if !_ccge {
+			return nil, _e.Errorf("\u0074\u0079\u0070\u0065\u003a\u0020\u0025\u0073\u002f\u0020\u0025\u0064\u0020\u0063\u0072e\u0061t\u006f\u0072\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u002e\u0020", _fgd.Type, _fgd.Type)
+		}
+		_dagf = _bdfg()
+		_da.Log.Trace("\u005b\u0053E\u0047\u004d\u0045\u004e\u0054-\u0048\u0045\u0041\u0044\u0045R\u005d\u005b\u0023\u0025\u0064\u005d\u0020\u0047\u0065\u0074\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0044\u0061\u0074\u0061\u0020\u0061\u0074\u0020\u004f\u0066\u0066\u0073\u0065\u0074\u003a\u0020\u0025\u0030\u0034\u0058", _fgd.SegmentNumber, _fgd.SegmentDataStartOffset)
+		_ffca, _ebe := _fgd.subInputReader()
+		if _ebe != nil {
+			return nil, _ebe
+		}
+		if _beab := _dagf.Init(_fgd, _ffca); _beab != nil {
+			_da.Log.Debug("\u0049\u006e\u0069\u0074 \u0066\u0061\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0076 \u0066o\u0072\u0020\u0074\u0079\u0070\u0065\u003a \u0025\u0054", _beab, _dagf)
+			return nil, _beab
+		}
+		_fgd.SegmentData = _dagf
+	}
+	return _dagf, nil
+}
+func (_addgc *GenericRegion) setOverrideFlag(_agbc int) {
+	_addgc.GBAtOverride[_agbc] = true
+	_addgc._fgf = true
+}
+func (_ebfgb *Header) writeFlags(_dbbfd _fg.BinaryWriter) (_gacc error) {
+	const _debe = "\u0048\u0065\u0061\u0064\u0065\u0072\u002e\u0077\u0072\u0069\u0074\u0065F\u006c\u0061\u0067\u0073"
+	_gcbf := byte(_ebfgb.Type)
+	if _gacc = _dbbfd.WriteByte(_gcbf); _gacc != nil {
+		return _fd.Wrap(_gacc, _debe, "\u0077\u0072\u0069ti\u006e\u0067\u0020\u0073\u0065\u0067\u006d\u0065\u006et\u0020t\u0079p\u0065 \u006e\u0075\u006d\u0062\u0065\u0072\u0020\u0066\u0061\u0069\u006c\u0065\u0064")
+	}
+	if !_ebfgb.RetainFlag && !_ebfgb.PageAssociationFieldSize {
 		return nil
 	}
-	if _bgac = _cdbd.SkipBits(-8); _bgac != nil {
-		return _ac.Wrap(_bgac, _egae, "\u0073\u006bi\u0070\u0070\u0069\u006e\u0067\u0020\u0062\u0061\u0063\u006b\u0020\u0074\u0068\u0065\u0020\u0062\u0069\u0074\u0073\u0020\u0066\u0061il\u0065\u0064")
+	if _gacc = _dbbfd.SkipBits(-8); _gacc != nil {
+		return _fd.Wrap(_gacc, _debe, "\u0073\u006bi\u0070\u0070\u0069\u006e\u0067\u0020\u0062\u0061\u0063\u006b\u0020\u0074\u0068\u0065\u0020\u0062\u0069\u0074\u0073\u0020\u0066\u0061il\u0065\u0064")
 	}
-	var _fdba int
-	if _agd.RetainFlag {
-		_fdba = 1
+	var _dfg int
+	if _ebfgb.RetainFlag {
+		_dfg = 1
 	}
-	if _bgac = _cdbd.WriteBit(_fdba); _bgac != nil {
-		return _ac.Wrap(_bgac, _egae, "\u0072\u0065\u0074\u0061in\u0020\u0072\u0065\u0074\u0061\u0069\u006e\u0020\u0066\u006c\u0061\u0067\u0073")
+	if _gacc = _dbbfd.WriteBit(_dfg); _gacc != nil {
+		return _fd.Wrap(_gacc, _debe, "\u0072\u0065\u0074\u0061in\u0020\u0072\u0065\u0074\u0061\u0069\u006e\u0020\u0066\u006c\u0061\u0067\u0073")
 	}
-	_fdba = 0
-	if _agd.PageAssociationFieldSize {
-		_fdba = 1
+	_dfg = 0
+	if _ebfgb.PageAssociationFieldSize {
+		_dfg = 1
 	}
-	if _bgac = _cdbd.WriteBit(_fdba); _bgac != nil {
-		return _ac.Wrap(_bgac, _egae, "p\u0061\u0067\u0065\u0020as\u0073o\u0063\u0069\u0061\u0074\u0069o\u006e\u0020\u0066\u006c\u0061\u0067")
+	if _gacc = _dbbfd.WriteBit(_dfg); _gacc != nil {
+		return _fd.Wrap(_gacc, _debe, "p\u0061\u0067\u0065\u0020as\u0073o\u0063\u0069\u0061\u0074\u0069o\u006e\u0020\u0066\u006c\u0061\u0067")
 	}
-	_cdbd.FinishByte()
+	_dbbfd.FinishByte()
 	return nil
 }
-func (_geea *GenericRegion) setOverrideFlag(_dfbc int) {
-	_geea.GBAtOverride[_dfbc] = true
-	_geea._aaaf = true
-}
-func (_ecb *template0) setIndex(_adf *_aa.DecoderStats) { _adf.SetIndex(0x100) }
-func (_fabf *TextRegion) String() string {
-	_daad := &_bb.Builder{}
-	_daad.WriteString("\u000a[\u0054E\u0058\u0054\u0020\u0052\u0045\u0047\u0049\u004f\u004e\u005d\u000a")
-	_daad.WriteString(_fabf.RegionInfo.String() + "\u000a")
-	_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053br\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u003a\u0020\u0025\u0076\u000a", _fabf.SbrTemplate))
-	_daad.WriteString(_be.Sprintf("\u0009-\u0020S\u0062\u0044\u0073\u004f\u0066f\u0073\u0065t\u003a\u0020\u0025\u0076\u000a", _fabf.SbDsOffset))
-	_daad.WriteString(_be.Sprintf("\t\u002d \u0044\u0065\u0066\u0061\u0075\u006c\u0074\u0050i\u0078\u0065\u006c\u003a %\u0076\u000a", _fabf.DefaultPixel))
-	_daad.WriteString(_be.Sprintf("\t\u002d\u0020\u0043\u006f\u006d\u0062i\u006e\u0061\u0074\u0069\u006f\u006e\u004f\u0070\u0065r\u0061\u0074\u006fr\u003a \u0025\u0076\u000a", _fabf.CombinationOperator))
-	_daad.WriteString(_be.Sprintf("\t\u002d \u0049\u0073\u0054\u0072\u0061\u006e\u0073\u0070o\u0073\u0065\u0064\u003a %\u0076\u000a", _fabf.IsTransposed))
-	_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020Re\u0066\u0065\u0072\u0065\u006e\u0063\u0065\u0043\u006f\u0072\u006e\u0065\u0072\u003a\u0020\u0025\u0076\u000a", _fabf.ReferenceCorner))
-	_daad.WriteString(_be.Sprintf("\t\u002d\u0020\u0055\u0073eR\u0065f\u0069\u006e\u0065\u006d\u0065n\u0074\u003a\u0020\u0025\u0076\u000a", _fabf.UseRefinement))
-	_daad.WriteString(_be.Sprintf("\u0009-\u0020\u0049\u0073\u0048\u0075\u0066\u0066\u006d\u0061\u006e\u0045n\u0063\u006f\u0064\u0065\u0064\u003a\u0020\u0025\u0076\u000a", _fabf.IsHuffmanEncoded))
-	if _fabf.IsHuffmanEncoded {
-		_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053bH\u0075\u0066\u0066\u0052\u0053\u0069\u007a\u0065\u003a\u0020\u0025\u0076\u000a", _fabf.SbHuffRSize))
-		_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0048\u0075\u0066\u0066\u0052\u0044\u0059:\u0020\u0025\u0076\u000a", _fabf.SbHuffRDY))
-		_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0048\u0075\u0066\u0066\u0052\u0044\u0058:\u0020\u0025\u0076\u000a", _fabf.SbHuffRDX))
-		_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053bH\u0075\u0066\u0066\u0052\u0044\u0048\u0065\u0069\u0067\u0068\u0074\u003a\u0020\u0025v\u000a", _fabf.SbHuffRDHeight))
-		_daad.WriteString(_be.Sprintf("\t\u002d\u0020\u0053\u0062Hu\u0066f\u0052\u0044\u0057\u0069\u0064t\u0068\u003a\u0020\u0025\u0076\u000a", _fabf.SbHuffRDWidth))
-		_daad.WriteString(_be.Sprintf("\u0009\u002d \u0053\u0062\u0048u\u0066\u0066\u0044\u0054\u003a\u0020\u0025\u0076\u000a", _fabf.SbHuffDT))
-		_daad.WriteString(_be.Sprintf("\u0009\u002d \u0053\u0062\u0048u\u0066\u0066\u0044\u0053\u003a\u0020\u0025\u0076\u000a", _fabf.SbHuffDS))
-		_daad.WriteString(_be.Sprintf("\u0009\u002d \u0053\u0062\u0048u\u0066\u0066\u0046\u0053\u003a\u0020\u0025\u0076\u000a", _fabf.SbHuffFS))
-	}
-	_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0072\u0041\u0054\u0058:\u0020\u0025\u0076\u000a", _fabf.SbrATX))
-	_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0072\u0041\u0054\u0059:\u0020\u0025\u0076\u000a", _fabf.SbrATY))
-	_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020N\u0075\u006d\u0062\u0065r\u004f\u0066\u0053\u0079\u006d\u0062\u006fl\u0049\u006e\u0073\u0074\u0061\u006e\u0063\u0065\u0073\u003a\u0020\u0025\u0076\u000a", _fabf.NumberOfSymbolInstances))
-	_daad.WriteString(_be.Sprintf("\u0009\u002d\u0020\u0053\u0062\u0072\u0041\u0054\u0058:\u0020\u0025\u0076\u000a", _fabf.SbrATX))
-	return _daad.String()
-}
-func (_aaec *SymbolDictionary) InitEncode(symbols *_c.Bitmaps, symbolList []int, symbolMap map[int]int, unborderSymbols bool) error {
-	const _eaacf = "S\u0079\u006d\u0062\u006f\u006c\u0044i\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079\u002eI\u006e\u0069\u0074E\u006ec\u006f\u0064\u0065"
-	_aaec.SdATX = []int8{3, -3, 2, -2}
-	_aaec.SdATY = []int8{-1, -1, -2, -2}
-	_aaec._dfa = symbols
-	_aaec._eaac = make([]int, len(symbolList))
-	copy(_aaec._eaac, symbolList)
-	if len(_aaec._eaac) != _aaec._dfa.Size() {
-		return _ac.Error(_eaacf, "s\u0079\u006d\u0062\u006f\u006c\u0073\u0020\u0061\u006e\u0064\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u004ci\u0073\u0074\u0020\u006f\u0066\u0020\u0064\u0069\u0066\u0066er\u0065\u006e\u0074 \u0073i\u007a\u0065")
-	}
-	_aaec.NumberOfNewSymbols = uint32(symbols.Size())
-	_aaec.NumberOfExportedSymbols = uint32(symbols.Size())
-	_aaec._faeae = symbolMap
-	_aaec._fadf = unborderSymbols
-	return nil
-}
-func (_fcbab *GenericRegion) Encode(w _g.BinaryWriter) (_gae int, _bdc error) {
-	const _egg = "G\u0065n\u0065\u0072\u0069\u0063\u0052\u0065\u0067\u0069o\u006e\u002e\u0045\u006eco\u0064\u0065"
-	if _fcbab.Bitmap == nil {
-		return 0, _ac.Error(_egg, "\u0070\u0072\u006f\u0076id\u0065\u0064\u0020\u006e\u0069\u006c\u0020\u0062\u0069\u0074\u006d\u0061\u0070")
-	}
-	_efbb, _bdc := _fcbab.RegionSegment.Encode(w)
-	if _bdc != nil {
-		return 0, _ac.Wrap(_bdc, _egg, "\u0052\u0065\u0067\u0069\u006f\u006e\u0053\u0065\u0067\u006d\u0065\u006e\u0074")
-	}
-	_gae += _efbb
-	if _bdc = w.SkipBits(4); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "\u0073k\u0069p\u0020\u0072\u0065\u0073\u0065r\u0076\u0065d\u0020\u0062\u0069\u0074\u0073")
-	}
-	var _bdeb int
-	if _fcbab.IsTPGDon {
-		_bdeb = 1
-	}
-	if _bdc = w.WriteBit(_bdeb); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "\u0074\u0070\u0067\u0064\u006f\u006e")
-	}
-	_bdeb = 0
-	if _bdc = w.WriteBit(int(_fcbab.GBTemplate>>1) & 0x01); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "f\u0069r\u0073\u0074\u0020\u0067\u0062\u0074\u0065\u006dp\u006c\u0061\u0074\u0065 b\u0069\u0074")
-	}
-	if _bdc = w.WriteBit(int(_fcbab.GBTemplate) & 0x01); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "s\u0065\u0063\u006f\u006ed \u0067b\u0074\u0065\u006d\u0070\u006ca\u0074\u0065\u0020\u0062\u0069\u0074")
-	}
-	if _fcbab.UseMMR {
-		_bdeb = 1
-	}
-	if _bdc = w.WriteBit(_bdeb); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "u\u0073\u0065\u0020\u004d\u004d\u0052\u0020\u0062\u0069\u0074")
-	}
-	_gae++
-	if _efbb, _bdc = _fcbab.writeGBAtPixels(w); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "")
-	}
-	_gae += _efbb
-	_cdg := _cg.New()
-	if _bdc = _cdg.EncodeBitmap(_fcbab.Bitmap, _fcbab.IsTPGDon); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "")
-	}
-	_cdg.Final()
-	var _geec int64
-	if _geec, _bdc = _cdg.WriteTo(w); _bdc != nil {
-		return _gae, _ac.Wrap(_bdc, _egg, "")
-	}
-	_gae += int(_geec)
-	return _gae, nil
-}
-func (_gebaf *SymbolDictionary) decodeNewSymbols(_fcaf, _cabeb uint32, _bcfc *_c.Bitmap, _bacf, _faga int32) error {
-	if _gebaf._abdfc == nil {
-		_gebaf._abdfc = _agfb(_gebaf._aege, nil)
-		if _gebaf._caaa == nil {
-			var _dddb error
-			_gebaf._caaa, _dddb = _aa.New(_gebaf._aege)
-			if _dddb != nil {
-				return _dddb
-			}
-		}
-		if _gebaf._ebff == nil {
-			_gebaf._ebff = _aa.NewStats(65536, 1)
-		}
-	}
-	_gebaf._abdfc.setParameters(_gebaf._ebff, _gebaf._caaa, _gebaf.SdrTemplate, _fcaf, _cabeb, _bcfc, _bacf, _faga, false, _gebaf.SdrATX, _gebaf.SdrATY)
-	return _gebaf.addSymbol(_gebaf._abdfc)
-}
-func (_ecca *Header) writeReferredToCount(_egfe _g.BinaryWriter) (_feef int, _bddf error) {
-	const _gde = "w\u0072i\u0074\u0065\u0052\u0065\u0066\u0065\u0072\u0072e\u0064\u0054\u006f\u0043ou\u006e\u0074"
-	_ecca.RTSNumbers = make([]int, len(_ecca.RTSegments))
-	for _fabb, _caca := range _ecca.RTSegments {
-		_ecca.RTSNumbers[_fabb] = int(_caca.SegmentNumber)
-	}
-	if len(_ecca.RTSNumbers) <= 4 {
-		var _cfcg byte
-		if len(_ecca.RetainBits) >= 1 {
-			_cfcg = _ecca.RetainBits[0]
-		}
-		_cfcg |= byte(len(_ecca.RTSNumbers)) << 5
-		if _bddf = _egfe.WriteByte(_cfcg); _bddf != nil {
-			return 0, _ac.Wrap(_bddf, _gde, "\u0073\u0068\u006fr\u0074\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
-		}
-		return 1, nil
-	}
-	_cegd := uint32(len(_ecca.RTSNumbers))
-	_abgb := make([]byte, 4+_cb.Ceil(len(_ecca.RTSNumbers)+1, 8))
-	_cegd |= 0x7 << 29
-	_bc.BigEndian.PutUint32(_abgb, _cegd)
-	copy(_abgb[1:], _ecca.RetainBits)
-	_feef, _bddf = _egfe.Write(_abgb)
-	if _bddf != nil {
-		return 0, _ac.Wrap(_bddf, _gde, "l\u006f\u006e\u0067\u0020\u0066\u006f\u0072\u006d\u0061\u0074")
-	}
-	return _feef, nil
-}
-func (_bdgba *TextRegion) getSymbols() error {
-	if _bdgba.Header.RTSegments != nil {
-		return _bdgba.initSymbols()
-	}
-	return nil
-}
-func (_ddf *template1) form(_agc, _fcba, _fbcf, _efc, _gcc int16) int16 {
-	return ((_agc & 0x02) << 8) | (_fcba << 6) | ((_fbcf & 0x03) << 4) | (_efc << 1) | _gcc
-}
-func (_bdaf *SymbolDictionary) addSymbol(_eafc Regioner) error {
-	_defa, _dada := _eafc.GetRegionBitmap()
-	if _dada != nil {
-		return _dada
-	}
-	_bdaf._gbeb[_bdaf._geba] = _defa
-	_bdaf._deeb = append(_bdaf._deeb, _defa)
-	_gb.Log.Trace("\u005b\u0053YM\u0042\u004f\u004c \u0044\u0049\u0043\u0054ION\u0041RY\u005d\u0020\u0041\u0064\u0064\u0065\u0064 s\u0079\u006d\u0062\u006f\u006c\u003a\u0020%\u0073", _defa)
-	return nil
-}
-func (_babc *PatternDictionary) extractPatterns(_eded *_c.Bitmap) error {
-	var _ffbe int
-	_gbcgf := make([]*_c.Bitmap, _babc.GrayMax+1)
-	for _ffbe <= int(_babc.GrayMax) {
-		_gcba := int(_babc.HdpWidth) * _ffbe
-		_cdad := _b.Rect(_gcba, 0, _gcba+int(_babc.HdpWidth), int(_babc.HdpHeight))
-		_eeeb, _eegb := _c.Extract(_cdad, _eded)
-		if _eegb != nil {
-			return _eegb
-		}
-		_gbcgf[_ffbe] = _eeeb
-		_ffbe++
-	}
-	_babc.Patterns = _gbcgf
-	return nil
-}
-func (_gfcdd *GenericRegion) overrideAtTemplate0a(_dbf, _ffga, _adgc, _egf, _ccb, _dfb int) int {
-	if _gfcdd.GBAtOverride[0] {
-		_dbf &= 0xFFEF
-		if _gfcdd.GBAtY[0] == 0 && _gfcdd.GBAtX[0] >= -int8(_ccb) {
-			_dbf |= (_egf >> uint(int8(_dfb)-_gfcdd.GBAtX[0]&0x1)) << 4
-		} else {
-			_dbf |= int(_gfcdd.getPixel(_ffga+int(_gfcdd.GBAtX[0]), _adgc+int(_gfcdd.GBAtY[0]))) << 4
-		}
-	}
-	if _gfcdd.GBAtOverride[1] {
-		_dbf &= 0xFBFF
-		if _gfcdd.GBAtY[1] == 0 && _gfcdd.GBAtX[1] >= -int8(_ccb) {
-			_dbf |= (_egf >> uint(int8(_dfb)-_gfcdd.GBAtX[1]&0x1)) << 10
-		} else {
-			_dbf |= int(_gfcdd.getPixel(_ffga+int(_gfcdd.GBAtX[1]), _adgc+int(_gfcdd.GBAtY[1]))) << 10
-		}
-	}
-	if _gfcdd.GBAtOverride[2] {
-		_dbf &= 0xF7FF
-		if _gfcdd.GBAtY[2] == 0 && _gfcdd.GBAtX[2] >= -int8(_ccb) {
-			_dbf |= (_egf >> uint(int8(_dfb)-_gfcdd.GBAtX[2]&0x1)) << 11
-		} else {
-			_dbf |= int(_gfcdd.getPixel(_ffga+int(_gfcdd.GBAtX[2]), _adgc+int(_gfcdd.GBAtY[2]))) << 11
-		}
-	}
-	if _gfcdd.GBAtOverride[3] {
-		_dbf &= 0x7FFF
-		if _gfcdd.GBAtY[3] == 0 && _gfcdd.GBAtX[3] >= -int8(_ccb) {
-			_dbf |= (_egf >> uint(int8(_dfb)-_gfcdd.GBAtX[3]&0x1)) << 15
-		} else {
-			_dbf |= int(_gfcdd.getPixel(_ffga+int(_gfcdd.GBAtX[3]), _adgc+int(_gfcdd.GBAtY[3]))) << 15
-		}
-	}
-	return _dbf
-}
-func (_gd *GenericRegion) InitEncode(bm *_c.Bitmap, xLoc, yLoc, template int, duplicateLineRemoval bool) error {
-	const _caf = "\u0047e\u006e\u0065\u0072\u0069\u0063\u0052\u0065\u0067\u0069\u006f\u006e.\u0049\u006e\u0069\u0074\u0045\u006e\u0063\u006f\u0064\u0065"
-	if bm == nil {
-		return _ac.Error(_caf, "\u0070\u0072\u006f\u0076id\u0065\u0064\u0020\u006e\u0069\u006c\u0020\u0062\u0069\u0074\u006d\u0061\u0070")
-	}
-	if xLoc < 0 || yLoc < 0 {
-		return _ac.Error(_caf, "\u0078\u0020\u0061\u006e\u0064\u0020\u0079\u0020\u006c\u006f\u0063\u0061\u0074i\u006f\u006e\u0020\u006d\u0075\u0073t\u0020\u0062\u0065\u0020\u0067\u0072\u0065\u0061\u0074\u0065\u0072\u0020\u0074h\u0061\u006e\u0020\u0030")
-	}
-	_gd.Bitmap = bm
-	_gd.GBTemplate = byte(template)
-	switch _gd.GBTemplate {
-	case 0:
-		_gd.GBAtX = []int8{3, -3, 2, -2}
-		_gd.GBAtY = []int8{-1, -1, -2, -2}
-	case 1:
-		_gd.GBAtX = []int8{3}
-		_gd.GBAtY = []int8{-1}
-	case 2, 3:
-		_gd.GBAtX = []int8{2}
-		_gd.GBAtY = []int8{-1}
-	default:
-		return _ac.Errorf(_caf, "\u0070\u0072o\u0076\u0069\u0064\u0065\u0064 \u0074\u0065\u006d\u0070\u006ca\u0074\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006e\u006f\u0074\u0020\u0069\u006e\u0020\u0076\u0061\u006c\u0069\u0064\u0020\u0072\u0061\u006e\u0067\u0065\u0020\u007b\u0030\u002c\u0031\u002c\u0032\u002c\u0033\u007d", template)
-	}
-	_gd.RegionSegment = &RegionSegment{BitmapHeight: uint32(bm.Height), BitmapWidth: uint32(bm.Width), XLocation: uint32(xLoc), YLocation: uint32(yLoc)}
-	_gd.IsTPGDon = duplicateLineRemoval
-	return nil
-}
-func (_fafa *PatternDictionary) readGrayMax() error {
-	_bgce, _bfba := _fafa._fad.ReadBits(32)
-	if _bfba != nil {
-		return _bfba
-	}
-	_fafa.GrayMax = uint32(_bgce & _f.MaxUint32)
-	return nil
-}
-func (_cgeec *SymbolDictionary) getToExportFlags() ([]int, error) {
+func (_gbbgb *SymbolDictionary) decodeAggregate(_fdgbg, _badfff uint32) error {
 	var (
-		_geda  int
-		_decg  int32
-		_gcgc  error
-		_cebb  = int32(_cgeec._fgfc + _cgeec.NumberOfNewSymbols)
-		_eecef = make([]int, _cebb)
+		_gbea int64
+		_dbdb error
 	)
-	for _ebade := int32(0); _ebade < _cebb; _ebade += _decg {
-		if _cgeec.IsHuffmanEncoded {
-			_cdfa, _eabe := _aag.GetStandardTable(1)
-			if _eabe != nil {
-				return nil, _eabe
-			}
-			_aedfb, _eabe := _cdfa.Decode(_cgeec._aege)
-			if _eabe != nil {
-				return nil, _eabe
-			}
-			_decg = int32(_aedfb)
-		} else {
-			_decg, _gcgc = _cgeec._caaa.DecodeInt(_cgeec._fddg)
-			if _gcgc != nil {
-				return nil, _gcgc
-			}
+	if _gbbgb.IsHuffmanEncoded {
+		_gbea, _dbdb = _gbbgb.huffDecodeRefAggNInst()
+		if _dbdb != nil {
+			return _dbdb
 		}
-		if _decg != 0 {
-			for _bcfg := _ebade; _bcfg < _ebade+_decg; _bcfg++ {
-				_eecef[_bcfg] = _geda
-			}
+	} else {
+		_gagb, _fccgg := _gbbgb._fffd.DecodeInt(_gbbgb._eagcd)
+		if _fccgg != nil {
+			return _fccgg
 		}
-		if _geda == 0 {
-			_geda = 1
-		} else {
-			_geda = 0
-		}
+		_gbea = int64(_gagb)
 	}
-	return _eecef, nil
-}
-func (_gfaf *RegionSegment) String() string {
-	_ffc := &_bb.Builder{}
-	_ffc.WriteString("\u0009[\u0052E\u0047\u0049\u004f\u004e\u0020S\u0045\u0047M\u0045\u004e\u0054\u005d\u000a")
-	_ffc.WriteString(_be.Sprintf("\t\u0009\u002d\u0020\u0042\u0069\u0074m\u0061\u0070\u0020\u0028\u0077\u0069d\u0074\u0068\u002c\u0020\u0068\u0065\u0069g\u0068\u0074\u0029\u0020\u005b\u0025\u0064\u0078\u0025\u0064]\u000a", _gfaf.BitmapWidth, _gfaf.BitmapHeight))
-	_ffc.WriteString(_be.Sprintf("\u0009\u0009\u002d\u0020L\u006f\u0063\u0061\u0074\u0069\u006f\u006e\u0020\u0028\u0078,\u0079)\u003a\u0020\u005b\u0025\u0064\u002c\u0025d\u005d\u000a", _gfaf.XLocation, _gfaf.YLocation))
-	_ffc.WriteString(_be.Sprintf("\t\u0009\u002d\u0020\u0043\u006f\u006db\u0069\u006e\u0061\u0074\u0069\u006f\u006e\u004f\u0070e\u0072\u0061\u0074o\u0072:\u0020\u0025\u0073", _gfaf.CombinaionOperator))
-	return _ffc.String()
-}
-func (_gacg *PatternDictionary) Init(h *Header, r _g.StreamReader) error {
-	_gacg._fad = r
-	return _gacg.parseHeader()
-}
-func (_effdd *GenericRegion) setParameters(_gbbg bool, _cabe, _eecb int64, _bfed, _feb uint32) {
-	_effdd.IsMMREncoded = _gbbg
-	_effdd.DataOffset = _cabe
-	_effdd.DataLength = _eecb
-	_effdd.RegionSegment.BitmapHeight = _bfed
-	_effdd.RegionSegment.BitmapWidth = _feb
-	_effdd._cgdc = nil
-	_effdd.Bitmap = nil
-}
-func (_dgcad *TextRegion) createRegionBitmap() error {
-	_dgcad.RegionBitmap = _c.New(int(_dgcad.RegionInfo.BitmapWidth), int(_dgcad.RegionInfo.BitmapHeight))
-	if _dgcad.DefaultPixel != 0 {
-		_dgcad.RegionBitmap.SetDefaultPixel()
+	if _gbea > 1 {
+		return _gbbgb.decodeThroughTextRegion(_fdgbg, _badfff, uint32(_gbea))
+	} else if _gbea == 1 {
+		return _gbbgb.decodeRefinedSymbol(_fdgbg, _badfff)
 	}
 	return nil
 }
-func (_aaad *GenericRefinementRegion) readAtPixels() error {
-	_aaad.GrAtX = make([]int8, 2)
-	_aaad.GrAtY = make([]int8, 2)
-	_bead, _afa := _aaad._ea.ReadByte()
-	if _afa != nil {
-		return _afa
-	}
-	_aaad.GrAtX[0] = int8(_bead)
-	_bead, _afa = _aaad._ea.ReadByte()
-	if _afa != nil {
-		return _afa
-	}
-	_aaad.GrAtY[0] = int8(_bead)
-	_bead, _afa = _aaad._ea.ReadByte()
-	if _afa != nil {
-		return _afa
-	}
-	_aaad.GrAtX[1] = int8(_bead)
-	_bead, _afa = _aaad._ea.ReadByte()
-	if _afa != nil {
-		return _afa
-	}
-	_aaad.GrAtY[1] = int8(_bead)
-	return nil
+
+var _ _ba.BasicTabler = &TableSegment{}
+
+func _daae(_dbed _fg.StreamReader, _cdfgf *Header) *TextRegion {
+	_bfdff := &TextRegion{_effb: _dbed, Header: _cdfgf, RegionInfo: NewRegionSegment(_dbed)}
+	return _bfdff
 }
-func (_agga *Header) writeReferredToSegments(_gdda _g.BinaryWriter) (_ebgc int, _adge error) {
-	const _fabc = "\u0077\u0072\u0069te\u0052\u0065\u0066\u0065\u0072\u0072\u0065\u0064\u0054\u006f\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0073"
-	var (
-		_cefb uint16
-		_cfe  uint32
-	)
-	_aefd := _agga.referenceSize()
-	_cdbge := 1
-	_fdfb := make([]byte, _aefd)
-	for _, _bgga := range _agga.RTSNumbers {
-		switch _aefd {
-		case 4:
-			_cfe = uint32(_bgga)
-			_bc.BigEndian.PutUint32(_fdfb, _cfe)
-			_cdbge, _adge = _gdda.Write(_fdfb)
-			if _adge != nil {
-				return 0, _ac.Wrap(_adge, _fabc, "u\u0069\u006e\u0074\u0033\u0032\u0020\u0073\u0069\u007a\u0065")
-			}
-		case 2:
-			_cefb = uint16(_bgga)
-			_bc.BigEndian.PutUint16(_fdfb, _cefb)
-			_cdbge, _adge = _gdda.Write(_fdfb)
-			if _adge != nil {
-				return 0, _ac.Wrap(_adge, _fabc, "\u0075\u0069\u006e\u0074\u0031\u0036")
-			}
-		default:
-			if _adge = _gdda.WriteByte(byte(_bgga)); _adge != nil {
-				return 0, _ac.Wrap(_adge, _fabc, "\u0075\u0069\u006et\u0038")
-			}
-		}
-		_ebgc += _cdbge
-	}
-	return _ebgc, nil
+func (_debab *PatternDictionary) Init(h *Header, r _fg.StreamReader) error {
+	_debab._fbdd = r
+	return _debab.parseHeader()
 }
-func (_cdefc *GenericRegion) decodeTemplate2(_cced, _bacg, _gfgg int, _bbg, _fecg int) (_fgdc error) {
-	const _ecba = "\u0064e\u0063o\u0064\u0065\u0054\u0065\u006d\u0070\u006c\u0061\u0074\u0065\u0032"
-	var (
-		_debe, _dgfb int
-		_dce, _bbgd  int
-		_acbd        byte
-		_egea, _ceeg int
-	)
-	if _cced >= 1 {
-		_acbd, _fgdc = _cdefc.Bitmap.GetByte(_fecg)
-		if _fgdc != nil {
-			return _ac.Wrap(_fgdc, _ecba, "\u006ci\u006ee\u004e\u0075\u006d\u0062\u0065\u0072\u0020\u003e\u003d\u0020\u0031")
-		}
-		_dce = int(_acbd)
+func (_cgca *Header) writeSegmentDataLength(_aggc _fg.BinaryWriter) (_ccgg int, _fgeg error) {
+	_fbb := make([]byte, 4)
+	_fe.BigEndian.PutUint32(_fbb, uint32(_cgca.SegmentDataLength))
+	if _ccgg, _fgeg = _aggc.Write(_fbb); _fgeg != nil {
+		return 0, _fd.Wrap(_fgeg, "\u0048\u0065a\u0064\u0065\u0072\u002e\u0077\u0072\u0069\u0074\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u0044\u0061\u0074\u0061\u004c\u0065ng\u0074\u0068", "")
 	}
-	if _cced >= 2 {
-		_acbd, _fgdc = _cdefc.Bitmap.GetByte(_fecg - _cdefc.Bitmap.RowStride)
-		if _fgdc != nil {
-			return _ac.Wrap(_fgdc, _ecba, "\u006ci\u006ee\u004e\u0075\u006d\u0062\u0065\u0072\u0020\u003e\u003d\u0020\u0032")
-		}
-		_bbgd = int(_acbd) << 4
+	return _ccgg, nil
+}
+func (_aaef *PageInformationSegment) Size() int { return 19 }
+func (_bdce *GenericRegion) GetRegionBitmap() (_efc *_d.Bitmap, _efcb error) {
+	if _bdce.Bitmap != nil {
+		return _bdce.Bitmap, nil
 	}
-	_debe = (_dce >> 3 & 0x7c) | (_bbgd >> 3 & 0x380)
-	for _cfc := 0; _cfc < _gfgg; _cfc = _egea {
-		var (
-			_ega  byte
-			_geae int
-		)
-		_egea = _cfc + 8
-		if _geab := _bacg - _cfc; _geab > 8 {
-			_geae = 8
-		} else {
-			_geae = _geab
+	if _bdce.IsMMREncoded {
+		if _bdce._gcd == nil {
+			_bdce._gcd, _efcb = _ad.New(_bdce._baf, int(_bdce.RegionSegment.BitmapWidth), int(_bdce.RegionSegment.BitmapHeight), _bdce.DataOffset, _bdce.DataLength)
+			if _efcb != nil {
+				return nil, _efcb
+			}
 		}
-		if _cced > 0 {
-			_dce <<= 8
-			if _egea < _bacg {
-				_acbd, _fgdc = _cdefc.Bitmap.GetByte(_fecg + 1)
-				if _fgdc != nil {
-					return _ac.Wrap(_fgdc, _ecba, "\u006c\u0069\u006e\u0065\u004e\u0075\u006d\u0062\u0065r\u0020\u003e\u0020\u0030")
+		_bdce.Bitmap, _efcb = _bdce._gcd.UncompressMMR()
+		return _bdce.Bitmap, _efcb
+	}
+	if _efcb = _bdce.updateOverrideFlags(); _efcb != nil {
+		return nil, _efcb
+	}
+	var _adf int
+	if _bdce._acb == nil {
+		_bdce._acb, _efcb = _b.New(_bdce._baf)
+		if _efcb != nil {
+			return nil, _efcb
+		}
+	}
+	if _bdce._aae == nil {
+		_bdce._aae = _b.NewStats(65536, 1)
+	}
+	_bdce.Bitmap = _d.New(int(_bdce.RegionSegment.BitmapWidth), int(_bdce.RegionSegment.BitmapHeight))
+	_bge := int(uint32(_bdce.Bitmap.Width+7) & (^uint32(7)))
+	for _abg := 0; _abg < _bdce.Bitmap.Height; _abg++ {
+		if _bdce.IsTPGDon {
+			var _egb int
+			_egb, _efcb = _bdce.decodeSLTP()
+			if _efcb != nil {
+				return nil, _efcb
+			}
+			_adf ^= _egb
+		}
+		if _adf == 1 {
+			if _abg > 0 {
+				if _efcb = _bdce.copyLineAbove(_abg); _efcb != nil {
+					return nil, _efcb
 				}
-				_dce |= int(_acbd)
+			}
+		} else {
+			if _efcb = _bdce.decodeLine(_abg, _bdce.Bitmap.Width, _bge); _efcb != nil {
+				return nil, _efcb
 			}
 		}
-		if _cced > 1 {
-			_bbgd <<= 8
-			if _egea < _bacg {
-				_acbd, _fgdc = _cdefc.Bitmap.GetByte(_fecg - _cdefc.Bitmap.RowStride + 1)
-				if _fgdc != nil {
-					return _ac.Wrap(_fgdc, _ecba, "\u006c\u0069\u006e\u0065\u004e\u0075\u006d\u0062\u0065r\u0020\u003e\u0020\u0031")
-				}
-				_bbgd |= int(_acbd) << 4
-			}
-		}
-		for _adb := 0; _adb < _geae; _adb++ {
-			_fecb := uint(10 - _adb)
-			if _cdefc._aaaf {
-				_dgfb = _cdefc.overrideAtTemplate2(_debe, _cfc+_adb, _cced, int(_ega), _adb)
-				_cdefc._bcae.SetIndex(int32(_dgfb))
-			} else {
-				_cdefc._bcae.SetIndex(int32(_debe))
-			}
-			_ceeg, _fgdc = _cdefc._ga.DecodeBit(_cdefc._bcae)
-			if _fgdc != nil {
-				return _ac.Wrap(_fgdc, _ecba, "")
-			}
-			_ega |= byte(_ceeg << uint(7-_adb))
-			_debe = ((_debe & 0x1bd) << 1) | _ceeg | ((_dce >> _fecb) & 0x4) | ((_bbgd >> _fecb) & 0x80)
-		}
-		if _ffa := _cdefc.Bitmap.SetByte(_bbg, _ega); _ffa != nil {
-			return _ac.Wrap(_ffa, _ecba, "")
-		}
-		_bbg++
-		_fecg++
 	}
-	return nil
+	return _bdce.Bitmap, nil
 }

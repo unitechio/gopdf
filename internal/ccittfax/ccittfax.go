@@ -1,1262 +1,155 @@
 package ccittfax
 
 import (
-	_g "errors"
-	_e "io"
-	_b "math"
+	_a "errors"
+	_ge "io"
+	_e "math"
 
-	_f "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_gf "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
 )
 
-func _cgc(_edad []byte, _ggeg int) ([]byte, int) { return _acbf(_edad, _ggeg, _fde) }
-func init() {
-	_bg = &treeNode{_dfb: true, _fffag: _ab}
-	_ff = &treeNode{_fffag: _ag, _efefd: _bg}
-	_ff._ebf = _ff
-	_a = &tree{_fgea: &treeNode{}}
-	if _gb := _a.fillWithNode(12, 0, _ff); _gb != nil {
-		panic(_gb.Error())
-	}
-	if _gfa := _a.fillWithNode(12, 1, _bg); _gfa != nil {
-		panic(_gfa.Error())
-	}
-	_gf = &tree{_fgea: &treeNode{}}
-	for _fg := 0; _fg < len(_dde); _fg++ {
-		for _c := 0; _c < len(_dde[_fg]); _c++ {
-			if _cc := _gf.fill(_fg+2, int(_dde[_fg][_c]), int(_ge[_fg][_c])); _cc != nil {
-				panic(_cc.Error())
-			}
+func _gec(_dgd []byte, _faa int, _fgda code) ([]byte, int) {
+	_cdd := 0
+	for _cdd < _fgda.BitsWritten {
+		_deb := _faa / 8
+		_afb := _faa % 8
+		if _deb >= len(_dgd) {
+			_dgd = append(_dgd, 0)
 		}
+		_gbfe := 8 - _afb
+		_aaf := _fgda.BitsWritten - _cdd
+		if _gbfe > _aaf {
+			_gbfe = _aaf
+		}
+		if _cdd < 8 {
+			_dgd[_deb] = _dgd[_deb] | byte(_fgda.Code>>uint(8+_afb-_cdd))&_ecd[8-_gbfe-_afb]
+		} else {
+			_dgd[_deb] = _dgd[_deb] | (byte(_fgda.Code<<uint(_cdd-8))&_ecd[8-_gbfe])>>uint(_afb)
+		}
+		_faa += _gbfe
+		_cdd += _gbfe
 	}
-	if _eb := _gf.fillWithNode(12, 0, _ff); _eb != nil {
-		panic(_eb.Error())
+	return _dgd, _faa
+}
+func init() {
+	_gee = &treeNode{_cag: true, _bcbd: _ab}
+	_ae = &treeNode{_bcbd: _ed, _gbe: _gee}
+	_ae._gbfd = _ae
+	_b = &tree{_fcgf: &treeNode{}}
+	if _ag := _b.fillWithNode(12, 0, _ae); _ag != nil {
+		panic(_ag.Error())
 	}
-	if _ea := _gf.fillWithNode(12, 1, _bg); _ea != nil {
+	if _ea := _b.fillWithNode(12, 1, _gee); _ea != nil {
 		panic(_ea.Error())
 	}
-	_da = &tree{_fgea: &treeNode{}}
-	for _aa := 0; _aa < len(_bge); _aa++ {
-		for _bc := 0; _bc < len(_bge[_aa]); _bc++ {
-			if _ca := _da.fill(_aa+4, int(_bge[_aa][_bc]), int(_cf[_aa][_bc])); _ca != nil {
-				panic(_ca.Error())
+	_d = &tree{_fcgf: &treeNode{}}
+	for _fd := 0; _fd < len(_ecf); _fd++ {
+		for _fe := 0; _fe < len(_ecf[_fd]); _fe++ {
+			if _bb := _d.fill(_fd+2, int(_ecf[_fd][_fe]), int(_fg[_fd][_fe])); _bb != nil {
+				panic(_bb.Error())
 			}
 		}
 	}
-	if _dd := _da.fillWithNode(12, 0, _ff); _dd != nil {
-		panic(_dd.Error())
+	if _ba := _d.fillWithNode(12, 0, _ae); _ba != nil {
+		panic(_ba.Error())
 	}
-	if _fe := _da.fillWithNode(12, 1, _bg); _fe != nil {
-		panic(_fe.Error())
-	}
-	_eg = &tree{_fgea: &treeNode{}}
-	if _fa := _eg.fill(4, 1, _de); _fa != nil {
-		panic(_fa.Error())
-	}
-	if _ege := _eg.fill(3, 1, _ef); _ege != nil {
-		panic(_ege.Error())
-	}
-	if _bf := _eg.fill(1, 1, 0); _bf != nil {
-		panic(_bf.Error())
-	}
-	if _bgc := _eg.fill(3, 3, 1); _bgc != nil {
-		panic(_bgc.Error())
-	}
-	if _fd := _eg.fill(6, 3, 2); _fd != nil {
-		panic(_fd.Error())
-	}
-	if _ebg := _eg.fill(7, 3, 3); _ebg != nil {
-		panic(_ebg.Error())
-	}
-	if _df := _eg.fill(3, 2, -1); _df != nil {
-		panic(_df.Error())
-	}
-	if _db := _eg.fill(6, 2, -2); _db != nil {
-		panic(_db.Error())
-	}
-	if _af := _eg.fill(7, 2, -3); _af != nil {
+	if _af := _d.fillWithNode(12, 1, _gee); _af != nil {
 		panic(_af.Error())
 	}
-}
-func (_bfe *tree) fillWithNode(_cfe, _bcea int, _bdgb *treeNode) error {
-	_ccff := _bfe._fgea
-	for _bfdf := 0; _bfdf < _cfe; _bfdf++ {
-		_abc := uint(_cfe - 1 - _bfdf)
-		_bbe := ((_bcea >> _abc) & 1) != 0
-		_cae := _ccff.walk(_bbe)
-		if _cae != nil {
-			if _cae._dfb {
-				return _g.New("\u006e\u006f\u0064\u0065\u0020\u0069\u0073\u0020\u006c\u0065\u0061\u0066\u002c\u0020\u006eo\u0020o\u0074\u0068\u0065\u0072\u0020\u0066\u006f\u006c\u006c\u006f\u0077\u0069\u006e\u0067")
+	_c = &tree{_fcgf: &treeNode{}}
+	for _ce := 0; _ce < len(_gg); _ce++ {
+		for _gbc := 0; _gbc < len(_gg[_ce]); _gbc++ {
+			if _fdc := _c.fill(_ce+4, int(_gg[_ce][_gbc]), int(_bgg[_ce][_gbc])); _fdc != nil {
+				panic(_fdc.Error())
 			}
-			_ccff = _cae
-			continue
 		}
-		if _bfdf == _cfe-1 {
-			_cae = _bdgb
-		} else {
-			_cae = &treeNode{}
-		}
-		if _bcea == 0 {
-			_cae._gfda = true
-		}
-		_ccff.set(_bbe, _cae)
-		_ccff = _cae
+	}
+	if _aee := _c.fillWithNode(12, 0, _ae); _aee != nil {
+		panic(_aee.Error())
+	}
+	if _ff := _c.fillWithNode(12, 1, _gee); _ff != nil {
+		panic(_ff.Error())
+	}
+	_ee = &tree{_fcgf: &treeNode{}}
+	if _ac := _ee.fill(4, 1, _f); _ac != nil {
+		panic(_ac.Error())
+	}
+	if _bg := _ee.fill(3, 1, _gb); _bg != nil {
+		panic(_bg.Error())
+	}
+	if _bbb := _ee.fill(1, 1, 0); _bbb != nil {
+		panic(_bbb.Error())
+	}
+	if _eaa := _ee.fill(3, 3, 1); _eaa != nil {
+		panic(_eaa.Error())
+	}
+	if _geb := _ee.fill(6, 3, 2); _geb != nil {
+		panic(_geb.Error())
+	}
+	if _afe := _ee.fill(7, 3, 3); _afe != nil {
+		panic(_afe.Error())
+	}
+	if _fc := _ee.fill(3, 2, -1); _fc != nil {
+		panic(_fc.Error())
+	}
+	if _edg := _ee.fill(6, 2, -2); _edg != nil {
+		panic(_edg.Error())
+	}
+	if _cf := _ee.fill(7, 2, -3); _cf != nil {
+		panic(_cf.Error())
+	}
+}
+
+var _gg = [...][]uint16{{0x7, 0x8, 0xb, 0xc, 0xe, 0xf}, {0x12, 0x13, 0x14, 0x1b, 0x7, 0x8}, {0x17, 0x18, 0x2a, 0x2b, 0x3, 0x34, 0x35, 0x7, 0x8}, {0x13, 0x17, 0x18, 0x24, 0x27, 0x28, 0x2b, 0x3, 0x37, 0x4, 0x8, 0xc}, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x1a, 0x1b, 0x2, 0x24, 0x25, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x3, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x4, 0x4a, 0x4b, 0x5, 0x52, 0x53, 0x54, 0x55, 0x58, 0x59, 0x5a, 0x5b, 0x64, 0x65, 0x67, 0x68, 0xa, 0xb}, {0x98, 0x99, 0x9a, 0x9b, 0xcc, 0xcd, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb}, {}, {0x8, 0xc, 0xd}, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x1c, 0x1d, 0x1e, 0x1f}}
+
+func (_afd *Decoder) decodeRowType2() error {
+	if _afd._gfb {
+		_afd._cd.Align()
+	}
+	if _eac := _afd.decode1D(); _eac != nil {
+		return _eac
 	}
 	return nil
 }
-
-var _dde = [...][]uint16{{0x2, 0x3}, {0x2, 0x3}, {0x2, 0x3}, {0x3}, {0x4, 0x5}, {0x4, 0x5, 0x7}, {0x4, 0x7}, {0x18}, {0x17, 0x18, 0x37, 0x8, 0xf}, {0x17, 0x18, 0x28, 0x37, 0x67, 0x68, 0x6c, 0x8, 0xc, 0xd}, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x1c, 0x1d, 0x1e, 0x1f, 0x24, 0x27, 0x28, 0x2b, 0x2c, 0x33, 0x34, 0x35, 0x37, 0x38, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xda, 0xdb}, {0x4a, 0x4b, 0x4c, 0x4d, 0x52, 0x53, 0x54, 0x55, 0x5a, 0x5b, 0x64, 0x65, 0x6c, 0x6d, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77}}
-
-func NewDecoder(data []byte, options DecodeOptions) (*Decoder, error) {
-	_cac := &Decoder{_dag: _f.NewReader(data), _afc: options.Columns, _gcd: options.Rows, _bdf: options.DamagedRowsBeforeError, _afg: make([]byte, (options.Columns+7)/8), _dfea: make([]int, options.Columns+2), _gac: make([]int, options.Columns+2), _eac: options.EncodedByteAligned, _faf: options.BlackIsOne, _gg: options.EndOfLine, _bcb: options.EndOfBlock}
-	switch {
-	case options.K == 0:
-		_cac._cafe = _ba
-		if len(data) < 20 {
-			return nil, _g.New("\u0074o\u006f\u0020\u0073\u0068o\u0072\u0074\u0020\u0063\u0063i\u0074t\u0066a\u0078\u0020\u0073\u0074\u0072\u0065\u0061m")
-		}
-		_ac := data[:20]
-		if _ac[0] != 0 || (_ac[1]>>4 != 1 && _ac[1] != 1) {
-			_cac._cafe = _eeg
-			_aeb := (uint16(_ac[0])<<8 + uint16(_ac[1]&0xff)) >> 4
-			for _daa := 12; _daa < 160; _daa++ {
-				_aeb = (_aeb << 1) + uint16((_ac[_daa/8]>>uint16(7-(_daa%8)))&0x01)
-				if _aeb&0xfff == 1 {
-					_cac._cafe = _ba
-					break
-				}
-			}
-		}
-	case options.K < 0:
-		_cac._cafe = _fb
-	case options.K > 0:
-		_cac._cafe = _ba
-		_cac._abg = true
-	}
-	switch _cac._cafe {
-	case _eeg, _ba, _fb:
-	default:
-		return nil, _g.New("\u0075\u006ek\u006e\u006f\u0077\u006e\u0020\u0063\u0063\u0069\u0074\u0074\u0066\u0061\u0078\u002e\u0044\u0065\u0063\u006f\u0064\u0065\u0072\u0020ty\u0070\u0065")
-	}
-	return _cac, nil
-}
-func (_gde *Decoder) decodeG32D() error {
-	_gde._fbc = _gde._bdc
-	_gde._gac, _gde._dfea = _gde._dfea, _gde._gac
-	_be := true
-	var (
-		_gff bool
-		_eec int
-		_deb error
-	)
-	_gde._bdc = 0
-_fga:
-	for _eec < _gde._afc {
-		_eab := _eg._fgea
-		for {
-			_gff, _deb = _gde._dag.ReadBool()
-			if _deb != nil {
-				return _deb
-			}
-			_eab = _eab.walk(_gff)
-			if _eab == nil {
-				continue _fga
-			}
-			if !_eab._dfb {
-				continue
-			}
-			switch _eab._fffag {
-			case _ef:
-				var _ecff int
-				if _be {
-					_ecff, _deb = _gde.decodeRun(_da)
-				} else {
-					_ecff, _deb = _gde.decodeRun(_gf)
-				}
-				if _deb != nil {
-					return _deb
-				}
-				_eec += _ecff
-				_gde._gac[_gde._bdc] = _eec
-				_gde._bdc++
-				if _be {
-					_ecff, _deb = _gde.decodeRun(_gf)
-				} else {
-					_ecff, _deb = _gde.decodeRun(_da)
-				}
-				if _deb != nil {
-					return _deb
-				}
-				_eec += _ecff
-				_gde._gac[_gde._bdc] = _eec
-				_gde._bdc++
-			case _de:
-				_gab := _gde.getNextChangingElement(_eec, _be) + 1
-				if _gab >= _gde._fbc {
-					_eec = _gde._afc
-				} else {
-					_eec = _gde._dfea[_gab]
-				}
-			default:
-				_edd := _gde.getNextChangingElement(_eec, _be)
-				if _edd >= _gde._fbc || _edd == -1 {
-					_eec = _gde._afc + _eab._fffag
-				} else {
-					_eec = _gde._dfea[_edd] + _eab._fffag
-				}
-				_gde._gac[_gde._bdc] = _eec
-				_gde._bdc++
-				_be = !_be
-			}
-			continue _fga
-		}
-	}
-	return nil
-}
-
-var _cf = [...][]uint16{{2, 3, 4, 5, 6, 7}, {128, 8, 9, 64, 10, 11}, {192, 1664, 16, 17, 13, 14, 15, 1, 12}, {26, 21, 28, 27, 18, 24, 25, 22, 256, 23, 20, 19}, {33, 34, 35, 36, 37, 38, 31, 32, 29, 53, 54, 39, 40, 41, 42, 43, 44, 30, 61, 62, 63, 0, 320, 384, 45, 59, 60, 46, 49, 50, 51, 52, 55, 56, 57, 58, 448, 512, 640, 576, 47, 48}, {1472, 1536, 1600, 1728, 704, 768, 832, 896, 960, 1024, 1088, 1152, 1216, 1280, 1344, 1408}, {}, {1792, 1856, 1920}, {1984, 2048, 2112, 2176, 2240, 2304, 2368, 2432, 2496, 2560}}
 
 const (
 	_ tiffType = iota
-	_eeg
-	_ba
-	_fb
+	_gef
+	_cfd
+	_eb
 )
 
-func init() {
-	_bb = make(map[int]code)
-	_bb[0] = code{Code: 13<<8 | 3<<6, BitsWritten: 10}
-	_bb[1] = code{Code: 2 << (5 + 8), BitsWritten: 3}
-	_bb[2] = code{Code: 3 << (6 + 8), BitsWritten: 2}
-	_bb[3] = code{Code: 2 << (6 + 8), BitsWritten: 2}
-	_bb[4] = code{Code: 3 << (5 + 8), BitsWritten: 3}
-	_bb[5] = code{Code: 3 << (4 + 8), BitsWritten: 4}
-	_bb[6] = code{Code: 2 << (4 + 8), BitsWritten: 4}
-	_bb[7] = code{Code: 3 << (3 + 8), BitsWritten: 5}
-	_bb[8] = code{Code: 5 << (2 + 8), BitsWritten: 6}
-	_bb[9] = code{Code: 4 << (2 + 8), BitsWritten: 6}
-	_bb[10] = code{Code: 4 << (1 + 8), BitsWritten: 7}
-	_bb[11] = code{Code: 5 << (1 + 8), BitsWritten: 7}
-	_bb[12] = code{Code: 7 << (1 + 8), BitsWritten: 7}
-	_bb[13] = code{Code: 4 << 8, BitsWritten: 8}
-	_bb[14] = code{Code: 7 << 8, BitsWritten: 8}
-	_bb[15] = code{Code: 12 << 8, BitsWritten: 9}
-	_bb[16] = code{Code: 5<<8 | 3<<6, BitsWritten: 10}
-	_bb[17] = code{Code: 6 << 8, BitsWritten: 10}
-	_bb[18] = code{Code: 2 << 8, BitsWritten: 10}
-	_bb[19] = code{Code: 12<<8 | 7<<5, BitsWritten: 11}
-	_bb[20] = code{Code: 13 << 8, BitsWritten: 11}
-	_bb[21] = code{Code: 13<<8 | 4<<5, BitsWritten: 11}
-	_bb[22] = code{Code: 6<<8 | 7<<5, BitsWritten: 11}
-	_bb[23] = code{Code: 5 << 8, BitsWritten: 11}
-	_bb[24] = code{Code: 2<<8 | 7<<5, BitsWritten: 11}
-	_bb[25] = code{Code: 3 << 8, BitsWritten: 11}
-	_bb[26] = code{Code: 12<<8 | 10<<4, BitsWritten: 12}
-	_bb[27] = code{Code: 12<<8 | 11<<4, BitsWritten: 12}
-	_bb[28] = code{Code: 12<<8 | 12<<4, BitsWritten: 12}
-	_bb[29] = code{Code: 12<<8 | 13<<4, BitsWritten: 12}
-	_bb[30] = code{Code: 6<<8 | 8<<4, BitsWritten: 12}
-	_bb[31] = code{Code: 6<<8 | 9<<4, BitsWritten: 12}
-	_bb[32] = code{Code: 6<<8 | 10<<4, BitsWritten: 12}
-	_bb[33] = code{Code: 6<<8 | 11<<4, BitsWritten: 12}
-	_bb[34] = code{Code: 13<<8 | 2<<4, BitsWritten: 12}
-	_bb[35] = code{Code: 13<<8 | 3<<4, BitsWritten: 12}
-	_bb[36] = code{Code: 13<<8 | 4<<4, BitsWritten: 12}
-	_bb[37] = code{Code: 13<<8 | 5<<4, BitsWritten: 12}
-	_bb[38] = code{Code: 13<<8 | 6<<4, BitsWritten: 12}
-	_bb[39] = code{Code: 13<<8 | 7<<4, BitsWritten: 12}
-	_bb[40] = code{Code: 6<<8 | 12<<4, BitsWritten: 12}
-	_bb[41] = code{Code: 6<<8 | 13<<4, BitsWritten: 12}
-	_bb[42] = code{Code: 13<<8 | 10<<4, BitsWritten: 12}
-	_bb[43] = code{Code: 13<<8 | 11<<4, BitsWritten: 12}
-	_bb[44] = code{Code: 5<<8 | 4<<4, BitsWritten: 12}
-	_bb[45] = code{Code: 5<<8 | 5<<4, BitsWritten: 12}
-	_bb[46] = code{Code: 5<<8 | 6<<4, BitsWritten: 12}
-	_bb[47] = code{Code: 5<<8 | 7<<4, BitsWritten: 12}
-	_bb[48] = code{Code: 6<<8 | 4<<4, BitsWritten: 12}
-	_bb[49] = code{Code: 6<<8 | 5<<4, BitsWritten: 12}
-	_bb[50] = code{Code: 5<<8 | 2<<4, BitsWritten: 12}
-	_bb[51] = code{Code: 5<<8 | 3<<4, BitsWritten: 12}
-	_bb[52] = code{Code: 2<<8 | 4<<4, BitsWritten: 12}
-	_bb[53] = code{Code: 3<<8 | 7<<4, BitsWritten: 12}
-	_bb[54] = code{Code: 3<<8 | 8<<4, BitsWritten: 12}
-	_bb[55] = code{Code: 2<<8 | 7<<4, BitsWritten: 12}
-	_bb[56] = code{Code: 2<<8 | 8<<4, BitsWritten: 12}
-	_bb[57] = code{Code: 5<<8 | 8<<4, BitsWritten: 12}
-	_bb[58] = code{Code: 5<<8 | 9<<4, BitsWritten: 12}
-	_bb[59] = code{Code: 2<<8 | 11<<4, BitsWritten: 12}
-	_bb[60] = code{Code: 2<<8 | 12<<4, BitsWritten: 12}
-	_bb[61] = code{Code: 5<<8 | 10<<4, BitsWritten: 12}
-	_bb[62] = code{Code: 6<<8 | 6<<4, BitsWritten: 12}
-	_bb[63] = code{Code: 6<<8 | 7<<4, BitsWritten: 12}
-	_gbc = make(map[int]code)
-	_gbc[0] = code{Code: 53 << 8, BitsWritten: 8}
-	_gbc[1] = code{Code: 7 << (2 + 8), BitsWritten: 6}
-	_gbc[2] = code{Code: 7 << (4 + 8), BitsWritten: 4}
-	_gbc[3] = code{Code: 8 << (4 + 8), BitsWritten: 4}
-	_gbc[4] = code{Code: 11 << (4 + 8), BitsWritten: 4}
-	_gbc[5] = code{Code: 12 << (4 + 8), BitsWritten: 4}
-	_gbc[6] = code{Code: 14 << (4 + 8), BitsWritten: 4}
-	_gbc[7] = code{Code: 15 << (4 + 8), BitsWritten: 4}
-	_gbc[8] = code{Code: 19 << (3 + 8), BitsWritten: 5}
-	_gbc[9] = code{Code: 20 << (3 + 8), BitsWritten: 5}
-	_gbc[10] = code{Code: 7 << (3 + 8), BitsWritten: 5}
-	_gbc[11] = code{Code: 8 << (3 + 8), BitsWritten: 5}
-	_gbc[12] = code{Code: 8 << (2 + 8), BitsWritten: 6}
-	_gbc[13] = code{Code: 3 << (2 + 8), BitsWritten: 6}
-	_gbc[14] = code{Code: 52 << (2 + 8), BitsWritten: 6}
-	_gbc[15] = code{Code: 53 << (2 + 8), BitsWritten: 6}
-	_gbc[16] = code{Code: 42 << (2 + 8), BitsWritten: 6}
-	_gbc[17] = code{Code: 43 << (2 + 8), BitsWritten: 6}
-	_gbc[18] = code{Code: 39 << (1 + 8), BitsWritten: 7}
-	_gbc[19] = code{Code: 12 << (1 + 8), BitsWritten: 7}
-	_gbc[20] = code{Code: 8 << (1 + 8), BitsWritten: 7}
-	_gbc[21] = code{Code: 23 << (1 + 8), BitsWritten: 7}
-	_gbc[22] = code{Code: 3 << (1 + 8), BitsWritten: 7}
-	_gbc[23] = code{Code: 4 << (1 + 8), BitsWritten: 7}
-	_gbc[24] = code{Code: 40 << (1 + 8), BitsWritten: 7}
-	_gbc[25] = code{Code: 43 << (1 + 8), BitsWritten: 7}
-	_gbc[26] = code{Code: 19 << (1 + 8), BitsWritten: 7}
-	_gbc[27] = code{Code: 36 << (1 + 8), BitsWritten: 7}
-	_gbc[28] = code{Code: 24 << (1 + 8), BitsWritten: 7}
-	_gbc[29] = code{Code: 2 << 8, BitsWritten: 8}
-	_gbc[30] = code{Code: 3 << 8, BitsWritten: 8}
-	_gbc[31] = code{Code: 26 << 8, BitsWritten: 8}
-	_gbc[32] = code{Code: 27 << 8, BitsWritten: 8}
-	_gbc[33] = code{Code: 18 << 8, BitsWritten: 8}
-	_gbc[34] = code{Code: 19 << 8, BitsWritten: 8}
-	_gbc[35] = code{Code: 20 << 8, BitsWritten: 8}
-	_gbc[36] = code{Code: 21 << 8, BitsWritten: 8}
-	_gbc[37] = code{Code: 22 << 8, BitsWritten: 8}
-	_gbc[38] = code{Code: 23 << 8, BitsWritten: 8}
-	_gbc[39] = code{Code: 40 << 8, BitsWritten: 8}
-	_gbc[40] = code{Code: 41 << 8, BitsWritten: 8}
-	_gbc[41] = code{Code: 42 << 8, BitsWritten: 8}
-	_gbc[42] = code{Code: 43 << 8, BitsWritten: 8}
-	_gbc[43] = code{Code: 44 << 8, BitsWritten: 8}
-	_gbc[44] = code{Code: 45 << 8, BitsWritten: 8}
-	_gbc[45] = code{Code: 4 << 8, BitsWritten: 8}
-	_gbc[46] = code{Code: 5 << 8, BitsWritten: 8}
-	_gbc[47] = code{Code: 10 << 8, BitsWritten: 8}
-	_gbc[48] = code{Code: 11 << 8, BitsWritten: 8}
-	_gbc[49] = code{Code: 82 << 8, BitsWritten: 8}
-	_gbc[50] = code{Code: 83 << 8, BitsWritten: 8}
-	_gbc[51] = code{Code: 84 << 8, BitsWritten: 8}
-	_gbc[52] = code{Code: 85 << 8, BitsWritten: 8}
-	_gbc[53] = code{Code: 36 << 8, BitsWritten: 8}
-	_gbc[54] = code{Code: 37 << 8, BitsWritten: 8}
-	_gbc[55] = code{Code: 88 << 8, BitsWritten: 8}
-	_gbc[56] = code{Code: 89 << 8, BitsWritten: 8}
-	_gbc[57] = code{Code: 90 << 8, BitsWritten: 8}
-	_gbc[58] = code{Code: 91 << 8, BitsWritten: 8}
-	_gbc[59] = code{Code: 74 << 8, BitsWritten: 8}
-	_gbc[60] = code{Code: 75 << 8, BitsWritten: 8}
-	_gbc[61] = code{Code: 50 << 8, BitsWritten: 8}
-	_gbc[62] = code{Code: 51 << 8, BitsWritten: 8}
-	_gbc[63] = code{Code: 52 << 8, BitsWritten: 8}
-	_fc = make(map[int]code)
-	_fc[64] = code{Code: 3<<8 | 3<<6, BitsWritten: 10}
-	_fc[128] = code{Code: 12<<8 | 8<<4, BitsWritten: 12}
-	_fc[192] = code{Code: 12<<8 | 9<<4, BitsWritten: 12}
-	_fc[256] = code{Code: 5<<8 | 11<<4, BitsWritten: 12}
-	_fc[320] = code{Code: 3<<8 | 3<<4, BitsWritten: 12}
-	_fc[384] = code{Code: 3<<8 | 4<<4, BitsWritten: 12}
-	_fc[448] = code{Code: 3<<8 | 5<<4, BitsWritten: 12}
-	_fc[512] = code{Code: 3<<8 | 12<<3, BitsWritten: 13}
-	_fc[576] = code{Code: 3<<8 | 13<<3, BitsWritten: 13}
-	_fc[640] = code{Code: 2<<8 | 10<<3, BitsWritten: 13}
-	_fc[704] = code{Code: 2<<8 | 11<<3, BitsWritten: 13}
-	_fc[768] = code{Code: 2<<8 | 12<<3, BitsWritten: 13}
-	_fc[832] = code{Code: 2<<8 | 13<<3, BitsWritten: 13}
-	_fc[896] = code{Code: 3<<8 | 18<<3, BitsWritten: 13}
-	_fc[960] = code{Code: 3<<8 | 19<<3, BitsWritten: 13}
-	_fc[1024] = code{Code: 3<<8 | 20<<3, BitsWritten: 13}
-	_fc[1088] = code{Code: 3<<8 | 21<<3, BitsWritten: 13}
-	_fc[1152] = code{Code: 3<<8 | 22<<3, BitsWritten: 13}
-	_fc[1216] = code{Code: 119 << 3, BitsWritten: 13}
-	_fc[1280] = code{Code: 2<<8 | 18<<3, BitsWritten: 13}
-	_fc[1344] = code{Code: 2<<8 | 19<<3, BitsWritten: 13}
-	_fc[1408] = code{Code: 2<<8 | 20<<3, BitsWritten: 13}
-	_fc[1472] = code{Code: 2<<8 | 21<<3, BitsWritten: 13}
-	_fc[1536] = code{Code: 2<<8 | 26<<3, BitsWritten: 13}
-	_fc[1600] = code{Code: 2<<8 | 27<<3, BitsWritten: 13}
-	_fc[1664] = code{Code: 3<<8 | 4<<3, BitsWritten: 13}
-	_fc[1728] = code{Code: 3<<8 | 5<<3, BitsWritten: 13}
-	_fdg = make(map[int]code)
-	_fdg[64] = code{Code: 27 << (3 + 8), BitsWritten: 5}
-	_fdg[128] = code{Code: 18 << (3 + 8), BitsWritten: 5}
-	_fdg[192] = code{Code: 23 << (2 + 8), BitsWritten: 6}
-	_fdg[256] = code{Code: 55 << (1 + 8), BitsWritten: 7}
-	_fdg[320] = code{Code: 54 << 8, BitsWritten: 8}
-	_fdg[384] = code{Code: 55 << 8, BitsWritten: 8}
-	_fdg[448] = code{Code: 100 << 8, BitsWritten: 8}
-	_fdg[512] = code{Code: 101 << 8, BitsWritten: 8}
-	_fdg[576] = code{Code: 104 << 8, BitsWritten: 8}
-	_fdg[640] = code{Code: 103 << 8, BitsWritten: 8}
-	_fdg[704] = code{Code: 102 << 8, BitsWritten: 9}
-	_fdg[768] = code{Code: 102<<8 | 1<<7, BitsWritten: 9}
-	_fdg[832] = code{Code: 105 << 8, BitsWritten: 9}
-	_fdg[896] = code{Code: 105<<8 | 1<<7, BitsWritten: 9}
-	_fdg[960] = code{Code: 106 << 8, BitsWritten: 9}
-	_fdg[1024] = code{Code: 106<<8 | 1<<7, BitsWritten: 9}
-	_fdg[1088] = code{Code: 107 << 8, BitsWritten: 9}
-	_fdg[1152] = code{Code: 107<<8 | 1<<7, BitsWritten: 9}
-	_fdg[1216] = code{Code: 108 << 8, BitsWritten: 9}
-	_fdg[1280] = code{Code: 108<<8 | 1<<7, BitsWritten: 9}
-	_fdg[1344] = code{Code: 109 << 8, BitsWritten: 9}
-	_fdg[1408] = code{Code: 109<<8 | 1<<7, BitsWritten: 9}
-	_fdg[1472] = code{Code: 76 << 8, BitsWritten: 9}
-	_fdg[1536] = code{Code: 76<<8 | 1<<7, BitsWritten: 9}
-	_fdg[1600] = code{Code: 77 << 8, BitsWritten: 9}
-	_fdg[1664] = code{Code: 24 << (2 + 8), BitsWritten: 6}
-	_fdg[1728] = code{Code: 77<<8 | 1<<7, BitsWritten: 9}
-	_ffd = make(map[int]code)
-	_ffd[1792] = code{Code: 1 << 8, BitsWritten: 11}
-	_ffd[1856] = code{Code: 1<<8 | 4<<5, BitsWritten: 11}
-	_ffd[1920] = code{Code: 1<<8 | 5<<5, BitsWritten: 11}
-	_ffd[1984] = code{Code: 1<<8 | 2<<4, BitsWritten: 12}
-	_ffd[2048] = code{Code: 1<<8 | 3<<4, BitsWritten: 12}
-	_ffd[2112] = code{Code: 1<<8 | 4<<4, BitsWritten: 12}
-	_ffd[2176] = code{Code: 1<<8 | 5<<4, BitsWritten: 12}
-	_ffd[2240] = code{Code: 1<<8 | 6<<4, BitsWritten: 12}
-	_ffd[2304] = code{Code: 1<<8 | 7<<4, BitsWritten: 12}
-	_ffd[2368] = code{Code: 1<<8 | 12<<4, BitsWritten: 12}
-	_ffd[2432] = code{Code: 1<<8 | 13<<4, BitsWritten: 12}
-	_ffd[2496] = code{Code: 1<<8 | 14<<4, BitsWritten: 12}
-	_ffd[2560] = code{Code: 1<<8 | 15<<4, BitsWritten: 12}
-	_ebb = make(map[int]byte)
-	_ebb[0] = 0xFF
-	_ebb[1] = 0xFE
-	_ebb[2] = 0xFC
-	_ebb[3] = 0xF8
-	_ebb[4] = 0xF0
-	_ebb[5] = 0xE0
-	_ebb[6] = 0xC0
-	_ebb[7] = 0x80
-	_ebb[8] = 0x00
-}
-func (_gee *Decoder) tryFetchRTC2D() (_fgef error) {
-	_gee._dag.Mark()
-	var _ecg bool
-	for _fcdd := 0; _fcdd < 5; _fcdd++ {
-		_ecg, _fgef = _gee.tryFetchEOL1()
-		if _fgef != nil {
-			if _g.Is(_fgef, _e.EOF) {
-				if _fcdd == 0 {
-					break
-				}
-				return _bfd
+func (_afa *Decoder) decodeRowType6() error {
+	if _afa._gfb {
+		_afa._cd.Align()
+	}
+	if _afa._de {
+		_afa._cd.Mark()
+		_cb, _baf := _afa.tryFetchEOL()
+		if _baf != nil {
+			return _baf
+		}
+		if _cb {
+			_cb, _baf = _afa.tryFetchEOL()
+			if _baf != nil {
+				return _baf
+			}
+			if _cb {
+				return _ge.EOF
 			}
 		}
-		if _ecg {
-			continue
-		}
-		if _fcdd > 0 {
-			return _bfd
-		}
-		break
+		_afa._cd.Reset()
 	}
-	if _ecg {
-		return _e.EOF
-	}
-	_gee._dag.Reset()
-	return _fgef
+	return _afa.decode2D()
 }
-func _eff(_cge, _bac int) code {
-	var _dfd code
-	switch _bac - _cge {
-	case -1:
-		_dfd = _bd
-	case -2:
-		_dfd = _bfb
-	case -3:
-		_dfd = _ga
-	case 0:
-		_dfd = _cb
-	case 1:
-		_dfd = _ce
-	case 2:
-		_dfd = _ee
-	case 3:
-		_dfd = _abf
-	}
-	return _dfd
-}
-func (_ad *Decoder) fetch() error {
-	if _ad._dfe == -1 {
-		return nil
-	}
-	if _ad._ecf < _ad._dfe {
-		return nil
-	}
-	_ad._dfe = 0
-	_fff := _ad.decodeRow()
-	if _fff != nil {
-		if !_g.Is(_fff, _e.EOF) {
-			return _fff
-		}
-		if _ad._dfe != 0 {
-			return _fff
-		}
-		_ad._dfe = -1
-	}
-	_ad._ecf = 0
-	return nil
-}
-func (_ffbc *treeNode) walk(_efff bool) *treeNode {
-	if _efff {
-		return _ffbc._efefd
-	}
-	return _ffbc._ebf
-}
-
-var (
-	_bb  map[int]code
-	_gbc map[int]code
-	_fc  map[int]code
-	_fdg map[int]code
-	_ffd map[int]code
-	_ebb map[int]byte
-	_ec  = code{Code: 1 << 4, BitsWritten: 12}
-	_caf = code{Code: 3 << 3, BitsWritten: 13}
-	_gbb = code{Code: 2 << 3, BitsWritten: 13}
-	_fde = code{Code: 1 << 12, BitsWritten: 4}
-	_age = code{Code: 1 << 13, BitsWritten: 3}
-	_cb  = code{Code: 1 << 15, BitsWritten: 1}
-	_bd  = code{Code: 3 << 13, BitsWritten: 3}
-	_bfb = code{Code: 3 << 10, BitsWritten: 6}
-	_ga  = code{Code: 3 << 9, BitsWritten: 7}
-	_ce  = code{Code: 2 << 13, BitsWritten: 3}
-	_ee  = code{Code: 2 << 10, BitsWritten: 6}
-	_abf = code{Code: 2 << 9, BitsWritten: 7}
-)
-
-type DecodeOptions struct {
-	Columns                int
-	Rows                   int
-	K                      int
-	EncodedByteAligned     bool
-	BlackIsOne             bool
-	EndOfBlock             bool
-	EndOfLine              bool
-	DamagedRowsBeforeError int
-}
-
-func (_gd *Decoder) decodeRowType4() error {
-	if !_gd._abg {
-		return _gd.decoderRowType41D()
-	}
-	if _gd._eac {
-		_gd._dag.Align()
-	}
-	_gd._dag.Mark()
-	_bfg, _gcdb := _gd.tryFetchEOL()
-	if _gcdb != nil {
-		return _gcdb
-	}
-	if !_bfg && _gd._gg {
-		_gd._ae++
-		if _gd._ae > _gd._bdf {
-			return _aac
-		}
-		_gd._dag.Reset()
-	}
-	if !_bfg {
-		_gd._dag.Reset()
-	}
-	_dgb, _gcdb := _gd._dag.ReadBool()
-	if _gcdb != nil {
-		return _gcdb
-	}
-	if _dgb {
-		if _bfg && _gd._bcb {
-			if _gcdb = _gd.tryFetchRTC2D(); _gcdb != nil {
-				return _gcdb
-			}
-		}
-		_gcdb = _gd.decode1D()
+func (_cge *Encoder) appendEncodedRow(_def, _ebag []byte, _ebb int) []byte {
+	if len(_def) > 0 && _ebb != 0 && !_cge.EncodedByteAlign {
+		_def[len(_def)-1] = _def[len(_def)-1] | _ebag[0]
+		_def = append(_def, _ebag[1:]...)
 	} else {
-		_gcdb = _gd.decode2D()
+		_def = append(_def, _ebag...)
 	}
-	if _gcdb != nil {
-		return _gcdb
-	}
-	return nil
-}
-func _bddg(_gbg []byte, _cfa int, _cba code) ([]byte, int) {
-	_cdce := true
-	var _eaad []byte
-	_eaad, _cfa = _acbf(nil, _cfa, _cba)
-	_bcc := 0
-	var _cgd int
-	for _bcc < len(_gbg) {
-		_cgd, _bcc = _fag(_gbg, _cdce, _bcc)
-		_eaad, _cfa = _bfae(_eaad, _cfa, _cgd, _cdce)
-		_cdce = !_cdce
-	}
-	return _eaad, _cfa % 8
-}
-func (_fgg *Decoder) tryFetchEOL() (bool, error) {
-	_bbd, _dbcf := _fgg._dag.ReadBits(12)
-	if _dbcf != nil {
-		return false, _dbcf
-	}
-	return _bbd == 0x1, nil
-}
-func (_dad *Decoder) decodeRow() (_baa error) {
-	if !_dad._bcb && _dad._gcd > 0 && _dad._gcd == _dad._bfc {
-		return _e.EOF
-	}
-	switch _dad._cafe {
-	case _eeg:
-		_baa = _dad.decodeRowType2()
-	case _ba:
-		_baa = _dad.decodeRowType4()
-	case _fb:
-		_baa = _dad.decodeRowType6()
-	}
-	if _baa != nil {
-		return _baa
-	}
-	_cfc := 0
-	_dge := true
-	_dad._bda = 0
-	for _ebgb := 0; _ebgb < _dad._bdc; _ebgb++ {
-		_fbee := _dad._afc
-		if _ebgb != _dad._bdc {
-			_fbee = _dad._gac[_ebgb]
-		}
-		if _fbee > _dad._afc {
-			_fbee = _dad._afc
-		}
-		_fffa := _cfc / 8
-		for _cfc%8 != 0 && _fbee-_cfc > 0 {
-			var _dc byte
-			if !_dge {
-				_dc = 1 << uint(7-(_cfc%8))
-			}
-			_dad._afg[_fffa] |= _dc
-			_cfc++
-		}
-		if _cfc%8 == 0 {
-			_fffa = _cfc / 8
-			var _bgce byte
-			if !_dge {
-				_bgce = 0xff
-			}
-			for _fbee-_cfc > 7 {
-				_dad._afg[_fffa] = _bgce
-				_cfc += 8
-				_fffa++
-			}
-		}
-		for _fbee-_cfc > 0 {
-			if _cfc%8 == 0 {
-				_dad._afg[_fffa] = 0
-			}
-			var _bbc byte
-			if !_dge {
-				_bbc = 1 << uint(7-(_cfc%8))
-			}
-			_dad._afg[_fffa] |= _bbc
-			_cfc++
-		}
-		_dge = !_dge
-	}
-	if _cfc != _dad._afc {
-		return _g.New("\u0073\u0075\u006d\u0020\u006f\u0066 \u0072\u0075\u006e\u002d\u006c\u0065\u006e\u0067\u0074\u0068\u0073\u0020\u0064\u006f\u0065\u0073\u0020\u006e\u006f\u0074 \u0065\u0071\u0075\u0061\u006c\u0020\u0073\u0063\u0061\u006e\u0020\u006c\u0069\u006ee\u0020w\u0069\u0064\u0074\u0068")
-	}
-	_dad._dfe = (_cfc + 7) / 8
-	_dad._bfc++
-	return nil
-}
-func (_cec *Decoder) decodeRowType6() error {
-	if _cec._eac {
-		_cec._dag.Align()
-	}
-	if _cec._bcb {
-		_cec._dag.Mark()
-		_ffe, _efd := _cec.tryFetchEOL()
-		if _efd != nil {
-			return _efd
-		}
-		if _ffe {
-			_ffe, _efd = _cec.tryFetchEOL()
-			if _efd != nil {
-				return _efd
-			}
-			if _ffe {
-				return _e.EOF
-			}
-		}
-		_cec._dag.Reset()
-	}
-	return _cec.decode2D()
-}
-func (_aacf *Decoder) decodeRowType2() error {
-	if _aacf._eac {
-		_aacf._dag.Align()
-	}
-	if _gaa := _aacf.decode1D(); _gaa != nil {
-		return _gaa
-	}
-	return nil
-}
-func _gce(_bddgb, _bdfe []byte, _abfg int) int {
-	_ccc := _bfcg(_bdfe, _abfg)
-	if _ccc < len(_bdfe) && (_abfg == -1 && _bdfe[_ccc] == _ged || _abfg >= 0 && _abfg < len(_bddgb) && _bddgb[_abfg] == _bdfe[_ccc] || _abfg >= len(_bddgb) && _bddgb[_abfg-1] != _bdfe[_ccc]) {
-		_ccc = _bfcg(_bdfe, _ccc)
-	}
-	return _ccc
-}
-func _bccc(_gced []byte, _fgae, _eeca, _cfdd int) ([]byte, int) {
-	_aace := _eff(_eeca, _cfdd)
-	_gced, _fgae = _acbf(_gced, _fgae, _aace)
-	return _gced, _fgae
-}
-func _dgbac(_dab [][]byte) [][]byte {
-	_feb := make([]byte, len(_dab[0]))
-	for _efg := range _feb {
-		_feb[_efg] = _ged
-	}
-	_dab = append(_dab, []byte{})
-	for _bgcd := len(_dab) - 1; _bgcd > 0; _bgcd-- {
-		_dab[_bgcd] = _dab[_bgcd-1]
-	}
-	_dab[0] = _feb
-	return _dab
-}
-func (_fge *Decoder) tryFetchEOL1() (bool, error) {
-	_acg, _bag := _fge._dag.ReadBits(13)
-	if _bag != nil {
-		return false, _bag
-	}
-	return _acg == 0x3, nil
-}
-func _acbf(_eda []byte, _dbec int, _fgd code) ([]byte, int) {
-	_aebf := 0
-	for _aebf < _fgd.BitsWritten {
-		_ddef := _dbec / 8
-		_fgb := _dbec % 8
-		if _ddef >= len(_eda) {
-			_eda = append(_eda, 0)
-		}
-		_eba := 8 - _fgb
-		_dae := _fgd.BitsWritten - _aebf
-		if _eba > _dae {
-			_eba = _dae
-		}
-		if _aebf < 8 {
-			_eda[_ddef] = _eda[_ddef] | byte(_fgd.Code>>uint(8+_fgb-_aebf))&_ebb[8-_eba-_fgb]
-		} else {
-			_eda[_ddef] = _eda[_ddef] | (byte(_fgd.Code<<uint(_aebf-8))&_ebb[8-_eba])>>uint(_fgb)
-		}
-		_dbec += _eba
-		_aebf += _eba
-	}
-	return _eda, _dbec
-}
-func (_dfcg *Decoder) looseFetchEOL() (bool, error) {
-	_ega, _fcd := _dfcg._dag.ReadBits(12)
-	if _fcd != nil {
-		return false, _fcd
-	}
-	switch _ega {
-	case 0x1:
-		return true, nil
-	case 0x0:
-		for {
-			_ggce, _ced := _dfcg._dag.ReadBool()
-			if _ced != nil {
-				return false, _ced
-			}
-			if _ggce {
-				return true, nil
-			}
-		}
-	default:
-		return false, nil
-	}
-}
-func (_bgg *Encoder) encodeG32D(_cab [][]byte) []byte {
-	var _fdb []byte
-	var _gfd int
-	for _ecd := 0; _ecd < len(_cab); _ecd += _bgg.K {
-		if _bgg.Rows > 0 && !_bgg.EndOfBlock && _ecd == _bgg.Rows {
-			break
-		}
-		_fab, _bdcc := _bddg(_cab[_ecd], _gfd, _caf)
-		_fdb = _bgg.appendEncodedRow(_fdb, _fab, _gfd)
-		if _bgg.EncodedByteAlign {
-			_bdcc = 0
-		}
-		_gfd = _bdcc
-		for _cfce := _ecd + 1; _cfce < (_ecd+_bgg.K) && _cfce < len(_cab); _cfce++ {
-			if _bgg.Rows > 0 && !_bgg.EndOfBlock && _cfce == _bgg.Rows {
-				break
-			}
-			_cgg, _bcf := _acbf(nil, _gfd, _gbb)
-			var _bfgf, _ccee, _afe int
-			_fabd := -1
-			for _fabd < len(_cab[_cfce]) {
-				_bfgf = _bfcg(_cab[_cfce], _fabd)
-				_ccee = _gce(_cab[_cfce], _cab[_cfce-1], _fabd)
-				_afe = _bfcg(_cab[_cfce-1], _ccee)
-				if _afe < _bfgf {
-					_cgg, _bcf = _cgc(_cgg, _bcf)
-					_fabd = _afe
-				} else {
-					if _b.Abs(float64(_ccee-_bfgf)) > 3 {
-						_cgg, _bcf, _fabd = _agg(_cab[_cfce], _cgg, _bcf, _fabd, _bfgf)
-					} else {
-						_cgg, _bcf = _bccc(_cgg, _bcf, _bfgf, _ccee)
-						_fabd = _bfgf
-					}
-				}
-			}
-			_fdb = _bgg.appendEncodedRow(_fdb, _cgg, _gfd)
-			if _bgg.EncodedByteAlign {
-				_bcf = 0
-			}
-			_gfd = _bcf % 8
-		}
-	}
-	if _bgg.EndOfBlock {
-		_edf, _ := _edfe(_gfd)
-		_fdb = _bgg.appendEncodedRow(_fdb, _edf, _gfd)
-	}
-	return _fdb
-}
-
-var (
-	_bfd = _g.New("\u0063\u0063\u0069\u0074tf\u0061\u0078\u0020\u0063\u006f\u0072\u0072\u0075\u0070\u0074\u0065\u0064\u0020\u0052T\u0043")
-	_aac = _g.New("\u0063\u0063\u0069\u0074tf\u0061\u0078\u0020\u0045\u004f\u004c\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075n\u0064")
-)
-
-func (_ddg *treeNode) set(_dgcc bool, _cdef *treeNode) {
-	if !_dgcc {
-		_ddg._ebf = _cdef
-	} else {
-		_ddg._efefd = _cdef
-	}
-}
-func _fdf(_ccf int, _faa bool) (code, int, bool) {
-	if _ccf < 64 {
-		if _faa {
-			return _gbc[_ccf], 0, true
-		}
-		return _bb[_ccf], 0, true
-	}
-	_bae := _ccf / 64
-	if _bae > 40 {
-		return _ffd[2560], _ccf - 2560, false
-	}
-	if _bae > 27 {
-		return _ffd[_bae*64], _ccf - _bae*64, false
-	}
-	if _faa {
-		return _fdg[_bae*64], _ccf - _bae*64, false
-	}
-	return _fc[_bae*64], _ccf - _bae*64, false
-}
-
-type treeNode struct {
-	_ebf   *treeNode
-	_efefd *treeNode
-	_fffag int
-	_gfda  bool
-	_dfb   bool
-}
-
-func _edfe(_dca int) ([]byte, int) {
-	var _gfe []byte
-	for _gfag := 0; _gfag < 6; _gfag++ {
-		_gfe, _dca = _acbf(_gfe, _dca, _caf)
-	}
-	return _gfe, _dca % 8
-}
-func (_cbd *Decoder) decode1D() error {
-	var (
-		_dcc  int
-		_cacc error
-	)
-	_aad := true
-	_cbd._bdc = 0
-	for {
-		var _cg int
-		if _aad {
-			_cg, _cacc = _cbd.decodeRun(_da)
-		} else {
-			_cg, _cacc = _cbd.decodeRun(_gf)
-		}
-		if _cacc != nil {
-			return _cacc
-		}
-		_dcc += _cg
-		_cbd._gac[_cbd._bdc] = _dcc
-		_cbd._bdc++
-		_aad = !_aad
-		if _dcc >= _cbd._afc {
-			break
-		}
-	}
-	return nil
-}
-
-var (
-	_ged byte = 1
-	_ddb byte = 0
-)
-
-func (_afcd *Encoder) Encode(pixels [][]byte) []byte {
-	if _afcd.BlackIs1 {
-		_ged = 0
-		_ddb = 1
-	} else {
-		_ged = 1
-		_ddb = 0
-	}
-	if _afcd.K == 0 {
-		return _afcd.encodeG31D(pixels)
-	}
-	if _afcd.K > 0 {
-		return _afcd.encodeG32D(pixels)
-	}
-	if _afcd.K < 0 {
-		return _afcd.encodeG4(pixels)
-	}
-	return nil
-}
-func _adf(_cceg, _ddeb []byte, _ecfb int, _cad bool) int {
-	_cfcg := _bfcg(_ddeb, _ecfb)
-	if _cfcg < len(_ddeb) && (_ecfb == -1 && _ddeb[_cfcg] == _ged || _ecfb >= 0 && _ecfb < len(_cceg) && _cceg[_ecfb] == _ddeb[_cfcg] || _ecfb >= len(_cceg) && _cad && _ddeb[_cfcg] == _ged || _ecfb >= len(_cceg) && !_cad && _ddeb[_cfcg] == _ddb) {
-		_cfcg = _bfcg(_ddeb, _cfcg)
-	}
-	return _cfcg
-}
-func _bfae(_eabe []byte, _geb int, _aeg int, _bab bool) ([]byte, int) {
-	var (
-		_dccfc code
-		_ggb   bool
-	)
-	for !_ggb {
-		_dccfc, _aeg, _ggb = _fdf(_aeg, _bab)
-		_eabe, _geb = _acbf(_eabe, _geb, _dccfc)
-	}
-	return _eabe, _geb
-}
-
-var _bge = [...][]uint16{{0x7, 0x8, 0xb, 0xc, 0xe, 0xf}, {0x12, 0x13, 0x14, 0x1b, 0x7, 0x8}, {0x17, 0x18, 0x2a, 0x2b, 0x3, 0x34, 0x35, 0x7, 0x8}, {0x13, 0x17, 0x18, 0x24, 0x27, 0x28, 0x2b, 0x3, 0x37, 0x4, 0x8, 0xc}, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x1a, 0x1b, 0x2, 0x24, 0x25, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x3, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x4, 0x4a, 0x4b, 0x5, 0x52, 0x53, 0x54, 0x55, 0x58, 0x59, 0x5a, 0x5b, 0x64, 0x65, 0x67, 0x68, 0xa, 0xb}, {0x98, 0x99, 0x9a, 0x9b, 0xcc, 0xcd, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb}, {}, {0x8, 0xc, 0xd}, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x1c, 0x1d, 0x1e, 0x1f}}
-
-func _bfcg(_efdb []byte, _cfd int) int {
-	if _cfd >= len(_efdb) {
-		return _cfd
-	}
-	if _cfd < -1 {
-		_cfd = -1
-	}
-	var _fdbg byte
-	if _cfd > -1 {
-		_fdbg = _efdb[_cfd]
-	} else {
-		_fdbg = _ged
-	}
-	_fcc := _cfd + 1
-	for _fcc < len(_efdb) {
-		if _efdb[_fcc] != _fdbg {
-			break
-		}
-		_fcc++
-	}
-	return _fcc
-}
-func _dcb(_dbd int) ([]byte, int) {
-	var _eee []byte
-	for _ffee := 0; _ffee < 6; _ffee++ {
-		_eee, _dbd = _acbf(_eee, _dbd, _ec)
-	}
-	return _eee, _dbd % 8
-}
-func _eaa(_fae int) ([]byte, int) {
-	var _aff []byte
-	for _ecge := 0; _ecge < 2; _ecge++ {
-		_aff, _fae = _acbf(_aff, _fae, _ec)
-	}
-	return _aff, _fae % 8
-}
-func (_ada *tree) fill(_fef, _fded, _bff int) error {
-	_gae := _ada._fgea
-	for _bef := 0; _bef < _fef; _bef++ {
-		_gbd := _fef - 1 - _bef
-		_fgc := ((_fded >> uint(_gbd)) & 1) != 0
-		_cde := _gae.walk(_fgc)
-		if _cde != nil {
-			if _cde._dfb {
-				return _g.New("\u006e\u006f\u0064\u0065\u0020\u0069\u0073\u0020\u006c\u0065\u0061\u0066\u002c\u0020\u006eo\u0020o\u0074\u0068\u0065\u0072\u0020\u0066\u006f\u006c\u006c\u006f\u0077\u0069\u006e\u0067")
-			}
-			_gae = _cde
-			continue
-		}
-		_cde = &treeNode{}
-		if _bef == _fef-1 {
-			_cde._fffag = _bff
-			_cde._dfb = true
-		}
-		if _fded == 0 {
-			_cde._gfda = true
-		}
-		_gae.set(_fgc, _cde)
-		_gae = _cde
-	}
-	return nil
-}
-func (_cef *Encoder) encodeG31D(_fgf [][]byte) []byte {
-	var _ecc []byte
-	_gbf := 0
-	for _bgea := range _fgf {
-		if _cef.Rows > 0 && !_cef.EndOfBlock && _bgea == _cef.Rows {
-			break
-		}
-		_acgc, _eag := _bddg(_fgf[_bgea], _gbf, _ec)
-		_ecc = _cef.appendEncodedRow(_ecc, _acgc, _gbf)
-		if _cef.EncodedByteAlign {
-			_eag = 0
-		}
-		_gbf = _eag
-	}
-	if _cef.EndOfBlock {
-		_ggf, _ := _dcb(_gbf)
-		_ecc = _cef.appendEncodedRow(_ecc, _ggf, _gbf)
-	}
-	return _ecc
-}
-func (_efc *Decoder) getNextChangingElement(_ggd int, _ffdg bool) int {
-	_gcc := 0
-	if !_ffdg {
-		_gcc = 1
-	}
-	_caff := int(uint32(_efc._bda)&0xFFFFFFFE) + _gcc
-	if _caff > 2 {
-		_caff -= 2
-	}
-	if _ggd == 0 {
-		return _caff
-	}
-	for _eeaa := _caff; _eeaa < _efc._fbc; _eeaa += 2 {
-		if _ggd < _efc._dfea[_eeaa] {
-			_efc._bda = _eeaa
-			return _eeaa
-		}
-	}
-	return -1
-}
-
-type tiffType int
-
-func (_bca *Encoder) encodeG4(_agf [][]byte) []byte {
-	_gge := make([][]byte, len(_agf))
-	copy(_gge, _agf)
-	_gge = _dgbac(_gge)
-	var _eeb []byte
-	var _afb int
-	for _acf := 1; _acf < len(_gge); _acf++ {
-		if _bca.Rows > 0 && !_bca.EndOfBlock && _acf == (_bca.Rows+1) {
-			break
-		}
-		var _ecb []byte
-		var _bdfg, _acd, _dff int
-		_ccg := _afb
-		_cdb := -1
-		for _cdb < len(_gge[_acf]) {
-			_bdfg = _bfcg(_gge[_acf], _cdb)
-			_acd = _gce(_gge[_acf], _gge[_acf-1], _cdb)
-			_dff = _bfcg(_gge[_acf-1], _acd)
-			if _dff < _bdfg {
-				_ecb, _ccg = _acbf(_ecb, _ccg, _fde)
-				_cdb = _dff
-			} else {
-				if _b.Abs(float64(_acd-_bdfg)) > 3 {
-					_ecb, _ccg, _cdb = _agg(_gge[_acf], _ecb, _ccg, _cdb, _bdfg)
-				} else {
-					_ecb, _ccg = _bccc(_ecb, _ccg, _bdfg, _acd)
-					_cdb = _bdfg
-				}
-			}
-		}
-		_eeb = _bca.appendEncodedRow(_eeb, _ecb, _afb)
-		if _bca.EncodedByteAlign {
-			_ccg = 0
-		}
-		_afb = _ccg % 8
-	}
-	if _bca.EndOfBlock {
-		_efef, _ := _eaa(_afb)
-		_eeb = _bca.appendEncodedRow(_eeb, _efef, _afb)
-	}
-	return _eeb
-}
-
-type tree struct{ _fgea *treeNode }
-
-func (_acb *Decoder) Read(in []byte) (int, error) {
-	if _acb._fdgd != nil {
-		return 0, _acb._fdgd
-	}
-	_cd := len(in)
-	var (
-		_dfa  int
-		_afgb int
-	)
-	for _cd != 0 {
-		if _acb._ecf >= _acb._dfe {
-			if _cdc := _acb.fetch(); _cdc != nil {
-				_acb._fdgd = _cdc
-				return 0, _cdc
-			}
-		}
-		if _acb._dfe == -1 {
-			return _dfa, _e.EOF
-		}
-		switch {
-		case _cd <= _acb._dfe-_acb._ecf:
-			_dfc := _acb._afg[_acb._ecf : _acb._ecf+_cd]
-			for _, _ddeg := range _dfc {
-				if !_acb._faf {
-					_ddeg = ^_ddeg
-				}
-				in[_afgb] = _ddeg
-				_afgb++
-			}
-			_dfa += len(_dfc)
-			_acb._ecf += len(_dfc)
-			return _dfa, nil
-		default:
-			_dg := _acb._afg[_acb._ecf:]
-			for _, _bfab := range _dg {
-				if !_acb._faf {
-					_bfab = ^_bfab
-				}
-				in[_afgb] = _bfab
-				_afgb++
-			}
-			_dfa += len(_dg)
-			_acb._ecf += len(_dg)
-			_cd -= len(_dg)
-		}
-	}
-	return _dfa, nil
-}
-
-var (
-	_bg *treeNode
-	_ff *treeNode
-	_gf *tree
-	_da *tree
-	_a  *tree
-	_eg *tree
-	_ab = -2000
-	_ag = -1000
-	_de = -3000
-	_ef = -4000
-)
-
-type Decoder struct {
-	_afc  int
-	_gcd  int
-	_bfc  int
-	_afg  []byte
-	_bdf  int
-	_abg  bool
-	_fed  bool
-	_bfa  bool
-	_faf  bool
-	_gg   bool
-	_bcb  bool
-	_eac  bool
-	_dfe  int
-	_ecf  int
-	_dfea []int
-	_gac  []int
-	_fbc  int
-	_bdc  int
-	_ae   int
-	_bda  int
-	_dag  *_f.Reader
-	_cafe tiffType
-	_fdgd error
-}
-
-func (_gga *Decoder) decode2D() error {
-	_gga._fbc = _gga._bdc
-	_gga._gac, _gga._dfea = _gga._dfea, _gga._gac
-	_dbc := true
-	var (
-		_dgc  bool
-		_bba  int
-		_gfac error
-	)
-	_gga._bdc = 0
-_ggc:
-	for _bba < _gga._afc {
-		_dccf := _eg._fgea
-		for {
-			_dgc, _gfac = _gga._dag.ReadBool()
-			if _gfac != nil {
-				return _gfac
-			}
-			_dccf = _dccf.walk(_dgc)
-			if _dccf == nil {
-				continue _ggc
-			}
-			if !_dccf._dfb {
-				continue
-			}
-			switch _dccf._fffag {
-			case _ef:
-				var _bdd int
-				if _dbc {
-					_bdd, _gfac = _gga.decodeRun(_da)
-				} else {
-					_bdd, _gfac = _gga.decodeRun(_gf)
-				}
-				if _gfac != nil {
-					return _gfac
-				}
-				_bba += _bdd
-				_gga._gac[_gga._bdc] = _bba
-				_gga._bdc++
-				if _dbc {
-					_bdd, _gfac = _gga.decodeRun(_gf)
-				} else {
-					_bdd, _gfac = _gga.decodeRun(_da)
-				}
-				if _gfac != nil {
-					return _gfac
-				}
-				_bba += _bdd
-				_gga._gac[_gga._bdc] = _bba
-				_gga._bdc++
-			case _de:
-				_dbe := _gga.getNextChangingElement(_bba, _dbc) + 1
-				if _dbe >= _gga._fbc {
-					_bba = _gga._afc
-				} else {
-					_bba = _gga._dfea[_dbe]
-				}
-			default:
-				_eea := _gga.getNextChangingElement(_bba, _dbc)
-				if _eea >= _gga._fbc || _eea == -1 {
-					_bba = _gga._afc + _dccf._fffag
-				} else {
-					_bba = _gga._dfea[_eea] + _dccf._fffag
-				}
-				_gga._gac[_gga._bdc] = _bba
-				_gga._bdc++
-				_dbc = !_dbc
-			}
-			continue _ggc
-		}
-	}
-	return nil
+	return _def
 }
 
 type code struct {
@@ -1264,119 +157,501 @@ type code struct {
 	BitsWritten int
 }
 
-func _agg(_bfaa, _eeed []byte, _agea, _dgce, _dbg int) ([]byte, int, int) {
-	_cbe := _bfcg(_bfaa, _dbg)
-	_cdbe := _dgce >= 0 && _bfaa[_dgce] == _ged || _dgce == -1
-	_eeed, _agea = _acbf(_eeed, _agea, _age)
-	var _aef int
-	if _dgce > -1 {
-		_aef = _dbg - _dgce
-	} else {
-		_aef = _dbg - _dgce - 1
-	}
-	_eeed, _agea = _bfae(_eeed, _agea, _aef, _cdbe)
-	_cdbe = !_cdbe
-	_gfdf := _cbe - _dbg
-	_eeed, _agea = _bfae(_eeed, _agea, _gfdf, _cdbe)
-	_dgce = _cbe
-	return _eeed, _agea, _dgce
+func init() {
+	_be = make(map[int]code)
+	_be[0] = code{Code: 13<<8 | 3<<6, BitsWritten: 10}
+	_be[1] = code{Code: 2 << (5 + 8), BitsWritten: 3}
+	_be[2] = code{Code: 3 << (6 + 8), BitsWritten: 2}
+	_be[3] = code{Code: 2 << (6 + 8), BitsWritten: 2}
+	_be[4] = code{Code: 3 << (5 + 8), BitsWritten: 3}
+	_be[5] = code{Code: 3 << (4 + 8), BitsWritten: 4}
+	_be[6] = code{Code: 2 << (4 + 8), BitsWritten: 4}
+	_be[7] = code{Code: 3 << (3 + 8), BitsWritten: 5}
+	_be[8] = code{Code: 5 << (2 + 8), BitsWritten: 6}
+	_be[9] = code{Code: 4 << (2 + 8), BitsWritten: 6}
+	_be[10] = code{Code: 4 << (1 + 8), BitsWritten: 7}
+	_be[11] = code{Code: 5 << (1 + 8), BitsWritten: 7}
+	_be[12] = code{Code: 7 << (1 + 8), BitsWritten: 7}
+	_be[13] = code{Code: 4 << 8, BitsWritten: 8}
+	_be[14] = code{Code: 7 << 8, BitsWritten: 8}
+	_be[15] = code{Code: 12 << 8, BitsWritten: 9}
+	_be[16] = code{Code: 5<<8 | 3<<6, BitsWritten: 10}
+	_be[17] = code{Code: 6 << 8, BitsWritten: 10}
+	_be[18] = code{Code: 2 << 8, BitsWritten: 10}
+	_be[19] = code{Code: 12<<8 | 7<<5, BitsWritten: 11}
+	_be[20] = code{Code: 13 << 8, BitsWritten: 11}
+	_be[21] = code{Code: 13<<8 | 4<<5, BitsWritten: 11}
+	_be[22] = code{Code: 6<<8 | 7<<5, BitsWritten: 11}
+	_be[23] = code{Code: 5 << 8, BitsWritten: 11}
+	_be[24] = code{Code: 2<<8 | 7<<5, BitsWritten: 11}
+	_be[25] = code{Code: 3 << 8, BitsWritten: 11}
+	_be[26] = code{Code: 12<<8 | 10<<4, BitsWritten: 12}
+	_be[27] = code{Code: 12<<8 | 11<<4, BitsWritten: 12}
+	_be[28] = code{Code: 12<<8 | 12<<4, BitsWritten: 12}
+	_be[29] = code{Code: 12<<8 | 13<<4, BitsWritten: 12}
+	_be[30] = code{Code: 6<<8 | 8<<4, BitsWritten: 12}
+	_be[31] = code{Code: 6<<8 | 9<<4, BitsWritten: 12}
+	_be[32] = code{Code: 6<<8 | 10<<4, BitsWritten: 12}
+	_be[33] = code{Code: 6<<8 | 11<<4, BitsWritten: 12}
+	_be[34] = code{Code: 13<<8 | 2<<4, BitsWritten: 12}
+	_be[35] = code{Code: 13<<8 | 3<<4, BitsWritten: 12}
+	_be[36] = code{Code: 13<<8 | 4<<4, BitsWritten: 12}
+	_be[37] = code{Code: 13<<8 | 5<<4, BitsWritten: 12}
+	_be[38] = code{Code: 13<<8 | 6<<4, BitsWritten: 12}
+	_be[39] = code{Code: 13<<8 | 7<<4, BitsWritten: 12}
+	_be[40] = code{Code: 6<<8 | 12<<4, BitsWritten: 12}
+	_be[41] = code{Code: 6<<8 | 13<<4, BitsWritten: 12}
+	_be[42] = code{Code: 13<<8 | 10<<4, BitsWritten: 12}
+	_be[43] = code{Code: 13<<8 | 11<<4, BitsWritten: 12}
+	_be[44] = code{Code: 5<<8 | 4<<4, BitsWritten: 12}
+	_be[45] = code{Code: 5<<8 | 5<<4, BitsWritten: 12}
+	_be[46] = code{Code: 5<<8 | 6<<4, BitsWritten: 12}
+	_be[47] = code{Code: 5<<8 | 7<<4, BitsWritten: 12}
+	_be[48] = code{Code: 6<<8 | 4<<4, BitsWritten: 12}
+	_be[49] = code{Code: 6<<8 | 5<<4, BitsWritten: 12}
+	_be[50] = code{Code: 5<<8 | 2<<4, BitsWritten: 12}
+	_be[51] = code{Code: 5<<8 | 3<<4, BitsWritten: 12}
+	_be[52] = code{Code: 2<<8 | 4<<4, BitsWritten: 12}
+	_be[53] = code{Code: 3<<8 | 7<<4, BitsWritten: 12}
+	_be[54] = code{Code: 3<<8 | 8<<4, BitsWritten: 12}
+	_be[55] = code{Code: 2<<8 | 7<<4, BitsWritten: 12}
+	_be[56] = code{Code: 2<<8 | 8<<4, BitsWritten: 12}
+	_be[57] = code{Code: 5<<8 | 8<<4, BitsWritten: 12}
+	_be[58] = code{Code: 5<<8 | 9<<4, BitsWritten: 12}
+	_be[59] = code{Code: 2<<8 | 11<<4, BitsWritten: 12}
+	_be[60] = code{Code: 2<<8 | 12<<4, BitsWritten: 12}
+	_be[61] = code{Code: 5<<8 | 10<<4, BitsWritten: 12}
+	_be[62] = code{Code: 6<<8 | 6<<4, BitsWritten: 12}
+	_be[63] = code{Code: 6<<8 | 7<<4, BitsWritten: 12}
+	_ad = make(map[int]code)
+	_ad[0] = code{Code: 53 << 8, BitsWritten: 8}
+	_ad[1] = code{Code: 7 << (2 + 8), BitsWritten: 6}
+	_ad[2] = code{Code: 7 << (4 + 8), BitsWritten: 4}
+	_ad[3] = code{Code: 8 << (4 + 8), BitsWritten: 4}
+	_ad[4] = code{Code: 11 << (4 + 8), BitsWritten: 4}
+	_ad[5] = code{Code: 12 << (4 + 8), BitsWritten: 4}
+	_ad[6] = code{Code: 14 << (4 + 8), BitsWritten: 4}
+	_ad[7] = code{Code: 15 << (4 + 8), BitsWritten: 4}
+	_ad[8] = code{Code: 19 << (3 + 8), BitsWritten: 5}
+	_ad[9] = code{Code: 20 << (3 + 8), BitsWritten: 5}
+	_ad[10] = code{Code: 7 << (3 + 8), BitsWritten: 5}
+	_ad[11] = code{Code: 8 << (3 + 8), BitsWritten: 5}
+	_ad[12] = code{Code: 8 << (2 + 8), BitsWritten: 6}
+	_ad[13] = code{Code: 3 << (2 + 8), BitsWritten: 6}
+	_ad[14] = code{Code: 52 << (2 + 8), BitsWritten: 6}
+	_ad[15] = code{Code: 53 << (2 + 8), BitsWritten: 6}
+	_ad[16] = code{Code: 42 << (2 + 8), BitsWritten: 6}
+	_ad[17] = code{Code: 43 << (2 + 8), BitsWritten: 6}
+	_ad[18] = code{Code: 39 << (1 + 8), BitsWritten: 7}
+	_ad[19] = code{Code: 12 << (1 + 8), BitsWritten: 7}
+	_ad[20] = code{Code: 8 << (1 + 8), BitsWritten: 7}
+	_ad[21] = code{Code: 23 << (1 + 8), BitsWritten: 7}
+	_ad[22] = code{Code: 3 << (1 + 8), BitsWritten: 7}
+	_ad[23] = code{Code: 4 << (1 + 8), BitsWritten: 7}
+	_ad[24] = code{Code: 40 << (1 + 8), BitsWritten: 7}
+	_ad[25] = code{Code: 43 << (1 + 8), BitsWritten: 7}
+	_ad[26] = code{Code: 19 << (1 + 8), BitsWritten: 7}
+	_ad[27] = code{Code: 36 << (1 + 8), BitsWritten: 7}
+	_ad[28] = code{Code: 24 << (1 + 8), BitsWritten: 7}
+	_ad[29] = code{Code: 2 << 8, BitsWritten: 8}
+	_ad[30] = code{Code: 3 << 8, BitsWritten: 8}
+	_ad[31] = code{Code: 26 << 8, BitsWritten: 8}
+	_ad[32] = code{Code: 27 << 8, BitsWritten: 8}
+	_ad[33] = code{Code: 18 << 8, BitsWritten: 8}
+	_ad[34] = code{Code: 19 << 8, BitsWritten: 8}
+	_ad[35] = code{Code: 20 << 8, BitsWritten: 8}
+	_ad[36] = code{Code: 21 << 8, BitsWritten: 8}
+	_ad[37] = code{Code: 22 << 8, BitsWritten: 8}
+	_ad[38] = code{Code: 23 << 8, BitsWritten: 8}
+	_ad[39] = code{Code: 40 << 8, BitsWritten: 8}
+	_ad[40] = code{Code: 41 << 8, BitsWritten: 8}
+	_ad[41] = code{Code: 42 << 8, BitsWritten: 8}
+	_ad[42] = code{Code: 43 << 8, BitsWritten: 8}
+	_ad[43] = code{Code: 44 << 8, BitsWritten: 8}
+	_ad[44] = code{Code: 45 << 8, BitsWritten: 8}
+	_ad[45] = code{Code: 4 << 8, BitsWritten: 8}
+	_ad[46] = code{Code: 5 << 8, BitsWritten: 8}
+	_ad[47] = code{Code: 10 << 8, BitsWritten: 8}
+	_ad[48] = code{Code: 11 << 8, BitsWritten: 8}
+	_ad[49] = code{Code: 82 << 8, BitsWritten: 8}
+	_ad[50] = code{Code: 83 << 8, BitsWritten: 8}
+	_ad[51] = code{Code: 84 << 8, BitsWritten: 8}
+	_ad[52] = code{Code: 85 << 8, BitsWritten: 8}
+	_ad[53] = code{Code: 36 << 8, BitsWritten: 8}
+	_ad[54] = code{Code: 37 << 8, BitsWritten: 8}
+	_ad[55] = code{Code: 88 << 8, BitsWritten: 8}
+	_ad[56] = code{Code: 89 << 8, BitsWritten: 8}
+	_ad[57] = code{Code: 90 << 8, BitsWritten: 8}
+	_ad[58] = code{Code: 91 << 8, BitsWritten: 8}
+	_ad[59] = code{Code: 74 << 8, BitsWritten: 8}
+	_ad[60] = code{Code: 75 << 8, BitsWritten: 8}
+	_ad[61] = code{Code: 50 << 8, BitsWritten: 8}
+	_ad[62] = code{Code: 51 << 8, BitsWritten: 8}
+	_ad[63] = code{Code: 52 << 8, BitsWritten: 8}
+	_cfe = make(map[int]code)
+	_cfe[64] = code{Code: 3<<8 | 3<<6, BitsWritten: 10}
+	_cfe[128] = code{Code: 12<<8 | 8<<4, BitsWritten: 12}
+	_cfe[192] = code{Code: 12<<8 | 9<<4, BitsWritten: 12}
+	_cfe[256] = code{Code: 5<<8 | 11<<4, BitsWritten: 12}
+	_cfe[320] = code{Code: 3<<8 | 3<<4, BitsWritten: 12}
+	_cfe[384] = code{Code: 3<<8 | 4<<4, BitsWritten: 12}
+	_cfe[448] = code{Code: 3<<8 | 5<<4, BitsWritten: 12}
+	_cfe[512] = code{Code: 3<<8 | 12<<3, BitsWritten: 13}
+	_cfe[576] = code{Code: 3<<8 | 13<<3, BitsWritten: 13}
+	_cfe[640] = code{Code: 2<<8 | 10<<3, BitsWritten: 13}
+	_cfe[704] = code{Code: 2<<8 | 11<<3, BitsWritten: 13}
+	_cfe[768] = code{Code: 2<<8 | 12<<3, BitsWritten: 13}
+	_cfe[832] = code{Code: 2<<8 | 13<<3, BitsWritten: 13}
+	_cfe[896] = code{Code: 3<<8 | 18<<3, BitsWritten: 13}
+	_cfe[960] = code{Code: 3<<8 | 19<<3, BitsWritten: 13}
+	_cfe[1024] = code{Code: 3<<8 | 20<<3, BitsWritten: 13}
+	_cfe[1088] = code{Code: 3<<8 | 21<<3, BitsWritten: 13}
+	_cfe[1152] = code{Code: 3<<8 | 22<<3, BitsWritten: 13}
+	_cfe[1216] = code{Code: 119 << 3, BitsWritten: 13}
+	_cfe[1280] = code{Code: 2<<8 | 18<<3, BitsWritten: 13}
+	_cfe[1344] = code{Code: 2<<8 | 19<<3, BitsWritten: 13}
+	_cfe[1408] = code{Code: 2<<8 | 20<<3, BitsWritten: 13}
+	_cfe[1472] = code{Code: 2<<8 | 21<<3, BitsWritten: 13}
+	_cfe[1536] = code{Code: 2<<8 | 26<<3, BitsWritten: 13}
+	_cfe[1600] = code{Code: 2<<8 | 27<<3, BitsWritten: 13}
+	_cfe[1664] = code{Code: 3<<8 | 4<<3, BitsWritten: 13}
+	_cfe[1728] = code{Code: 3<<8 | 5<<3, BitsWritten: 13}
+	_fde = make(map[int]code)
+	_fde[64] = code{Code: 27 << (3 + 8), BitsWritten: 5}
+	_fde[128] = code{Code: 18 << (3 + 8), BitsWritten: 5}
+	_fde[192] = code{Code: 23 << (2 + 8), BitsWritten: 6}
+	_fde[256] = code{Code: 55 << (1 + 8), BitsWritten: 7}
+	_fde[320] = code{Code: 54 << 8, BitsWritten: 8}
+	_fde[384] = code{Code: 55 << 8, BitsWritten: 8}
+	_fde[448] = code{Code: 100 << 8, BitsWritten: 8}
+	_fde[512] = code{Code: 101 << 8, BitsWritten: 8}
+	_fde[576] = code{Code: 104 << 8, BitsWritten: 8}
+	_fde[640] = code{Code: 103 << 8, BitsWritten: 8}
+	_fde[704] = code{Code: 102 << 8, BitsWritten: 9}
+	_fde[768] = code{Code: 102<<8 | 1<<7, BitsWritten: 9}
+	_fde[832] = code{Code: 105 << 8, BitsWritten: 9}
+	_fde[896] = code{Code: 105<<8 | 1<<7, BitsWritten: 9}
+	_fde[960] = code{Code: 106 << 8, BitsWritten: 9}
+	_fde[1024] = code{Code: 106<<8 | 1<<7, BitsWritten: 9}
+	_fde[1088] = code{Code: 107 << 8, BitsWritten: 9}
+	_fde[1152] = code{Code: 107<<8 | 1<<7, BitsWritten: 9}
+	_fde[1216] = code{Code: 108 << 8, BitsWritten: 9}
+	_fde[1280] = code{Code: 108<<8 | 1<<7, BitsWritten: 9}
+	_fde[1344] = code{Code: 109 << 8, BitsWritten: 9}
+	_fde[1408] = code{Code: 109<<8 | 1<<7, BitsWritten: 9}
+	_fde[1472] = code{Code: 76 << 8, BitsWritten: 9}
+	_fde[1536] = code{Code: 76<<8 | 1<<7, BitsWritten: 9}
+	_fde[1600] = code{Code: 77 << 8, BitsWritten: 9}
+	_fde[1664] = code{Code: 24 << (2 + 8), BitsWritten: 6}
+	_fde[1728] = code{Code: 77<<8 | 1<<7, BitsWritten: 9}
+	_edgc = make(map[int]code)
+	_edgc[1792] = code{Code: 1 << 8, BitsWritten: 11}
+	_edgc[1856] = code{Code: 1<<8 | 4<<5, BitsWritten: 11}
+	_edgc[1920] = code{Code: 1<<8 | 5<<5, BitsWritten: 11}
+	_edgc[1984] = code{Code: 1<<8 | 2<<4, BitsWritten: 12}
+	_edgc[2048] = code{Code: 1<<8 | 3<<4, BitsWritten: 12}
+	_edgc[2112] = code{Code: 1<<8 | 4<<4, BitsWritten: 12}
+	_edgc[2176] = code{Code: 1<<8 | 5<<4, BitsWritten: 12}
+	_edgc[2240] = code{Code: 1<<8 | 6<<4, BitsWritten: 12}
+	_edgc[2304] = code{Code: 1<<8 | 7<<4, BitsWritten: 12}
+	_edgc[2368] = code{Code: 1<<8 | 12<<4, BitsWritten: 12}
+	_edgc[2432] = code{Code: 1<<8 | 13<<4, BitsWritten: 12}
+	_edgc[2496] = code{Code: 1<<8 | 14<<4, BitsWritten: 12}
+	_edgc[2560] = code{Code: 1<<8 | 15<<4, BitsWritten: 12}
+	_ecd = make(map[int]byte)
+	_ecd[0] = 0xFF
+	_ecd[1] = 0xFE
+	_ecd[2] = 0xFC
+	_ecd[3] = 0xF8
+	_ecd[4] = 0xF0
+	_ecd[5] = 0xE0
+	_ecd[6] = 0xC0
+	_ecd[7] = 0x80
+	_ecd[8] = 0x00
 }
-func (_fdc tiffType) String() string {
-	switch _fdc {
-	case _eeg:
-		return "\u0074\u0069\u0066\u0066\u0054\u0079\u0070\u0065\u004d\u006f\u0064i\u0066\u0069\u0065\u0064\u0048\u0075\u0066\u0066\u006d\u0061n\u0052\u006c\u0065"
-	case _ba:
-		return "\u0074\u0069\u0066\u0066\u0054\u0079\u0070\u0065\u0054\u0034"
-	case _fb:
-		return "\u0074\u0069\u0066\u0066\u0054\u0079\u0070\u0065\u0054\u0036"
-	default:
-		return "\u0075n\u0064\u0065\u0066\u0069\u006e\u0065d"
+func _bgc(_cdg, _gdf []byte, _baa int) int {
+	_fcd := _dgg(_gdf, _baa)
+	if _fcd < len(_gdf) && (_baa == -1 && _gdf[_fcd] == _bdec || _baa >= 0 && _baa < len(_cdg) && _cdg[_baa] == _gdf[_fcd] || _baa >= len(_cdg) && _cdg[_baa-1] != _gdf[_fcd]) {
+		_fcd = _dgg(_gdf, _fcd)
 	}
+	return _fcd
 }
-
-var _ge = [...][]uint16{{3, 2}, {1, 4}, {6, 5}, {7}, {9, 8}, {10, 11, 12}, {13, 14}, {15}, {16, 17, 0, 18, 64}, {24, 25, 23, 22, 19, 20, 21, 1792, 1856, 1920}, {1984, 2048, 2112, 2176, 2240, 2304, 2368, 2432, 2496, 2560, 52, 55, 56, 59, 60, 320, 384, 448, 53, 54, 50, 51, 44, 45, 46, 47, 57, 58, 61, 256, 48, 49, 62, 63, 30, 31, 32, 33, 40, 41, 128, 192, 26, 27, 28, 29, 34, 35, 36, 37, 38, 39, 42, 43}, {640, 704, 768, 832, 1280, 1344, 1408, 1472, 1536, 1600, 1664, 1728, 512, 576, 896, 960, 1024, 1088, 1152, 1216}}
-
-func _fag(_gdeg []byte, _fbb bool, _ded int) (int, int) {
-	_ffeg := 0
-	for _ded < len(_gdeg) {
-		if _fbb {
-			if _gdeg[_ded] != _ged {
-				break
-			}
-		} else {
-			if _gdeg[_ded] != _ddb {
-				break
-			}
-		}
-		_ffeg++
-		_ded++
-	}
-	return _ffeg, _ded
-}
-func (_ed *Decoder) decoderRowType41D() error {
-	if _ed._eac {
-		_ed._dag.Align()
-	}
-	_ed._dag.Mark()
-	var (
-		_fcg bool
-		_feg error
-	)
-	if _ed._gg {
-		_fcg, _feg = _ed.tryFetchEOL()
-		if _feg != nil {
-			return _feg
-		}
-		if !_fcg {
-			return _aac
-		}
-	} else {
-		_fcg, _feg = _ed.looseFetchEOL()
-		if _feg != nil {
-			return _feg
-		}
-	}
-	if !_fcg {
-		_ed._dag.Reset()
-	}
-	if _fcg && _ed._bcb {
-		_ed._dag.Mark()
-		for _agd := 0; _agd < 5; _agd++ {
-			_fcg, _feg = _ed.tryFetchEOL()
-			if _feg != nil {
-				if _g.Is(_feg, _e.EOF) {
-					if _agd == 0 {
-						break
-					}
-					return _bfd
-				}
-			}
-			if _fcg {
-				continue
-			}
-			if _agd > 0 {
-				return _bfd
-			}
+func (_ffa *Encoder) encodeG4(_ddc [][]byte) []byte {
+	_babc := make([][]byte, len(_ddc))
+	copy(_babc, _ddc)
+	_babc = _egf(_babc)
+	var _babg []byte
+	var _cgc int
+	for _daa := 1; _daa < len(_babc); _daa++ {
+		if _ffa.Rows > 0 && !_ffa.EndOfBlock && _daa == (_ffa.Rows+1) {
 			break
 		}
-		if _fcg {
-			return _e.EOF
+		var _acg []byte
+		var _beb, _ggb, _aeb int
+		_gcaf := _cgc
+		_ggc := -1
+		for _ggc < len(_babc[_daa]) {
+			_beb = _dgg(_babc[_daa], _ggc)
+			_ggb = _bgc(_babc[_daa], _babc[_daa-1], _ggc)
+			_aeb = _dgg(_babc[_daa-1], _ggb)
+			if _aeb < _beb {
+				_acg, _gcaf = _gec(_acg, _gcaf, _aa)
+				_ggc = _aeb
+			} else {
+				if _e.Abs(float64(_ggb-_beb)) > 3 {
+					_acg, _gcaf, _ggc = _dfe(_babc[_daa], _acg, _gcaf, _ggc, _beb)
+				} else {
+					_acg, _gcaf = _dabd(_acg, _gcaf, _beb, _ggb)
+					_ggc = _beb
+				}
+			}
 		}
-		_ed._dag.Reset()
+		_babg = _ffa.appendEncodedRow(_babg, _acg, _cgc)
+		if _ffa.EncodedByteAlign {
+			_gcaf = 0
+		}
+		_cgc = _gcaf % 8
 	}
-	if _feg = _ed.decode1D(); _feg != nil {
-		return _feg
+	if _ffa.EndOfBlock {
+		_ged, _ := _dcf(_cgc)
+		_babg = _ffa.appendEncodedRow(_babg, _ged, _cgc)
+	}
+	return _babg
+}
+func _gfa(_acf []byte, _eeg int, _gfc code) ([]byte, int) {
+	_abe := true
+	var _cdeee []byte
+	_cdeee, _eeg = _gec(nil, _eeg, _gfc)
+	_cdb := 0
+	var _eec int
+	for _cdb < len(_acf) {
+		_eec, _cdb = _gab(_acf, _abe, _cdb)
+		_cdeee, _eeg = _caad(_cdeee, _eeg, _eec, _abe)
+		_abe = !_abe
+	}
+	return _cdeee, _eeg % 8
+}
+
+var (
+	_bdec byte = 1
+	_edf  byte = 0
+)
+
+type tree struct{ _fcgf *treeNode }
+
+func (_bbc *Decoder) decode1D() error {
+	var (
+		_ebg int
+		_ddg error
+	)
+	_ebgd := true
+	_bbc._bfca = 0
+	for {
+		var _bdd int
+		if _ebgd {
+			_bdd, _ddg = _bbc.decodeRun(_c)
+		} else {
+			_bdd, _ddg = _bbc.decodeRun(_d)
+		}
+		if _ddg != nil {
+			return _ddg
+		}
+		_ebg += _bdd
+		_bbc._bac[_bbc._bfca] = _ebg
+		_bbc._bfca++
+		_ebgd = !_ebgd
+		if _ebg >= _bbc._aeg {
+			break
+		}
 	}
 	return nil
 }
-func (_bdg *Encoder) appendEncodedRow(_acda, _cfcc []byte, _bce int) []byte {
-	if len(_acda) > 0 && _bce != 0 && !_bdg.EncodedByteAlign {
-		_acda[len(_acda)-1] = _acda[len(_acda)-1] | _cfcc[0]
-		_acda = append(_acda, _cfcc[1:]...)
-	} else {
-		_acda = append(_acda, _cfcc...)
+func _caad(_cgd []byte, _cgcc int, _babb int, _bbbda bool) ([]byte, int) {
+	var (
+		_baeg code
+		_gff  bool
+	)
+	for !_gff {
+		_baeg, _babb, _gff = _cdbd(_babb, _bbbda)
+		_cgd, _cgcc = _gec(_cgd, _cgcc, _baeg)
 	}
-	return _acda
+	return _cgd, _cgcc
+}
+func (_dcg *Decoder) decodeRowType4() error {
+	if !_dcg._fdcd {
+		return _dcg.decoderRowType41D()
+	}
+	if _dcg._gfb {
+		_dcg._cd.Align()
+	}
+	_dcg._cd.Mark()
+	_ffc, _cffd := _dcg.tryFetchEOL()
+	if _cffd != nil {
+		return _cffd
+	}
+	if !_ffc && _dcg._ccf {
+		_dcg._bggf++
+		if _dcg._bggf > _dcg._gd {
+			return _fa
+		}
+		_dcg._cd.Reset()
+	}
+	if !_ffc {
+		_dcg._cd.Reset()
+	}
+	_abd, _cffd := _dcg._cd.ReadBool()
+	if _cffd != nil {
+		return _cffd
+	}
+	if _abd {
+		if _ffc && _dcg._de {
+			if _cffd = _dcg.tryFetchRTC2D(); _cffd != nil {
+				return _cffd
+			}
+		}
+		_cffd = _dcg.decode1D()
+	} else {
+		_cffd = _dcg.decode2D()
+	}
+	if _cffd != nil {
+		return _cffd
+	}
+	return nil
+}
+func (_bfb *Decoder) Read(in []byte) (int, error) {
+	if _bfb._aad != nil {
+		return 0, _bfb._aad
+	}
+	_bggd := len(in)
+	var (
+		_bcf int
+		_caf int
+	)
+	for _bggd != 0 {
+		if _bfb._geg >= _bfb._bc {
+			if _dbc := _bfb.fetch(); _dbc != nil {
+				_bfb._aad = _dbc
+				return 0, _dbc
+			}
+		}
+		if _bfb._bc == -1 {
+			return _bcf, _ge.EOF
+		}
+		switch {
+		case _bggd <= _bfb._bc-_bfb._geg:
+			_fce := _bfb._dgc[_bfb._geg : _bfb._geg+_bggd]
+			for _, _deg := range _fce {
+				if !_bfb._bbf {
+					_deg = ^_deg
+				}
+				in[_caf] = _deg
+				_caf++
+			}
+			_bcf += len(_fce)
+			_bfb._geg += len(_fce)
+			return _bcf, nil
+		default:
+			_dgf := _bfb._dgc[_bfb._geg:]
+			for _, _gge := range _dgf {
+				if !_bfb._bbf {
+					_gge = ^_gge
+				}
+				in[_caf] = _gge
+				_caf++
+			}
+			_bcf += len(_dgf)
+			_bfb._geg += len(_dgf)
+			_bggd -= len(_dgf)
+		}
+	}
+	return _bcf, nil
+}
+
+var (
+	_gee *treeNode
+	_ae  *treeNode
+	_d   *tree
+	_c   *tree
+	_b   *tree
+	_ee  *tree
+	_ab  = -2000
+	_ed  = -1000
+	_f   = -3000
+	_gb  = -4000
+)
+
+func (_fdg *Decoder) decode2D() error {
+	_fdg._bd = _fdg._bfca
+	_fdg._bac, _fdg._df = _fdg._df, _fdg._bac
+	_dga := true
+	var (
+		_eg   bool
+		_fefe int
+		_aba  error
+	)
+	_fdg._bfca = 0
+_eag:
+	for _fefe < _fdg._aeg {
+		_bacb := _ee._fcgf
+		for {
+			_eg, _aba = _fdg._cd.ReadBool()
+			if _aba != nil {
+				return _aba
+			}
+			_bacb = _bacb.walk(_eg)
+			if _bacb == nil {
+				continue _eag
+			}
+			if !_bacb._cag {
+				continue
+			}
+			switch _bacb._bcbd {
+			case _gb:
+				var _ecce int
+				if _dga {
+					_ecce, _aba = _fdg.decodeRun(_c)
+				} else {
+					_ecce, _aba = _fdg.decodeRun(_d)
+				}
+				if _aba != nil {
+					return _aba
+				}
+				_fefe += _ecce
+				_fdg._bac[_fdg._bfca] = _fefe
+				_fdg._bfca++
+				if _dga {
+					_ecce, _aba = _fdg.decodeRun(_d)
+				} else {
+					_ecce, _aba = _fdg.decodeRun(_c)
+				}
+				if _aba != nil {
+					return _aba
+				}
+				_fefe += _ecce
+				_fdg._bac[_fdg._bfca] = _fefe
+				_fdg._bfca++
+			case _f:
+				_eba := _fdg.getNextChangingElement(_fefe, _dga) + 1
+				if _eba >= _fdg._bd {
+					_fefe = _fdg._aeg
+				} else {
+					_fefe = _fdg._df[_eba]
+				}
+			default:
+				_ebaf := _fdg.getNextChangingElement(_fefe, _dga)
+				if _ebaf >= _fdg._bd || _ebaf == -1 {
+					_fefe = _fdg._aeg + _bacb._bcbd
+				} else {
+					_fefe = _fdg._df[_ebaf] + _bacb._bcbd
+				}
+				_fdg._bac[_fdg._bfca] = _fefe
+				_fdg._bfca++
+				_dga = !_dga
+			}
+			continue _eag
+		}
+	}
+	return nil
 }
 
 type Encoder struct {
@@ -1390,28 +665,750 @@ type Encoder struct {
 	DamagedRowsBeforeError int
 }
 
-func (_dgf *Decoder) decodeRun(_aca *tree) (int, error) {
-	var _dgba int
-	_fbcc := _aca._fgea
-	for {
-		_dged, _ffb := _dgf._dag.ReadBool()
-		if _ffb != nil {
-			return 0, _ffb
+func (_ebe *Decoder) getNextChangingElement(_eab int, _fbg bool) int {
+	_bae := 0
+	if !_fbg {
+		_bae = 1
+	}
+	_aea := int(uint32(_ebe._gbde)&0xFFFFFFFE) + _bae
+	if _aea > 2 {
+		_aea -= 2
+	}
+	if _eab == 0 {
+		return _aea
+	}
+	for _eff := _aea; _eff < _ebe._bd; _eff += 2 {
+		if _eab < _ebe._df[_eff] {
+			_ebe._gbde = _eff
+			return _eff
 		}
-		_fbcc = _fbcc.walk(_dged)
-		if _fbcc == nil {
-			return 0, _g.New("\u0075\u006e\u006bno\u0077\u006e\u0020\u0063\u006f\u0064\u0065\u0020\u0069n\u0020H\u0075f\u0066m\u0061\u006e\u0020\u0052\u004c\u0045\u0020\u0073\u0074\u0072\u0065\u0061\u006d")
+	}
+	return -1
+}
+func _geab(_aff, _gedf []byte, _bfbb int, _aebe bool) int {
+	_aegg := _dgg(_gedf, _bfbb)
+	if _aegg < len(_gedf) && (_bfbb == -1 && _gedf[_aegg] == _bdec || _bfbb >= 0 && _bfbb < len(_aff) && _aff[_bfbb] == _gedf[_aegg] || _bfbb >= len(_aff) && _aebe && _gedf[_aegg] == _bdec || _bfbb >= len(_aff) && !_aebe && _gedf[_aegg] == _edf) {
+		_aegg = _dgg(_gedf, _aegg)
+	}
+	return _aegg
+}
+func _dcf(_bad int) ([]byte, int) {
+	var _ffe []byte
+	for _ceg := 0; _ceg < 2; _ceg++ {
+		_ffe, _bad = _gec(_ffe, _bad, _db)
+	}
+	return _ffe, _bad % 8
+}
+func (_effe *Encoder) Encode(pixels [][]byte) []byte {
+	if _effe.BlackIs1 {
+		_bdec = 0
+		_edf = 1
+	} else {
+		_bdec = 1
+		_edf = 0
+	}
+	if _effe.K == 0 {
+		return _effe.encodeG31D(pixels)
+	}
+	if _effe.K > 0 {
+		return _effe.encodeG32D(pixels)
+	}
+	if _effe.K < 0 {
+		return _effe.encodeG4(pixels)
+	}
+	return nil
+}
+func _ggce(_ebd int) ([]byte, int) {
+	var _fcg []byte
+	for _gcc := 0; _gcc < 6; _gcc++ {
+		_fcg, _ebd = _gec(_fcg, _ebd, _dg)
+	}
+	return _fcg, _ebd % 8
+}
+func _dfe(_effef, _acgb []byte, _edfb, _gggc, _bcd int) ([]byte, int, int) {
+	_bdee := _dgg(_effef, _bcd)
+	_egd := _gggc >= 0 && _effef[_gggc] == _bdec || _gggc == -1
+	_acgb, _edfb = _gec(_acgb, _edfb, _bed)
+	var _dcde int
+	if _gggc > -1 {
+		_dcde = _bcd - _gggc
+	} else {
+		_dcde = _bcd - _gggc - 1
+	}
+	_acgb, _edfb = _caad(_acgb, _edfb, _dcde, _egd)
+	_egd = !_egd
+	_dab := _bdee - _bcd
+	_acgb, _edfb = _caad(_acgb, _edfb, _dab, _egd)
+	_gggc = _bdee
+	return _acgb, _edfb, _gggc
+}
+func NewDecoder(data []byte, options DecodeOptions) (*Decoder, error) {
+	_ded := &Decoder{_cd: _gf.NewReader(data), _aeg: options.Columns, _da: options.Rows, _gd: options.DamagedRowsBeforeError, _dgc: make([]byte, (options.Columns+7)/8), _df: make([]int, options.Columns+2), _bac: make([]int, options.Columns+2), _gfb: options.EncodedByteAligned, _bbf: options.BlackIsOne, _ccf: options.EndOfLine, _de: options.EndOfBlock}
+	switch {
+	case options.K == 0:
+		_ded._fff = _cfd
+		if len(data) < 20 {
+			return nil, _a.New("\u0074o\u006f\u0020\u0073\u0068o\u0072\u0074\u0020\u0063\u0063i\u0074t\u0066a\u0078\u0020\u0073\u0074\u0072\u0065\u0061m")
 		}
-		if _fbcc._dfb {
-			_dgba += _fbcc._fffag
-			switch {
-			case _fbcc._fffag >= 64:
-				_fbcc = _aca._fgea
-			case _fbcc._fffag >= 0:
-				return _dgba, nil
+		_bag := data[:20]
+		if _bag[0] != 0 || (_bag[1]>>4 != 1 && _bag[1] != 1) {
+			_ded._fff = _gef
+			_edgce := (uint16(_bag[0])<<8 + uint16(_bag[1]&0xff)) >> 4
+			for _ecc := 12; _ecc < 160; _ecc++ {
+				_edgce = (_edgce << 1) + uint16((_bag[_ecc/8]>>uint16(7-(_ecc%8)))&0x01)
+				if _edgce&0xfff == 1 {
+					_ded._fff = _cfd
+					break
+				}
+			}
+		}
+	case options.K < 0:
+		_ded._fff = _eb
+	case options.K > 0:
+		_ded._fff = _cfd
+		_ded._fdcd = true
+	}
+	switch _ded._fff {
+	case _gef, _cfd, _eb:
+	default:
+		return nil, _a.New("\u0075\u006ek\u006e\u006f\u0077\u006e\u0020\u0063\u0063\u0069\u0074\u0074\u0066\u0061\u0078\u002e\u0044\u0065\u0063\u006f\u0064\u0065\u0072\u0020ty\u0070\u0065")
+	}
+	return _ded, nil
+}
+func _ada(_beg []byte, _abc int) ([]byte, int) { return _gec(_beg, _abc, _aa) }
+func _cdbd(_gea int, _ecca bool) (code, int, bool) {
+	if _gea < 64 {
+		if _ecca {
+			return _ad[_gea], 0, true
+		}
+		return _be[_gea], 0, true
+	}
+	_edcc := _gea / 64
+	if _edcc > 40 {
+		return _edgc[2560], _gea - 2560, false
+	}
+	if _edcc > 27 {
+		return _edgc[_edcc*64], _gea - _edcc*64, false
+	}
+	if _ecca {
+		return _fde[_edcc*64], _gea - _edcc*64, false
+	}
+	return _cfe[_edcc*64], _gea - _edcc*64, false
+}
+func (_bef *Encoder) encodeG32D(_ggg [][]byte) []byte {
+	var _dfa []byte
+	var _efb int
+	for _fdee := 0; _fdee < len(_ggg); _fdee += _bef.K {
+		if _bef.Rows > 0 && !_bef.EndOfBlock && _fdee == _bef.Rows {
+			break
+		}
+		_cac, _deee := _gfa(_ggg[_fdee], _efb, _dg)
+		_dfa = _bef.appendEncodedRow(_dfa, _cac, _efb)
+		if _bef.EncodedByteAlign {
+			_deee = 0
+		}
+		_efb = _deee
+		for _ade := _fdee + 1; _ade < (_fdee+_bef.K) && _ade < len(_ggg); _ade++ {
+			if _bef.Rows > 0 && !_bef.EndOfBlock && _ade == _bef.Rows {
+				break
+			}
+			_dfac, _fgg := _gec(nil, _efb, _bf)
+			var _eaf, _fcb, _cfa int
+			_dae := -1
+			for _dae < len(_ggg[_ade]) {
+				_eaf = _dgg(_ggg[_ade], _dae)
+				_fcb = _bgc(_ggg[_ade], _ggg[_ade-1], _dae)
+				_cfa = _dgg(_ggg[_ade-1], _fcb)
+				if _cfa < _eaf {
+					_dfac, _fgg = _ada(_dfac, _fgg)
+					_dae = _cfa
+				} else {
+					if _e.Abs(float64(_fcb-_eaf)) > 3 {
+						_dfac, _fgg, _dae = _dfe(_ggg[_ade], _dfac, _fgg, _dae, _eaf)
+					} else {
+						_dfac, _fgg = _dabd(_dfac, _fgg, _eaf, _fcb)
+						_dae = _eaf
+					}
+				}
+			}
+			_dfa = _bef.appendEncodedRow(_dfa, _dfac, _efb)
+			if _bef.EncodedByteAlign {
+				_fgg = 0
+			}
+			_efb = _fgg % 8
+		}
+	}
+	if _bef.EndOfBlock {
+		_ece, _ := _ggce(_efb)
+		_dfa = _bef.appendEncodedRow(_dfa, _ece, _efb)
+	}
+	return _dfa
+}
+func (_fdb *Decoder) tryFetchEOL1() (bool, error) {
+	_edb, _aec := _fdb._cd.ReadBits(13)
+	if _aec != nil {
+		return false, _aec
+	}
+	return _edb == 0x3, nil
+}
+
+var _ecf = [...][]uint16{{0x2, 0x3}, {0x2, 0x3}, {0x2, 0x3}, {0x3}, {0x4, 0x5}, {0x4, 0x5, 0x7}, {0x4, 0x7}, {0x18}, {0x17, 0x18, 0x37, 0x8, 0xf}, {0x17, 0x18, 0x28, 0x37, 0x67, 0x68, 0x6c, 0x8, 0xc, 0xd}, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x1c, 0x1d, 0x1e, 0x1f, 0x24, 0x27, 0x28, 0x2b, 0x2c, 0x33, 0x34, 0x35, 0x37, 0x38, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xda, 0xdb}, {0x4a, 0x4b, 0x4c, 0x4d, 0x52, 0x53, 0x54, 0x55, 0x5a, 0x5b, 0x64, 0x65, 0x6c, 0x6d, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77}}
+var _bgg = [...][]uint16{{2, 3, 4, 5, 6, 7}, {128, 8, 9, 64, 10, 11}, {192, 1664, 16, 17, 13, 14, 15, 1, 12}, {26, 21, 28, 27, 18, 24, 25, 22, 256, 23, 20, 19}, {33, 34, 35, 36, 37, 38, 31, 32, 29, 53, 54, 39, 40, 41, 42, 43, 44, 30, 61, 62, 63, 0, 320, 384, 45, 59, 60, 46, 49, 50, 51, 52, 55, 56, 57, 58, 448, 512, 640, 576, 47, 48}, {1472, 1536, 1600, 1728, 704, 768, 832, 896, 960, 1024, 1088, 1152, 1216, 1280, 1344, 1408}, {}, {1792, 1856, 1920}, {1984, 2048, 2112, 2176, 2240, 2304, 2368, 2432, 2496, 2560}}
+
+func (_cfb *Decoder) decoderRowType41D() error {
+	if _cfb._gfb {
+		_cfb._cd.Align()
+	}
+	_cfb._cd.Mark()
+	var (
+		_dcc bool
+		_fed error
+	)
+	if _cfb._ccf {
+		_dcc, _fed = _cfb.tryFetchEOL()
+		if _fed != nil {
+			return _fed
+		}
+		if !_dcc {
+			return _fa
+		}
+	} else {
+		_dcc, _fed = _cfb.looseFetchEOL()
+		if _fed != nil {
+			return _fed
+		}
+	}
+	if !_dcc {
+		_cfb._cd.Reset()
+	}
+	if _dcc && _cfb._de {
+		_cfb._cd.Mark()
+		for _gcb := 0; _gcb < 5; _gcb++ {
+			_dcc, _fed = _cfb.tryFetchEOL()
+			if _fed != nil {
+				if _a.Is(_fed, _ge.EOF) {
+					if _gcb == 0 {
+						break
+					}
+					return _gc
+				}
+			}
+			if _dcc {
+				continue
+			}
+			if _gcb > 0 {
+				return _gc
+			}
+			break
+		}
+		if _dcc {
+			return _ge.EOF
+		}
+		_cfb._cd.Reset()
+	}
+	if _fed = _cfb.decode1D(); _fed != nil {
+		return _fed
+	}
+	return nil
+}
+
+type tiffType int
+type DecodeOptions struct {
+	Columns                int
+	Rows                   int
+	K                      int
+	EncodedByteAligned     bool
+	BlackIsOne             bool
+	EndOfBlock             bool
+	EndOfLine              bool
+	DamagedRowsBeforeError int
+}
+
+func (_dee *Decoder) tryFetchEOL() (bool, error) {
+	_cfc, _gca := _dee._cd.ReadBits(12)
+	if _gca != nil {
+		return false, _gca
+	}
+	return _cfc == 0x1, nil
+}
+func _egf(_baea [][]byte) [][]byte {
+	_bgcb := make([]byte, len(_baea[0]))
+	for _efbf := range _bgcb {
+		_bgcb[_efbf] = _bdec
+	}
+	_baea = append(_baea, []byte{})
+	for _bdfb := len(_baea) - 1; _bdfb > 0; _bdfb-- {
+		_baea[_bdfb] = _baea[_bdfb-1]
+	}
+	_baea[0] = _bgcb
+	return _baea
+}
+func (_edc *Decoder) decodeRow() (_adgd error) {
+	if !_edc._de && _edc._da > 0 && _edc._da == _edc._agg {
+		return _ge.EOF
+	}
+	switch _edc._fff {
+	case _gef:
+		_adgd = _edc.decodeRowType2()
+	case _cfd:
+		_adgd = _edc.decodeRowType4()
+	case _eb:
+		_adgd = _edc.decodeRowType6()
+	}
+	if _adgd != nil {
+		return _adgd
+	}
+	_bdf := 0
+	_afg := true
+	_edc._gbde = 0
+	for _bbbc := 0; _bbbc < _edc._bfca; _bbbc++ {
+		_ggf := _edc._aeg
+		if _bbbc != _edc._bfca {
+			_ggf = _edc._bac[_bbbc]
+		}
+		if _ggf > _edc._aeg {
+			_ggf = _edc._aeg
+		}
+		_eef := _bdf / 8
+		for _bdf%8 != 0 && _ggf-_bdf > 0 {
+			var _cee byte
+			if !_afg {
+				_cee = 1 << uint(7-(_bdf%8))
+			}
+			_edc._dgc[_eef] |= _cee
+			_bdf++
+		}
+		if _bdf%8 == 0 {
+			_eef = _bdf / 8
+			var _ccg byte
+			if !_afg {
+				_ccg = 0xff
+			}
+			for _ggf-_bdf > 7 {
+				_edc._dgc[_eef] = _ccg
+				_bdf += 8
+				_eef++
+			}
+		}
+		for _ggf-_bdf > 0 {
+			if _bdf%8 == 0 {
+				_edc._dgc[_eef] = 0
+			}
+			var _ga byte
+			if !_afg {
+				_ga = 1 << uint(7-(_bdf%8))
+			}
+			_edc._dgc[_eef] |= _ga
+			_bdf++
+		}
+		_afg = !_afg
+	}
+	if _bdf != _edc._aeg {
+		return _a.New("\u0073\u0075\u006d\u0020\u006f\u0066 \u0072\u0075\u006e\u002d\u006c\u0065\u006e\u0067\u0074\u0068\u0073\u0020\u0064\u006f\u0065\u0073\u0020\u006e\u006f\u0074 \u0065\u0071\u0075\u0061\u006c\u0020\u0073\u0063\u0061\u006e\u0020\u006c\u0069\u006ee\u0020w\u0069\u0064\u0074\u0068")
+	}
+	_edc._bc = (_bdf + 7) / 8
+	_edc._agg++
+	return nil
+}
+
+type treeNode struct {
+	_gbfd *treeNode
+	_gbe  *treeNode
+	_bcbd int
+	_agbg bool
+	_cag  bool
+}
+
+func _dgg(_dgba []byte, _gfaf int) int {
+	if _gfaf >= len(_dgba) {
+		return _gfaf
+	}
+	if _gfaf < -1 {
+		_gfaf = -1
+	}
+	var _bga byte
+	if _gfaf > -1 {
+		_bga = _dgba[_gfaf]
+	} else {
+		_bga = _bdec
+	}
+	_egac := _gfaf + 1
+	for _egac < len(_dgba) {
+		if _dgba[_egac] != _bga {
+			break
+		}
+		_egac++
+	}
+	return _egac
+}
+func (_gfg *Decoder) tryFetchRTC2D() (_eee error) {
+	_gfg._cd.Mark()
+	var _cdee bool
+	for _ega := 0; _ega < 5; _ega++ {
+		_cdee, _eee = _gfg.tryFetchEOL1()
+		if _eee != nil {
+			if _a.Is(_eee, _ge.EOF) {
+				if _ega == 0 {
+					break
+				}
+				return _gc
+			}
+		}
+		if _cdee {
+			continue
+		}
+		if _ega > 0 {
+			return _gc
+		}
+		break
+	}
+	if _cdee {
+		return _ge.EOF
+	}
+	_gfg._cd.Reset()
+	return _eee
+}
+func _fdce(_cgg, _dea int) code {
+	var _fdd code
+	switch _dea - _cgg {
+	case -1:
+		_fdd = _adg
+	case -2:
+		_fdd = _bfc
+	case -3:
+		_fdd = _ceb
+	case 0:
+		_fdd = _cff
+	case 1:
+		_fdd = _cg
+	case 2:
+		_fdd = _dd
+	case 3:
+		_fdd = _bab
+	}
+	return _fdd
+}
+func (_fgc *Decoder) looseFetchEOL() (bool, error) {
+	_ecdb, _gbg := _fgc._cd.ReadBits(12)
+	if _gbg != nil {
+		return false, _gbg
+	}
+	switch _ecdb {
+	case 0x1:
+		return true, nil
+	case 0x0:
+		for {
+			_efc, _dbce := _fgc._cd.ReadBool()
+			if _dbce != nil {
+				return false, _dbce
+			}
+			if _efc {
+				return true, nil
+			}
+		}
+	default:
+		return false, nil
+	}
+}
+
+var _fg = [...][]uint16{{3, 2}, {1, 4}, {6, 5}, {7}, {9, 8}, {10, 11, 12}, {13, 14}, {15}, {16, 17, 0, 18, 64}, {24, 25, 23, 22, 19, 20, 21, 1792, 1856, 1920}, {1984, 2048, 2112, 2176, 2240, 2304, 2368, 2432, 2496, 2560, 52, 55, 56, 59, 60, 320, 384, 448, 53, 54, 50, 51, 44, 45, 46, 47, 57, 58, 61, 256, 48, 49, 62, 63, 30, 31, 32, 33, 40, 41, 128, 192, 26, 27, 28, 29, 34, 35, 36, 37, 38, 39, 42, 43}, {640, 704, 768, 832, 1280, 1344, 1408, 1472, 1536, 1600, 1664, 1728, 512, 576, 896, 960, 1024, 1088, 1152, 1216}}
+
+type Decoder struct {
+	_aeg  int
+	_da   int
+	_agg  int
+	_dgc  []byte
+	_gd   int
+	_fdcd bool
+	_gbd  bool
+	_ca   bool
+	_bbf  bool
+	_ccf  bool
+	_de   bool
+	_gfb  bool
+	_bc   int
+	_geg  int
+	_df   []int
+	_bac  []int
+	_bd   int
+	_bfca int
+	_bggf int
+	_gbde int
+	_cd   *_gf.Reader
+	_fff  tiffType
+	_aad  error
+}
+
+func (_cec *treeNode) set(_ggge bool, _dfb *treeNode) {
+	if !_ggge {
+		_cec._gbfd = _dfb
+	} else {
+		_cec._gbe = _dfb
+	}
+}
+
+var (
+	_gc = _a.New("\u0063\u0063\u0069\u0074tf\u0061\u0078\u0020\u0063\u006f\u0072\u0072\u0075\u0070\u0074\u0065\u0064\u0020\u0052T\u0043")
+	_fa = _a.New("\u0063\u0063\u0069\u0074tf\u0061\u0078\u0020\u0045\u004f\u004c\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075n\u0064")
+)
+
+func (_fgd tiffType) String() string {
+	switch _fgd {
+	case _gef:
+		return "\u0074\u0069\u0066\u0066\u0054\u0079\u0070\u0065\u004d\u006f\u0064i\u0066\u0069\u0065\u0064\u0048\u0075\u0066\u0066\u006d\u0061n\u0052\u006c\u0065"
+	case _cfd:
+		return "\u0074\u0069\u0066\u0066\u0054\u0079\u0070\u0065\u0054\u0034"
+	case _eb:
+		return "\u0074\u0069\u0066\u0066\u0054\u0079\u0070\u0065\u0054\u0036"
+	default:
+		return "\u0075n\u0064\u0065\u0066\u0069\u006e\u0065d"
+	}
+}
+
+var (
+	_be   map[int]code
+	_ad   map[int]code
+	_cfe  map[int]code
+	_fde  map[int]code
+	_edgc map[int]code
+	_ecd  map[int]byte
+	_db   = code{Code: 1 << 4, BitsWritten: 12}
+	_dg   = code{Code: 3 << 3, BitsWritten: 13}
+	_bf   = code{Code: 2 << 3, BitsWritten: 13}
+	_aa   = code{Code: 1 << 12, BitsWritten: 4}
+	_bed  = code{Code: 1 << 13, BitsWritten: 3}
+	_cff  = code{Code: 1 << 15, BitsWritten: 1}
+	_adg  = code{Code: 3 << 13, BitsWritten: 3}
+	_bfc  = code{Code: 3 << 10, BitsWritten: 6}
+	_ceb  = code{Code: 3 << 9, BitsWritten: 7}
+	_cg   = code{Code: 2 << 13, BitsWritten: 3}
+	_dd   = code{Code: 2 << 10, BitsWritten: 6}
+	_bab  = code{Code: 2 << 9, BitsWritten: 7}
+)
+
+func _dabd(_aca []byte, _cga, _eda, _ggcc int) ([]byte, int) {
+	_fba := _fdce(_eda, _ggcc)
+	_aca, _cga = _gec(_aca, _cga, _fba)
+	return _aca, _cga
+}
+func (_ffd *tree) fillWithNode(_aece, _fcbb int, _baeae *treeNode) error {
+	_eccc := _ffd._fcgf
+	for _adc := 0; _adc < _aece; _adc++ {
+		_eage := uint(_aece - 1 - _adc)
+		_bfg := ((_fcbb >> _eage) & 1) != 0
+		_dad := _eccc.walk(_bfg)
+		if _dad != nil {
+			if _dad._cag {
+				return _a.New("\u006e\u006f\u0064\u0065\u0020\u0069\u0073\u0020\u006c\u0065\u0061\u0066\u002c\u0020\u006eo\u0020o\u0074\u0068\u0065\u0072\u0020\u0066\u006f\u006c\u006c\u006f\u0077\u0069\u006e\u0067")
+			}
+			_eccc = _dad
+			continue
+		}
+		if _adc == _aece-1 {
+			_dad = _baeae
+		} else {
+			_dad = &treeNode{}
+		}
+		if _fcbb == 0 {
+			_dad._agbg = true
+		}
+		_eccc.set(_bfg, _dad)
+		_eccc = _dad
+	}
+	return nil
+}
+func (_bdc *Decoder) decodeG32D() error {
+	_bdc._bd = _bdc._bfca
+	_bdc._bac, _bdc._df = _bdc._df, _bdc._bac
+	_aega := true
+	var (
+		_cde bool
+		_ecb int
+		_ef  error
+	)
+	_bdc._bfca = 0
+_fef:
+	for _ecb < _bdc._aeg {
+		_caa := _ee._fcgf
+		for {
+			_cde, _ef = _bdc._cd.ReadBool()
+			if _ef != nil {
+				return _ef
+			}
+			_caa = _caa.walk(_cde)
+			if _caa == nil {
+				continue _fef
+			}
+			if !_caa._cag {
+				continue
+			}
+			switch _caa._bcbd {
+			case _gb:
+				var _dcd int
+				if _aega {
+					_dcd, _ef = _bdc.decodeRun(_c)
+				} else {
+					_dcd, _ef = _bdc.decodeRun(_d)
+				}
+				if _ef != nil {
+					return _ef
+				}
+				_ecb += _dcd
+				_bdc._bac[_bdc._bfca] = _ecb
+				_bdc._bfca++
+				if _aega {
+					_dcd, _ef = _bdc.decodeRun(_d)
+				} else {
+					_dcd, _ef = _bdc.decodeRun(_c)
+				}
+				if _ef != nil {
+					return _ef
+				}
+				_ecb += _dcd
+				_bdc._bac[_bdc._bfca] = _ecb
+				_bdc._bfca++
+			case _f:
+				_bce := _bdc.getNextChangingElement(_ecb, _aega) + 1
+				if _bce >= _bdc._bd {
+					_ecb = _bdc._aeg
+				} else {
+					_ecb = _bdc._df[_bce]
+				}
 			default:
-				return _dgf._afc, nil
+				_cab := _bdc.getNextChangingElement(_ecb, _aega)
+				if _cab >= _bdc._bd || _cab == -1 {
+					_ecb = _bdc._aeg + _caa._bcbd
+				} else {
+					_ecb = _bdc._df[_cab] + _caa._bcbd
+				}
+				_bdc._bac[_bdc._bfca] = _ecb
+				_bdc._bfca++
+				_aega = !_aega
+			}
+			continue _fef
+		}
+	}
+	return nil
+}
+func (_cda *treeNode) walk(_bec bool) *treeNode {
+	if _bec {
+		return _cda._gbe
+	}
+	return _cda._gbfd
+}
+func _gab(_afeb []byte, _agb bool, _dgb int) (int, int) {
+	_bfd := 0
+	for _dgb < len(_afeb) {
+		if _agb {
+			if _afeb[_dgb] != _bdec {
+				break
+			}
+		} else {
+			if _afeb[_dgb] != _edf {
+				break
+			}
+		}
+		_bfd++
+		_dgb++
+	}
+	return _bfd, _dgb
+}
+func _gdc(_bbbd int) ([]byte, int) {
+	var _cdc []byte
+	for _ddgc := 0; _ddgc < 6; _ddgc++ {
+		_cdc, _bbbd = _gec(_cdc, _bbbd, _db)
+	}
+	return _cdc, _bbbd % 8
+}
+func (_gfe *Decoder) fetch() error {
+	if _gfe._bc == -1 {
+		return nil
+	}
+	if _gfe._geg < _gfe._bc {
+		return nil
+	}
+	_gfe._bc = 0
+	_aef := _gfe.decodeRow()
+	if _aef != nil {
+		if !_a.Is(_aef, _ge.EOF) {
+			return _aef
+		}
+		if _gfe._bc != 0 {
+			return _aef
+		}
+		_gfe._bc = -1
+	}
+	_gfe._geg = 0
+	return nil
+}
+func (_ccfe *Decoder) decodeRun(_acd *tree) (int, error) {
+	var _bbd int
+	_ebef := _acd._fcgf
+	for {
+		_aac, _bde := _ccfe._cd.ReadBool()
+		if _bde != nil {
+			return 0, _bde
+		}
+		_ebef = _ebef.walk(_aac)
+		if _ebef == nil {
+			return 0, _a.New("\u0075\u006e\u006bno\u0077\u006e\u0020\u0063\u006f\u0064\u0065\u0020\u0069n\u0020H\u0075f\u0066m\u0061\u006e\u0020\u0052\u004c\u0045\u0020\u0073\u0074\u0072\u0065\u0061\u006d")
+		}
+		if _ebef._cag {
+			_bbd += _ebef._bcbd
+			switch {
+			case _ebef._bcbd >= 64:
+				_ebef = _acd._fcgf
+			case _ebef._bcbd >= 0:
+				return _bbd, nil
+			default:
+				return _ccfe._aeg, nil
 			}
 		}
 	}
+}
+func (_edae *tree) fill(_bace, _eeb, _fffd int) error {
+	_eafg := _edae._fcgf
+	for _dggc := 0; _dggc < _bace; _dggc++ {
+		_fgb := _bace - 1 - _dggc
+		_ccff := ((_eeb >> uint(_fgb)) & 1) != 0
+		_aefc := _eafg.walk(_ccff)
+		if _aefc != nil {
+			if _aefc._cag {
+				return _a.New("\u006e\u006f\u0064\u0065\u0020\u0069\u0073\u0020\u006c\u0065\u0061\u0066\u002c\u0020\u006eo\u0020o\u0074\u0068\u0065\u0072\u0020\u0066\u006f\u006c\u006c\u006f\u0077\u0069\u006e\u0067")
+			}
+			_eafg = _aefc
+			continue
+		}
+		_aefc = &treeNode{}
+		if _dggc == _bace-1 {
+			_aefc._bcbd = _fffd
+			_aefc._cag = true
+		}
+		if _eeb == 0 {
+			_aefc._agbg = true
+		}
+		_eafg.set(_ccff, _aefc)
+		_eafg = _aefc
+	}
+	return nil
+}
+func (_gbf *Encoder) encodeG31D(_afdd [][]byte) []byte {
+	var _gcg []byte
+	_fefa := 0
+	for _dde := range _afdd {
+		if _gbf.Rows > 0 && !_gbf.EndOfBlock && _dde == _gbf.Rows {
+			break
+		}
+		_ffg, _bddd := _gfa(_afdd[_dde], _fefa, _db)
+		_gcg = _gbf.appendEncodedRow(_gcg, _ffg, _fefa)
+		if _gbf.EncodedByteAlign {
+			_bddd = 0
+		}
+		_fefa = _bddd
+	}
+	if _gbf.EndOfBlock {
+		_bcb, _ := _gdc(_fefa)
+		_gcg = _gbf.appendEncodedRow(_gcg, _bcb, _fefa)
+	}
+	return _gcg
 }

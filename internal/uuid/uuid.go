@@ -1,45 +1,45 @@
 package uuid
 
 import (
-	_f "crypto/rand"
-	_a "encoding/hex"
-	_fd "io"
+	_g "crypto/rand"
+	_ac "encoding/hex"
+	_a "io"
 )
 
-var Nil = _cbc
-var _cbc UUID
+var _gdg UUID
 
-func (_d UUID) String() string { var _cg [36]byte; _e(_cg[:], _d); return string(_cg[:]) }
+func _ga(_fef []byte, _c UUID) {
+	_ac.Encode(_fef, _c[:4])
+	_fef[8] = '-'
+	_ac.Encode(_fef[9:13], _c[4:6])
+	_fef[13] = '-'
+	_ac.Encode(_fef[14:18], _c[6:8])
+	_fef[18] = '-'
+	_ac.Encode(_fef[19:23], _c[8:10])
+	_fef[23] = '-'
+	_ac.Encode(_fef[24:], _c[10:])
+}
 
-var _ae = _f.Reader
+var Nil = _gdg
+var _ge = _g.Reader
 
+func (_gb UUID) String() string { var _fe [36]byte; _ga(_fe[:], _gb); return string(_fe[:]) }
+func MustUUID() UUID {
+	uuid, _fc := NewUUID()
+	if _fc != nil {
+		panic(_fc)
+	}
+	return uuid
+}
 func NewUUID() (UUID, error) {
 	var uuid UUID
-	_, _cd := _fd.ReadFull(_ae, uuid[:])
-	if _cd != nil {
-		return _cbc, _cd
+	_, _f := _a.ReadFull(_ge, uuid[:])
+	if _f != nil {
+		return _gdg, _f
 	}
 	uuid[6] = (uuid[6] & 0x0f) | 0x40
 	uuid[8] = (uuid[8] & 0x3f) | 0x80
 	return uuid, nil
-}
-func MustUUID() UUID {
-	uuid, _cb := NewUUID()
-	if _cb != nil {
-		panic(_cb)
-	}
-	return uuid
-}
-func _e(_ec []byte, _cf UUID) {
-	_a.Encode(_ec, _cf[:4])
-	_ec[8] = '-'
-	_a.Encode(_ec[9:13], _cf[4:6])
-	_ec[13] = '-'
-	_a.Encode(_ec[14:18], _cf[6:8])
-	_ec[18] = '-'
-	_a.Encode(_ec[19:23], _cf[8:10])
-	_ec[23] = '-'
-	_a.Encode(_ec[24:], _cf[10:])
 }
 
 type UUID [16]byte

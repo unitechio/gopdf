@@ -1,11 +1,11 @@
 package pdfutil
 
 import (
-	_fa "bitbucket.org/shenghui0779/gopdf/common"
-	_e "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_b "bitbucket.org/shenghui0779/gopdf/contentstream/draw"
-	_gc "bitbucket.org/shenghui0779/gopdf/core"
-	_g "bitbucket.org/shenghui0779/gopdf/model"
+	_b "bitbucket.org/shenghui0779/gopdf/common"
+	_a "bitbucket.org/shenghui0779/gopdf/contentstream"
+	_fe "bitbucket.org/shenghui0779/gopdf/contentstream/draw"
+	_f "bitbucket.org/shenghui0779/gopdf/core"
+	_eg "bitbucket.org/shenghui0779/gopdf/model"
 )
 
 // NormalizePage performs the following operations on the passed in page:
@@ -23,57 +23,57 @@ import (
 // PDF viewer.
 // NOTE: This function does not normalize annotations, outlines other parts
 // that are not part of the basic geometry and page content streams.
-func NormalizePage(page *_g.PdfPage) error {
-	_c, _a := page.GetMediaBox()
-	if _a != nil {
-		return _a
+func NormalizePage(page *_eg.PdfPage) error {
+	_g, _ge := page.GetMediaBox()
+	if _ge != nil {
+		return _ge
 	}
-	_gd, _a := page.GetRotate()
-	if _a != nil {
-		_fa.Log.Debug("\u0045\u0052R\u004f\u0052\u003a\u0020\u0025\u0073\u0020\u002d\u0020\u0069\u0067\u006e\u006f\u0072\u0069\u006e\u0067\u0020\u0061\u006e\u0064\u0020\u0061\u0073\u0073\u0075\u006d\u0069\u006e\u0067\u0020\u006e\u006f\u0020\u0072\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u000a", _a.Error())
+	_af, _ge := page.GetRotate()
+	if _ge != nil {
+		_b.Log.Debug("\u0045\u0052R\u004f\u0052\u003a\u0020\u0025\u0073\u0020\u002d\u0020\u0069\u0067\u006e\u006f\u0072\u0069\u006e\u0067\u0020\u0061\u006e\u0064\u0020\u0061\u0073\u0073\u0075\u006d\u0069\u006e\u0067\u0020\u006e\u006f\u0020\u0072\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u000a", _ge.Error())
 	}
-	_fe := _gd%360 != 0 && _gd%90 == 0
-	_c.Normalize()
-	_bf, _ee, _ef, _d := _c.Llx, _c.Lly, _c.Width(), _c.Height()
-	_bg := _bf != 0 || _ee != 0
-	if !_fe && !_bg {
+	_ag := _af%360 != 0 && _af%90 == 0
+	_g.Normalize()
+	_gb, _fed, _be, _fb := _g.Llx, _g.Lly, _g.Width(), _g.Height()
+	_agf := _gb != 0 || _fed != 0
+	if !_ag && !_agf {
 		return nil
 	}
-	_af := func(_bb, _ab, _bd float64) _b.BoundingBox {
-		return _b.Path{Points: []_b.Point{_b.NewPoint(0, 0).Rotate(_bd), _b.NewPoint(_bb, 0).Rotate(_bd), _b.NewPoint(0, _ab).Rotate(_bd), _b.NewPoint(_bb, _ab).Rotate(_bd)}}.GetBoundingBox()
+	_fbf := func(_d, _dg, _ege float64) _fe.BoundingBox {
+		return _fe.Path{Points: []_fe.Point{_fe.NewPoint(0, 0).Rotate(_ege), _fe.NewPoint(_d, 0).Rotate(_ege), _fe.NewPoint(0, _dg).Rotate(_ege), _fe.NewPoint(_d, _dg).Rotate(_ege)}}.GetBoundingBox()
 	}
-	_fc := _e.NewContentCreator()
-	var _fg float64
-	if _fe {
-		_fg = -float64(_gd)
-		_aa := _af(_ef, _d, _fg)
-		_fc.Translate((_aa.Width-_ef)/2+_ef/2, (_aa.Height-_d)/2+_d/2)
-		_fc.RotateDeg(_fg)
-		_fc.Translate(-_ef/2, -_d/2)
-		_ef, _d = _aa.Width, _aa.Height
+	_aa := _a.NewContentCreator()
+	var _gc float64
+	if _ag {
+		_gc = -float64(_af)
+		_ac := _fbf(_be, _fb, _gc)
+		_aa.Translate((_ac.Width-_be)/2+_be/2, (_ac.Height-_fb)/2+_fb/2)
+		_aa.RotateDeg(_gc)
+		_aa.Translate(-_be/2, -_fb/2)
+		_be, _fb = _ac.Width, _ac.Height
 	}
-	if _bg {
-		_fc.Translate(-_bf, -_ee)
+	if _agf {
+		_aa.Translate(-_gb, -_fed)
 	}
-	_dc := _fc.Operations()
-	_eef, _a := _gc.MakeStream(_dc.Bytes(), _gc.NewFlateEncoder())
-	if _a != nil {
-		return _a
+	_gbe := _aa.Operations()
+	_fg, _ge := _f.MakeStream(_gbe.Bytes(), _f.NewFlateEncoder())
+	if _ge != nil {
+		return _ge
 	}
-	_dcf := _gc.MakeArray(_eef)
-	_dcf.Append(page.GetContentStreamObjs()...)
-	*_c = _g.PdfRectangle{Urx: _ef, Ury: _d}
-	if _fd := page.CropBox; _fd != nil {
-		_fd.Normalize()
-		_gg, _ae, _dd, _ad := _fd.Llx-_bf, _fd.Lly-_ee, _fd.Width(), _fd.Height()
-		if _fe {
-			_ag := _af(_dd, _ad, _fg)
-			_dd, _ad = _ag.Width, _ag.Height
+	_ef := _f.MakeArray(_fg)
+	_ef.Append(page.GetContentStreamObjs()...)
+	*_g = _eg.PdfRectangle{Urx: _be, Ury: _fb}
+	if _bed := page.CropBox; _bed != nil {
+		_bed.Normalize()
+		_c, _bg, _afa, _ce := _bed.Llx-_gb, _bed.Lly-_fed, _bed.Width(), _bed.Height()
+		if _ag {
+			_cb := _fbf(_afa, _ce, _gc)
+			_afa, _ce = _cb.Width, _cb.Height
 		}
-		*_fd = _g.PdfRectangle{Llx: _gg, Lly: _ae, Urx: _gg + _dd, Ury: _ae + _ad}
+		*_bed = _eg.PdfRectangle{Llx: _c, Lly: _bg, Urx: _c + _afa, Ury: _bg + _ce}
 	}
-	_fa.Log.Debug("\u0052\u006f\u0074\u0061\u0074\u0065\u003d\u0025\u0066\u00b0\u0020\u004f\u0070\u0073\u003d%\u0071 \u004d\u0065\u0064\u0069\u0061\u0042\u006f\u0078\u003d\u0025\u002e\u0032\u0066", _fg, _dc, _c)
-	page.Contents = _dcf
+	_b.Log.Debug("\u0052\u006f\u0074\u0061\u0074\u0065\u003d\u0025\u0066\u00b0\u0020\u004f\u0070\u0073\u003d%\u0071 \u004d\u0065\u0064\u0069\u0061\u0042\u006f\u0078\u003d\u0025\u002e\u0032\u0066", _gc, _gbe, _g)
+	page.Contents = _ef
 	page.Rotate = nil
 	return nil
 }

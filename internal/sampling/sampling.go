@@ -1,244 +1,243 @@
 package sampling
 
 import (
-	_ff "io"
+	_g "io"
 
-	_b "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/imageutil"
+	_e "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_cb "bitbucket.org/shenghui0779/gopdf/internal/imageutil"
 )
 
-type Writer struct {
-	_af       _d.ImageBase
-	_dgca     *_b.Writer
-	_gff, _aa int
-	_cad      bool
+func NewReader(img _cb.ImageBase) *Reader {
+	return &Reader{_cg: _e.NewReader(img.Data), _d: img, _da: img.ColorComponents, _a: img.BytesPerLine*8 != img.ColorComponents*img.BitsPerComponent*img.Width}
 }
-
-func NewReader(img _d.ImageBase) *Reader {
-	return &Reader{_g: _b.NewReader(img.Data), _fd: img, _be: img.ColorComponents, _dg: img.BytesPerLine*8 != img.ColorComponents*img.BitsPerComponent*img.Width}
-}
-
-type Reader struct {
-	_fd          _d.ImageBase
-	_g           *_b.Reader
-	_gb, _a, _be int
-	_dg          bool
-}
-
-func (_ef *Writer) WriteSample(sample uint32) error {
-	if _, _cadf := _ef._dgca.WriteBits(uint64(sample), _ef._af.BitsPerComponent); _cadf != nil {
-		return _cadf
-	}
-	_ef._aa--
-	if _ef._aa == 0 {
-		_ef._aa = _ef._af.ColorComponents
-		_ef._gff++
-	}
-	if _ef._gff == _ef._af.Width {
-		if _ef._cad {
-			_ef._dgca.FinishByte()
+func (_cge *Writer) WriteSamples(samples []uint32) error {
+	for _ae := 0; _ae < len(samples); _ae++ {
+		if _gf := _cge.WriteSample(samples[_ae]); _gf != nil {
+			return _gf
 		}
-		_ef._gff = 0
 	}
 	return nil
-}
-func ResampleBytes(data []byte, bitsPerSample int) []uint32 {
-	var _bc []uint32
-	_dfe := bitsPerSample
-	var _ee uint32
-	var _fb byte
-	_gd := 0
-	_dgb := 0
-	_dgg := 0
-	for _dgg < len(data) {
-		if _gd > 0 {
-			_ge := _gd
-			if _dfe < _ge {
-				_ge = _dfe
-			}
-			_ee = (_ee << uint(_ge)) | uint32(_fb>>uint(8-_ge))
-			_gd -= _ge
-			if _gd > 0 {
-				_fb = _fb << uint(_ge)
-			} else {
-				_fb = 0
-			}
-			_dfe -= _ge
-			if _dfe == 0 {
-				_bc = append(_bc, _ee)
-				_dfe = bitsPerSample
-				_ee = 0
-				_dgb++
-			}
-		} else {
-			_ca := data[_dgg]
-			_dgg++
-			_ag := 8
-			if _dfe < _ag {
-				_ag = _dfe
-			}
-			_gd = 8 - _ag
-			_ee = (_ee << uint(_ag)) | uint32(_ca>>uint(_gd))
-			if _ag < 8 {
-				_fb = _ca << uint(_ag)
-			}
-			_dfe -= _ag
-			if _dfe == 0 {
-				_bc = append(_bc, _ee)
-				_dfe = bitsPerSample
-				_ee = 0
-				_dgb++
-			}
-		}
-	}
-	for _gd >= bitsPerSample {
-		_bd := _gd
-		if _dfe < _bd {
-			_bd = _dfe
-		}
-		_ee = (_ee << uint(_bd)) | uint32(_fb>>uint(8-_bd))
-		_gd -= _bd
-		if _gd > 0 {
-			_fb = _fb << uint(_bd)
-		} else {
-			_fb = 0
-		}
-		_dfe -= _bd
-		if _dfe == 0 {
-			_bc = append(_bc, _ee)
-			_dfe = bitsPerSample
-			_ee = 0
-			_dgb++
-		}
-	}
-	return _bc
 }
 
 type SampleReader interface {
 	ReadSample() (uint32, error)
-	ReadSamples(_c []uint32) error
+	ReadSamples(_cd []uint32) error
+}
+type Reader struct {
+	_d             _cb.ImageBase
+	_cg            *_e.Reader
+	_cdg, _eg, _da int
+	_a             bool
 }
 
+func (_ee *Writer) WriteSample(sample uint32) error {
+	if _, _efa := _ee._ca.WriteBits(uint64(sample), _ee._dfa.BitsPerComponent); _efa != nil {
+		return _efa
+	}
+	_ee._eda--
+	if _ee._eda == 0 {
+		_ee._eda = _ee._dfa.ColorComponents
+		_ee._cac++
+	}
+	if _ee._cac == _ee._dfa.Width {
+		if _ee._bde {
+			_ee._ca.FinishByte()
+		}
+		_ee._cac = 0
+	}
+	return nil
+}
 func ResampleUint32(data []uint32, bitsPerInputSample int, bitsPerOutputSample int) []uint32 {
-	var _bg []uint32
-	_gg := bitsPerOutputSample
-	var _bf uint32
-	var _cd uint32
-	_bgg := 0
-	_gcb := 0
-	_cf := 0
-	for _cf < len(data) {
-		if _bgg > 0 {
-			_cfg := _bgg
-			if _gg < _cfg {
-				_cfg = _gg
+	var _efg []uint32
+	_cdf := bitsPerOutputSample
+	var _df uint32
+	var _cbd uint32
+	_afg := 0
+	_f := 0
+	_dc := 0
+	for _dc < len(data) {
+		if _afg > 0 {
+			_fg := _afg
+			if _cdf < _fg {
+				_fg = _cdf
 			}
-			_bf = (_bf << uint(_cfg)) | (_cd >> uint(bitsPerInputSample-_cfg))
-			_bgg -= _cfg
-			if _bgg > 0 {
-				_cd = _cd << uint(_cfg)
+			_df = (_df << uint(_fg)) | (_cbd >> uint(bitsPerInputSample-_fg))
+			_afg -= _fg
+			if _afg > 0 {
+				_cbd = _cbd << uint(_fg)
 			} else {
-				_cd = 0
+				_cbd = 0
 			}
-			_gg -= _cfg
-			if _gg == 0 {
-				_bg = append(_bg, _bf)
-				_gg = bitsPerOutputSample
-				_bf = 0
-				_gcb++
+			_cdf -= _fg
+			if _cdf == 0 {
+				_efg = append(_efg, _df)
+				_cdf = bitsPerOutputSample
+				_df = 0
+				_f++
 			}
 		} else {
-			_dgc := data[_cf]
-			_cf++
-			_ce := bitsPerInputSample
-			if _gg < _ce {
-				_ce = _gg
+			_bb := data[_dc]
+			_dc++
+			_ede := bitsPerInputSample
+			if _cdf < _ede {
+				_ede = _cdf
 			}
-			_bgg = bitsPerInputSample - _ce
-			_bf = (_bf << uint(_ce)) | (_dgc >> uint(_bgg))
-			if _ce < bitsPerInputSample {
-				_cd = _dgc << uint(_ce)
+			_afg = bitsPerInputSample - _ede
+			_df = (_df << uint(_ede)) | (_bb >> uint(_afg))
+			if _ede < bitsPerInputSample {
+				_cbd = _bb << uint(_ede)
 			}
-			_gg -= _ce
-			if _gg == 0 {
-				_bg = append(_bg, _bf)
-				_gg = bitsPerOutputSample
-				_bf = 0
-				_gcb++
+			_cdf -= _ede
+			if _cdf == 0 {
+				_efg = append(_efg, _df)
+				_cdf = bitsPerOutputSample
+				_df = 0
+				_f++
 			}
 		}
 	}
-	for _bgg >= bitsPerOutputSample {
-		_fc := _bgg
-		if _gg < _fc {
-			_fc = _gg
+	for _afg >= bitsPerOutputSample {
+		_ege := _afg
+		if _cdf < _ege {
+			_ege = _cdf
 		}
-		_bf = (_bf << uint(_fc)) | (_cd >> uint(bitsPerInputSample-_fc))
-		_bgg -= _fc
-		if _bgg > 0 {
-			_cd = _cd << uint(_fc)
+		_df = (_df << uint(_ege)) | (_cbd >> uint(bitsPerInputSample-_ege))
+		_afg -= _ege
+		if _afg > 0 {
+			_cbd = _cbd << uint(_ege)
 		} else {
-			_cd = 0
+			_cbd = 0
 		}
-		_gg -= _fc
-		if _gg == 0 {
-			_bg = append(_bg, _bf)
-			_gg = bitsPerOutputSample
-			_bf = 0
-			_gcb++
+		_cdf -= _ege
+		if _cdf == 0 {
+			_efg = append(_efg, _df)
+			_cdf = bitsPerOutputSample
+			_df = 0
+			_f++
 		}
 	}
-	if _gg > 0 && _gg < bitsPerOutputSample {
-		_bf <<= uint(_gg)
-		_bg = append(_bg, _bf)
+	if _cdf > 0 && _cdf < bitsPerOutputSample {
+		_df <<= uint(_cdf)
+		_efg = append(_efg, _df)
 	}
-	return _bg
+	return _efg
 }
-func (_gc *Reader) ReadSamples(samples []uint32) (_df error) {
-	for _cc := 0; _cc < len(samples); _cc++ {
-		samples[_cc], _df = _gc.ReadSample()
-		if _df != nil {
-			return _df
+
+type Writer struct {
+	_dfa       _cb.ImageBase
+	_ca        *_e.Writer
+	_cac, _eda int
+	_bde       bool
+}
+
+func (_gb *Reader) ReadSamples(samples []uint32) (_b error) {
+	for _ce := 0; _ce < len(samples); _ce++ {
+		samples[_ce], _b = _gb.ReadSample()
+		if _b != nil {
+			return _b
 		}
 	}
 	return nil
 }
-func (_e *Reader) ReadSample() (uint32, error) {
-	if _e._a == _e._fd.Height {
-		return 0, _ff.EOF
+func (_ef *Reader) ReadSample() (uint32, error) {
+	if _ef._eg == _ef._d.Height {
+		return 0, _g.EOF
 	}
-	_gf, _de := _e._g.ReadBits(byte(_e._fd.BitsPerComponent))
-	if _de != nil {
-		return 0, _de
+	_ed, _cbe := _ef._cg.ReadBits(byte(_ef._d.BitsPerComponent))
+	if _cbe != nil {
+		return 0, _cbe
 	}
-	_e._be--
-	if _e._be == 0 {
-		_e._be = _e._fd.ColorComponents
-		_e._gb++
+	_ef._da--
+	if _ef._da == 0 {
+		_ef._da = _ef._d.ColorComponents
+		_ef._cdg++
 	}
-	if _e._gb == _e._fd.Width {
-		if _e._dg {
-			_e._g.ConsumeRemainingBits()
+	if _ef._cdg == _ef._d.Width {
+		if _ef._a {
+			_ef._cg.ConsumeRemainingBits()
 		}
-		_e._gb = 0
-		_e._a++
+		_ef._cdg = 0
+		_ef._eg++
 	}
-	return uint32(_gf), nil
-}
-func (_fdc *Writer) WriteSamples(samples []uint32) error {
-	for _afg := 0; _afg < len(samples); _afg++ {
-		if _dfd := _fdc.WriteSample(samples[_afg]); _dfd != nil {
-			return _dfd
-		}
-	}
-	return nil
+	return uint32(_ed), nil
 }
 
 type SampleWriter interface {
-	WriteSample(_cg uint32) error
-	WriteSamples(_cce []uint32) error
+	WriteSample(_be uint32) error
+	WriteSamples(_fc []uint32) error
 }
 
-func NewWriter(img _d.ImageBase) *Writer {
-	return &Writer{_dgca: _b.NewWriterMSB(img.Data), _af: img, _aa: img.ColorComponents, _cad: img.BytesPerLine*8 != img.ColorComponents*img.BitsPerComponent*img.Width}
+func NewWriter(img _cb.ImageBase) *Writer {
+	return &Writer{_ca: _e.NewWriterMSB(img.Data), _dfa: img, _eda: img.ColorComponents, _bde: img.BytesPerLine*8 != img.ColorComponents*img.BitsPerComponent*img.Width}
+}
+func ResampleBytes(data []byte, bitsPerSample int) []uint32 {
+	var _efb []uint32
+	_bg := bitsPerSample
+	var _bc uint32
+	var _bgb byte
+	_de := 0
+	_bd := 0
+	_bcf := 0
+	for _bcf < len(data) {
+		if _de > 0 {
+			_af := _de
+			if _bg < _af {
+				_af = _bg
+			}
+			_bc = (_bc << uint(_af)) | uint32(_bgb>>uint(8-_af))
+			_de -= _af
+			if _de > 0 {
+				_bgb = _bgb << uint(_af)
+			} else {
+				_bgb = 0
+			}
+			_bg -= _af
+			if _bg == 0 {
+				_efb = append(_efb, _bc)
+				_bg = bitsPerSample
+				_bc = 0
+				_bd++
+			}
+		} else {
+			_gd := data[_bcf]
+			_bcf++
+			_gc := 8
+			if _bg < _gc {
+				_gc = _bg
+			}
+			_de = 8 - _gc
+			_bc = (_bc << uint(_gc)) | uint32(_gd>>uint(_de))
+			if _gc < 8 {
+				_bgb = _gd << uint(_gc)
+			}
+			_bg -= _gc
+			if _bg == 0 {
+				_efb = append(_efb, _bc)
+				_bg = bitsPerSample
+				_bc = 0
+				_bd++
+			}
+		}
+	}
+	for _de >= bitsPerSample {
+		_ceg := _de
+		if _bg < _ceg {
+			_ceg = _bg
+		}
+		_bc = (_bc << uint(_ceg)) | uint32(_bgb>>uint(8-_ceg))
+		_de -= _ceg
+		if _de > 0 {
+			_bgb = _bgb << uint(_ceg)
+		} else {
+			_bgb = 0
+		}
+		_bg -= _ceg
+		if _bg == 0 {
+			_efb = append(_efb, _bc)
+			_bg = bitsPerSample
+			_bc = 0
+			_bd++
+		}
+	}
+	return _efb
 }

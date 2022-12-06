@@ -1,24 +1,198 @@
 package mdp
 
 import (
-	_e "errors"
+	_d "errors"
 	_g "fmt"
 
-	_c "bitbucket.org/shenghui0779/gopdf/core"
+	_dd "bitbucket.org/shenghui0779/gopdf/core"
 )
 
-// IsPermitted returns true if changes permitted.
-func (_gde *DiffResults) IsPermitted() bool { return len(_gde.Errors) == 0 }
-func (_bb *DiffResults) addErrorWithDescription(_afg int, _gaa string) {
-	if _bb.Errors == nil {
-		_bb.Errors = make([]*DiffResult, 0)
+func NewDefaultDiffPolicy() DiffPolicy {
+	return &defaultDiffPolicy{_a: nil, _e: &DiffResults{}, _ac: 0}
+}
+func (_efcc *defaultDiffPolicy) comparePages(_cee int, _fdbc, _cdd *_dd.PdfIndirectObject) error {
+	if _, _bfc := _efcc._a[_cdd.ObjectNumber]; _bfc {
+		_efcc._e.addErrorWithDescription(_cee, "\u0050a\u0067e\u0073\u0020\u0077\u0065\u0072e\u0020\u0063h\u0061\u006e\u0067\u0065\u0064")
 	}
-	_bb.Errors = append(_bb.Errors, &DiffResult{Revision: _afg, Description: _gaa})
+	_gc, _bc := _dd.GetDict(_cdd.PdfObject)
+	_aac, _dge := _dd.GetDict(_fdbc.PdfObject)
+	if !_bc || !_dge {
+		return _d.New("\u0075n\u0065\u0078\u0070\u0065\u0063\u0074\u0065\u0064\u0020\u0050\u0061g\u0065\u0073\u0027\u0020\u006f\u0062\u006a\u0065\u0063\u0074")
+	}
+	_ea, _bc := _dd.GetArray(_gc.Get("\u004b\u0069\u0064\u0073"))
+	_dga, _dge := _dd.GetArray(_aac.Get("\u004b\u0069\u0064\u0073"))
+	if !_bc || !_dge {
+		return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0050\u0061\u0067\u0065s\u0027 \u0064\u0069\u0063\u0074\u0069\u006f\u006ea\u0072\u0079")
+	}
+	_ad := _ea.Len()
+	if _ad > _dga.Len() {
+		_ad = _dga.Len()
+	}
+	for _cff := 0; _cff < _ad; _cff++ {
+		_fga, _affa := _dd.GetIndirect(_dd.ResolveReference(_dga.Get(_cff)))
+		_ggd, _aga := _dd.GetIndirect(_dd.ResolveReference(_ea.Get(_cff)))
+		if !_affa || !_aga {
+			return _d.New("\u0075\u006e\u0065\u0078pe\u0063\u0074\u0065\u0064\u0020\u0070\u0061\u0067\u0065\u0020\u006f\u0062\u006a\u0065c\u0074")
+		}
+		if _fga.ObjectNumber != _ggd.ObjectNumber {
+			_efcc._e.addErrorWithDescription(_cee, _g.Sprintf("p\u0061\u0067\u0065\u0020#%\u0064 \u0077\u0061\u0073\u0020\u0072e\u0070\u006c\u0061\u0063\u0065\u0064", _cff))
+		}
+		_bae, _affa := _dd.GetDict(_ggd)
+		_bdf, _aga := _dd.GetDict(_fga)
+		if !_affa || !_aga {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0070\u0061\u0067\u0065'\u0073 \u0064\u0069\u0063\u0074\u0069\u006f\u006ea\u0072\u0079")
+		}
+		_fb, _fcf := _caa(_bae.Get("\u0041\u006e\u006e\u006f\u0074\u0073"))
+		if _fcf != nil {
+			return _fcf
+		}
+		_ec, _fcf := _caa(_bdf.Get("\u0041\u006e\u006e\u006f\u0074\u0073"))
+		if _fcf != nil {
+			return _fcf
+		}
+		if _dfb := _efcc.compareAnnots(_cee, _ec, _fb); _dfb != nil {
+			return _dfb
+		}
+	}
+	for _agag := _ad + 1; _agag <= _ea.Len(); _agag++ {
+		_efcc._e.addErrorWithDescription(_cee, _g.Sprintf("\u0070a\u0067e\u0020\u0023\u0025\u0064\u0020w\u0061\u0073 \u0061\u0064\u0064\u0065\u0064", _agag))
+	}
+	for _cge := _ad + 1; _cge <= _dga.Len(); _cge++ {
+		_efcc._e.addErrorWithDescription(_cee, _g.Sprintf("p\u0061g\u0065\u0020\u0023\u0025\u0064\u0020\u0077\u0061s\u0020\u0072\u0065\u006dov\u0065\u0064", _cge))
+	}
+	return nil
+}
+func (_eeg *defaultDiffPolicy) compareFields(_ebe int, _dg, _dgf []_dd.PdfObject) error {
+	_db := make(map[int64]*_dd.PdfObjectDictionary)
+	for _, _aff := range _dg {
+		_ce, _df := _dd.GetIndirect(_aff)
+		if !_df {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0066\u0069\u0065\u006cd\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+		}
+		_cca, _df := _dd.GetDict(_ce.PdfObject)
+		if !_df {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+		}
+		_db[_ce.ObjectNumber] = _cca
+	}
+	for _, _dgd := range _dgf {
+		_dbb, _fa := _dd.GetIndirect(_dgd)
+		if !_fa {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0066\u0069\u0065\u006cd\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+		}
+		_fef, _fa := _dd.GetDict(_dbb.PdfObject)
+		if !_fa {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0066\u0069\u0065\u006cd\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+		}
+		T := _fef.Get("\u0054")
+		if _, _ddc := _eeg._a[_dbb.ObjectNumber]; _ddc {
+			switch _eeg._ac {
+			case NoRestrictions, FillForms, FillFormsAndAnnots:
+				_eeg._e.addWarningWithDescription(_ebe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", T))
+			default:
+				_eeg._e.addErrorWithDescription(_ebe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", T))
+			}
+		}
+		if _, _da := _db[_dbb.ObjectNumber]; !_da {
+			switch _eeg._ac {
+			case NoRestrictions, FillForms, FillFormsAndAnnots:
+				_eeg._e.addWarningWithDescription(_ebe, _g.Sprintf("\u0046i\u0065l\u0064\u0020\u0025\u0073\u0020w\u0061\u0073 \u0061\u0064\u0064\u0065\u0064", _fef.Get("\u0054")))
+			default:
+				_eeg._e.addErrorWithDescription(_ebe, _g.Sprintf("\u0046i\u0065l\u0064\u0020\u0025\u0073\u0020w\u0061\u0073 \u0061\u0064\u0064\u0065\u0064", _fef.Get("\u0054")))
+			}
+		} else {
+			delete(_db, _dbb.ObjectNumber)
+			if _, _cd := _eeg._a[_dbb.ObjectNumber]; _cd {
+				switch _eeg._ac {
+				case NoRestrictions, FillForms, FillFormsAndAnnots:
+					_eeg._e.addWarningWithDescription(_ebe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", _fef.Get("\u0054")))
+				default:
+					_eeg._e.addErrorWithDescription(_ebe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", _fef.Get("\u0054")))
+				}
+			}
+		}
+		if FT, _aec := _dd.GetNameVal(_fef.Get("\u0046\u0054")); _aec {
+			if FT == "\u0053\u0069\u0067" {
+				if _bb, _cf := _dd.GetIndirect(_fef.Get("\u0056")); _cf {
+					if _, _egd := _eeg._a[_bb.ObjectNumber]; _egd {
+						switch _eeg._ac {
+						case NoRestrictions, FillForms, FillFormsAndAnnots:
+							_eeg._e.addWarningWithDescription(_ebe, _g.Sprintf("\u0053\u0069\u0067na\u0074\u0075\u0072\u0065\u0020\u0066\u006f\u0072\u0020%\u0073 \u0066i\u0065l\u0064\u0020\u0077\u0061\u0073\u0020\u0063\u0068\u0061\u006e\u0067\u0065\u0064", T))
+						default:
+							_eeg._e.addErrorWithDescription(_ebe, _g.Sprintf("\u0053\u0069\u0067na\u0074\u0075\u0072\u0065\u0020\u0066\u006f\u0072\u0020%\u0073 \u0066i\u0065l\u0064\u0020\u0077\u0061\u0073\u0020\u0063\u0068\u0061\u006e\u0067\u0065\u0064", T))
+						}
+					}
+				}
+			}
+		}
+	}
+	for _, _ba := range _db {
+		switch _eeg._ac {
+		case NoRestrictions:
+			_eeg._e.addWarningWithDescription(_ebe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0072\u0065\u006dov\u0065\u0064", _ba.Get("\u0054")))
+		default:
+			_eeg._e.addErrorWithDescription(_ebe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0072\u0065\u006dov\u0065\u0064", _ba.Get("\u0054")))
+		}
+	}
+	return nil
+}
+func (_ggde *DiffResults) addError(_ece *DiffResult) {
+	if _ggde.Errors == nil {
+		_ggde.Errors = make([]*DiffResult, 0)
+	}
+	_ggde.Errors = append(_ggde.Errors, _ece)
 }
 
-// String returns the state of the warning.
-func (_gea *DiffResult) String() string {
-	return _g.Sprintf("\u0025\u0073\u0020\u0069n \u0072\u0065\u0076\u0069\u0073\u0069\u006f\u006e\u0073\u0020\u0023\u0025\u0064", _gea.Description, _gea.Revision)
+// DocMDPPermission is values for set up access permissions for DocMDP.
+// (Section 12.8.2.2, Table 254 - Entries in a signature dictionary p. 471 in PDF32000_2008).
+type DocMDPPermission int64
+
+// ReviewFile implementation of DiffPolicy interface
+// The default policy only checks the next types of objects:
+// Page, Pages (container for page objects), Annot, Annots (container for annotation objects), Field.
+// It checks adding, removing and modifying objects of these types.
+func (_f *defaultDiffPolicy) ReviewFile(oldParser *_dd.PdfParser, newParser *_dd.PdfParser, params *MDPParameters) (*DiffResults, error) {
+	if oldParser.GetRevisionNumber() > newParser.GetRevisionNumber() {
+		return nil, _d.New("\u006f\u006c\u0064\u0020\u0072\u0065\u0076\u0069\u0073\u0069\u006f\u006e\u0020\u0067\u0072\u0065\u0061\u0074\u0065\u0072\u0020\u0074\u0068\u0061n\u0020\u006e\u0065\u0077\u0020r\u0065\u0076i\u0073\u0069\u006f\u006e")
+	}
+	if oldParser.GetRevisionNumber() == newParser.GetRevisionNumber() {
+		if oldParser != newParser {
+			return nil, _d.New("\u0073\u0061m\u0065\u0020\u0072\u0065v\u0069\u0073i\u006f\u006e\u0073\u002c\u0020\u0062\u0075\u0074 \u0064\u0069\u0066\u0066\u0065\u0072\u0065\u006e\u0074\u0020\u0070\u0061r\u0073\u0065\u0072\u0073")
+		}
+		return &DiffResults{}, nil
+	}
+	if params == nil {
+		_f._ac = NoRestrictions
+	} else {
+		_f._ac = params.DocMDPLevel
+	}
+	_de := &DiffResults{}
+	for _cc := oldParser.GetRevisionNumber() + 1; _cc <= newParser.GetRevisionNumber(); _cc++ {
+		_cb, _dea := newParser.GetRevision(_cc - 1)
+		if _dea != nil {
+			return nil, _dea
+		}
+		_eb, _dea := newParser.GetRevision(_cc)
+		if _dea != nil {
+			return nil, _dea
+		}
+		_gg, _dea := _f.compareRevisions(_cb, _eb)
+		if _dea != nil {
+			return nil, _dea
+		}
+		_de.Warnings = append(_de.Warnings, _gg.Warnings...)
+		_de.Errors = append(_de.Errors, _gg.Errors...)
+	}
+	return _de, nil
+}
+
+// IsPermitted returns true if changes permitted.
+func (_ebga *DiffResults) IsPermitted() bool { return len(_ebga.Errors) == 0 }
+func (_dgeb *DiffResults) addWarning(_be *DiffResult) {
+	if _dgeb.Warnings == nil {
+		_dgeb.Warnings = make([]*DiffResult, 0)
+	}
+	_dgeb.Warnings = append(_dgeb.Warnings, _be)
 }
 
 // DiffResult describes the warning or the error for the DiffPolicy results.
@@ -27,50 +201,65 @@ type DiffResult struct {
 	Description string
 }
 
-// ReviewFile implementation of DiffPolicy interface
-// The default policy only checks the next types of objects:
-// Page, Pages (container for page objects), Annot, Annots (container for annotation objects), Field.
-// It checks adding, removing and modifying objects of these types.
-func (_cb *defaultDiffPolicy) ReviewFile(oldParser *_c.PdfParser, newParser *_c.PdfParser, params *MDPParameters) (*DiffResults, error) {
-	if oldParser.GetRevisionNumber() > newParser.GetRevisionNumber() {
-		return nil, _e.New("\u006f\u006c\u0064\u0020\u0072\u0065\u0076\u0069\u0073\u0069\u006f\u006e\u0020\u0067\u0072\u0065\u0061\u0074\u0065\u0072\u0020\u0074\u0068\u0061n\u0020\u006e\u0065\u0077\u0020r\u0065\u0076i\u0073\u0069\u006f\u006e")
+func (_bcf *DiffResults) addErrorWithDescription(_ebg int, _ggg string) {
+	if _bcf.Errors == nil {
+		_bcf.Errors = make([]*DiffResult, 0)
 	}
-	if oldParser.GetRevisionNumber() == newParser.GetRevisionNumber() {
-		if oldParser != newParser {
-			return nil, _e.New("\u0073\u0061m\u0065\u0020\u0072\u0065v\u0069\u0073i\u006f\u006e\u0073\u002c\u0020\u0062\u0075\u0074 \u0064\u0069\u0066\u0066\u0065\u0072\u0065\u006e\u0074\u0020\u0070\u0061r\u0073\u0065\u0072\u0073")
-		}
+	_bcf.Errors = append(_bcf.Errors, &DiffResult{Revision: _ebg, Description: _ggg})
+}
+func (_eg *defaultDiffPolicy) compareRevisions(_b *_dd.PdfParser, _cg *_dd.PdfParser) (*DiffResults, error) {
+	var _ca error
+	_eg._a, _ca = _cg.GetUpdatedObjects(_b)
+	if _ca != nil {
+		return &DiffResults{}, _ca
+	}
+	if len(_eg._a) == 0 {
 		return &DiffResults{}, nil
 	}
-	if params == nil {
-		_cb._d = NoRestrictions
-	} else {
-		_cb._d = params.DocMDPLevel
+	_ef := _cg.GetRevisionNumber()
+	_fg, _dec := _dd.GetIndirect(_dd.ResolveReference(_b.GetTrailer().Get("\u0052\u006f\u006f\u0074")))
+	_ee, _bd := _dd.GetIndirect(_dd.ResolveReference(_cg.GetTrailer().Get("\u0052\u006f\u006f\u0074")))
+	if !_dec || !_bd {
+		return &DiffResults{}, _d.New("\u0065\u0072\u0072o\u0072\u0020\u0077\u0068i\u006c\u0065\u0020\u0067\u0065\u0074\u0074i\u006e\u0067\u0020\u0072\u006f\u006f\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074")
 	}
-	_a := &DiffResults{}
-	for _ag := oldParser.GetRevisionNumber() + 1; _ag <= newParser.GetRevisionNumber(); _ag++ {
-		_cf, _fg := newParser.GetRevision(_ag - 1)
-		if _fg != nil {
-			return nil, _fg
-		}
-		_b, _fg := newParser.GetRevision(_ag)
-		if _fg != nil {
-			return nil, _fg
-		}
-		_ge, _fg := _cb.compareRevisions(_cf, _b)
-		if _fg != nil {
-			return nil, _fg
-		}
-		_a.Warnings = append(_a.Warnings, _ge.Warnings...)
-		_a.Errors = append(_a.Errors, _ge.Errors...)
+	_ae, _dec := _dd.GetDict(_dd.ResolveReference(_fg.PdfObject))
+	_bf, _bd := _dd.GetDict(_dd.ResolveReference(_ee.PdfObject))
+	if !_dec || !_bd {
+		return &DiffResults{}, _d.New("\u0065\u0072\u0072\u006f\u0072\u0020\u0077\u0068\u0069\u006c\u0065\u0020\u0067e\u0074\u0074\u0069\u006e\u0067\u0020a\u0020\u0072\u006f\u006f\u0074\u0027\u0073\u0020\u0064\u0069\u0063\u0074\u0069o\u006e\u0061\u0072\u0079")
 	}
-	return _a, nil
-}
-
-// MDPParameters describes parameters for the MDP checks (now only DocMDP).
-type MDPParameters struct{ DocMDPLevel DocMDPPermission }
-
-func NewDefaultDiffPolicy() DiffPolicy {
-	return &defaultDiffPolicy{_ef: nil, _eg: &DiffResults{}, _d: 0}
+	if _ag, _ff := _dd.GetIndirect(_bf.Get("\u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d")); _ff {
+		_ffc, _af := _dd.GetDict(_ag)
+		if !_af {
+			return &DiffResults{}, _d.New("\u0065\u0072\u0072\u006f\u0072 \u0077\u0068\u0069\u006c\u0065\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067 \u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d\u0027\u0073\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
+		}
+		_gb := make([]_dd.PdfObject, 0)
+		if _eed, _fd := _dd.GetIndirect(_ae.Get("\u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d")); _fd {
+			if _bdb, _fc := _dd.GetDict(_eed); _fc {
+				if _ed, _efd := _dd.GetArray(_bdb.Get("\u0046\u0069\u0065\u006c\u0064\u0073")); _efd {
+					_gb = _ed.Elements()
+				}
+			}
+		}
+		_ab, _af := _dd.GetArray(_ffc.Get("\u0046\u0069\u0065\u006c\u0064\u0073"))
+		if !_af {
+			return &DiffResults{}, _d.New("\u0065\u0072r\u006f\u0072\u0020\u0077h\u0069\u006ce\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067 \u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d\u0027\u0073\u0020\u0066i\u0065\u006c\u0064\u0073")
+		}
+		if _fge := _eg.compareFields(_ef, _gb, _ab.Elements()); _fge != nil {
+			return &DiffResults{}, _fge
+		}
+	}
+	_fdb, _fe := _dd.GetIndirect(_bf.Get("\u0050\u0061\u0067e\u0073"))
+	if !_fe {
+		return &DiffResults{}, _d.New("\u0065\u0072\u0072\u006f\u0072\u0020w\u0068\u0069\u006c\u0065\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067\u0020p\u0061\u0067\u0065\u0073\u0027\u0020\u006fb\u006a\u0065\u0063\u0074")
+	}
+	_ffa, _fe := _dd.GetIndirect(_ae.Get("\u0050\u0061\u0067e\u0073"))
+	if !_fe {
+		return &DiffResults{}, _d.New("\u0065\u0072\u0072\u006f\u0072\u0020w\u0068\u0069\u006c\u0065\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067\u0020p\u0061\u0067\u0065\u0073\u0027\u0020\u006fb\u006a\u0065\u0063\u0074")
+	}
+	if _ded := _eg.comparePages(_ef, _ffa, _fdb); _ded != nil {
+		return &DiffResults{}, _ded
+	}
+	return _eg._e, nil
 }
 
 // DiffResults describes the results of the DiffPolicy.
@@ -79,69 +268,11 @@ type DiffResults struct {
 	Errors   []*DiffResult
 }
 
-func (_gb *defaultDiffPolicy) comparePages(_ggf int, _fgd, _dgg *_c.PdfIndirectObject) error {
-	if _, _ggfd := _gb._ef[_dgg.ObjectNumber]; _ggfd {
-		_gb._eg.addErrorWithDescription(_ggf, "\u0050a\u0067e\u0073\u0020\u0077\u0065\u0072e\u0020\u0063h\u0061\u006e\u0067\u0065\u0064")
+func (_acg *DiffResults) addWarningWithDescription(_affc int, _fcc string) {
+	if _acg.Warnings == nil {
+		_acg.Warnings = make([]*DiffResult, 0)
 	}
-	_aef, _ecd := _c.GetDict(_dgg.PdfObject)
-	_fgg, _bde := _c.GetDict(_fgd.PdfObject)
-	if !_ecd || !_bde {
-		return _e.New("\u0075n\u0065\u0078\u0070\u0065\u0063\u0074\u0065\u0064\u0020\u0050\u0061g\u0065\u0073\u0027\u0020\u006f\u0062\u006a\u0065\u0063\u0074")
-	}
-	_bgd, _ecd := _c.GetArray(_aef.Get("\u004b\u0069\u0064\u0073"))
-	_aa, _bde := _c.GetArray(_fgg.Get("\u004b\u0069\u0064\u0073"))
-	if !_ecd || !_bde {
-		return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0050\u0061\u0067\u0065s\u0027 \u0064\u0069\u0063\u0074\u0069\u006f\u006ea\u0072\u0079")
-	}
-	_ce := _bgd.Len()
-	if _ce > _aa.Len() {
-		_ce = _aa.Len()
-	}
-	for _gc := 0; _gc < _ce; _gc++ {
-		_bab, _dbg := _c.GetIndirect(_c.ResolveReference(_aa.Get(_gc)))
-		_bfda, _aeb := _c.GetIndirect(_c.ResolveReference(_bgd.Get(_gc)))
-		if !_dbg || !_aeb {
-			return _e.New("\u0075\u006e\u0065\u0078pe\u0063\u0074\u0065\u0064\u0020\u0070\u0061\u0067\u0065\u0020\u006f\u0062\u006a\u0065c\u0074")
-		}
-		if _bab.ObjectNumber != _bfda.ObjectNumber {
-			_gb._eg.addErrorWithDescription(_ggf, _g.Sprintf("p\u0061\u0067\u0065\u0020#%\u0064 \u0077\u0061\u0073\u0020\u0072e\u0070\u006c\u0061\u0063\u0065\u0064", _gc))
-		}
-		_ceg, _dbg := _c.GetDict(_bfda)
-		_bdb, _aeb := _c.GetDict(_bab)
-		if !_dbg || !_aeb {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0070\u0061\u0067\u0065'\u0073 \u0064\u0069\u0063\u0074\u0069\u006f\u006ea\u0072\u0079")
-		}
-		_ade, _cegf := _agb(_ceg.Get("\u0041\u006e\u006e\u006f\u0074\u0073"))
-		if _cegf != nil {
-			return _cegf
-		}
-		_fgbc, _cegf := _agb(_bdb.Get("\u0041\u006e\u006e\u006f\u0074\u0073"))
-		if _cegf != nil {
-			return _cegf
-		}
-		if _ggd := _gb.compareAnnots(_ggf, _fgbc, _ade); _ggd != nil {
-			return _ggd
-		}
-	}
-	for _ebf := _ce + 1; _ebf <= _bgd.Len(); _ebf++ {
-		_gb._eg.addErrorWithDescription(_ggf, _g.Sprintf("\u0070a\u0067e\u0020\u0023\u0025\u0064\u0020w\u0061\u0073 \u0061\u0064\u0064\u0065\u0064", _ebf))
-	}
-	for _fa := _ce + 1; _fa <= _aa.Len(); _fa++ {
-		_gb._eg.addErrorWithDescription(_ggf, _g.Sprintf("p\u0061g\u0065\u0020\u0023\u0025\u0064\u0020\u0077\u0061s\u0020\u0072\u0065\u006dov\u0065\u0064", _fa))
-	}
-	return nil
-}
-func (_gce *DiffResults) addWarning(_gfge *DiffResult) {
-	if _gce.Warnings == nil {
-		_gce.Warnings = make([]*DiffResult, 0)
-	}
-	_gce.Warnings = append(_gce.Warnings, _gfge)
-}
-func (_fbd *DiffResults) addError(_gfa *DiffResult) {
-	if _fbd.Errors == nil {
-		_fbd.Errors = make([]*DiffResult, 0)
-	}
-	_fbd.Errors = append(_fbd.Errors, _gfa)
+	_acg.Warnings = append(_acg.Warnings, &DiffResult{Revision: _affc, Description: _fcc})
 }
 
 // DiffPolicy interface for comparing two revisions of the Pdf document.
@@ -151,72 +282,16 @@ type DiffPolicy interface {
 	// and evaluate the differences between the revisions.
 	// Each implementation of this interface must decide
 	// how to handle cases where there are multiple revisions between the old and new revisions.
-	ReviewFile(_fff *_c.PdfParser, _geaf *_c.PdfParser, _ffc *MDPParameters) (*DiffResults, error)
+	ReviewFile(_dgc *_dd.PdfParser, _afc *_dd.PdfParser, _bbd *MDPParameters) (*DiffResults, error)
 }
-
-// DocMDPPermission is values for set up access permissions for DocMDP.
-// (Section 12.8.2.2, Table 254 - Entries in a signature dictionary p. 471 in PDF32000_2008).
-type DocMDPPermission int64
 type defaultDiffPolicy struct {
-	_ef map[int64]_c.PdfObject
-	_eg *DiffResults
-	_d  DocMDPPermission
+	_a  map[int64]_dd.PdfObject
+	_e  *DiffResults
+	_ac DocMDPPermission
 }
 
-func (_cg *defaultDiffPolicy) compareRevisions(_bg *_c.PdfParser, _cff *_c.PdfParser) (*DiffResults, error) {
-	var _fc error
-	_cg._ef, _fc = _cff.GetUpdatedObjects(_bg)
-	if _fc != nil {
-		return &DiffResults{}, _fc
-	}
-	if len(_cg._ef) == 0 {
-		return &DiffResults{}, nil
-	}
-	_geg := _cff.GetRevisionNumber()
-	_fd, _ac := _c.GetIndirect(_c.ResolveReference(_bg.GetTrailer().Get("\u0052\u006f\u006f\u0074")))
-	_gee, _eb := _c.GetIndirect(_c.ResolveReference(_cff.GetTrailer().Get("\u0052\u006f\u006f\u0074")))
-	if !_ac || !_eb {
-		return &DiffResults{}, _e.New("\u0065\u0072\u0072o\u0072\u0020\u0077\u0068i\u006c\u0065\u0020\u0067\u0065\u0074\u0074i\u006e\u0067\u0020\u0072\u006f\u006f\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074")
-	}
-	_bf, _ac := _c.GetDict(_c.ResolveReference(_fd.PdfObject))
-	_fcg, _eb := _c.GetDict(_c.ResolveReference(_gee.PdfObject))
-	if !_ac || !_eb {
-		return &DiffResults{}, _e.New("\u0065\u0072\u0072\u006f\u0072\u0020\u0077\u0068\u0069\u006c\u0065\u0020\u0067e\u0074\u0074\u0069\u006e\u0067\u0020a\u0020\u0072\u006f\u006f\u0074\u0027\u0073\u0020\u0064\u0069\u0063\u0074\u0069o\u006e\u0061\u0072\u0079")
-	}
-	if _dg, _fde := _c.GetIndirect(_fcg.Get("\u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d")); _fde {
-		_fdef, _bff := _c.GetDict(_dg)
-		if !_bff {
-			return &DiffResults{}, _e.New("\u0065\u0072\u0072\u006f\u0072 \u0077\u0068\u0069\u006c\u0065\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067 \u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d\u0027\u0073\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
-		}
-		_gf := make([]_c.PdfObject, 0)
-		if _ee, _bfd := _c.GetIndirect(_bf.Get("\u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d")); _bfd {
-			if _bfc, _fdg := _c.GetDict(_ee); _fdg {
-				if _be, _de := _c.GetArray(_bfc.Get("\u0046\u0069\u0065\u006c\u0064\u0073")); _de {
-					_gf = _be.Elements()
-				}
-			}
-		}
-		_fca, _bff := _c.GetArray(_fdef.Get("\u0046\u0069\u0065\u006c\u0064\u0073"))
-		if !_bff {
-			return &DiffResults{}, _e.New("\u0065\u0072r\u006f\u0072\u0020\u0077h\u0069\u006ce\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067 \u0041\u0063\u0072\u006f\u0046\u006f\u0072\u006d\u0027\u0073\u0020\u0066i\u0065\u006c\u0064\u0073")
-		}
-		if _ba := _cg.compareFields(_geg, _gf, _fca.Elements()); _ba != nil {
-			return &DiffResults{}, _ba
-		}
-	}
-	_ff, _efa := _c.GetIndirect(_fcg.Get("\u0050\u0061\u0067e\u0073"))
-	if !_efa {
-		return &DiffResults{}, _e.New("\u0065\u0072\u0072\u006f\u0072\u0020w\u0068\u0069\u006c\u0065\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067\u0020p\u0061\u0067\u0065\u0073\u0027\u0020\u006fb\u006a\u0065\u0063\u0074")
-	}
-	_dd, _efa := _c.GetIndirect(_bf.Get("\u0050\u0061\u0067e\u0073"))
-	if !_efa {
-		return &DiffResults{}, _e.New("\u0065\u0072\u0072\u006f\u0072\u0020w\u0068\u0069\u006c\u0065\u0020\u0067\u0065\u0074\u0074\u0069\u006e\u0067\u0020p\u0061\u0067\u0065\u0073\u0027\u0020\u006fb\u006a\u0065\u0063\u0074")
-	}
-	if _cgd := _cg.comparePages(_geg, _dd, _ff); _cgd != nil {
-		return &DiffResults{}, _cgd
-	}
-	return _cg._eg, nil
-}
+// MDPParameters describes parameters for the MDP checks (now only DocMDP).
+type MDPParameters struct{ DocMDPLevel DocMDPPermission }
 
 const (
 	NoRestrictions     DocMDPPermission = 0
@@ -225,190 +300,114 @@ const (
 	FillFormsAndAnnots DocMDPPermission = 3
 )
 
-func (_gd *DiffResults) addWarningWithDescription(_ffe int, _eff string) {
-	if _gd.Warnings == nil {
-		_gd.Warnings = make([]*DiffResult, 0)
-	}
-	_gd.Warnings = append(_gd.Warnings, &DiffResult{Revision: _ffe, Description: _eff})
+// String returns the state of the warning.
+func (_ecd *DiffResult) String() string {
+	return _g.Sprintf("\u0025\u0073\u0020\u0069n \u0072\u0065\u0076\u0069\u0073\u0069\u006f\u006e\u0073\u0020\u0023\u0025\u0064", _ecd.Description, _ecd.Revision)
 }
-func _agb(_fbb _c.PdfObject) ([]_c.PdfObject, error) {
-	_dfe := make([]_c.PdfObject, 0)
-	if _fbb != nil {
-		_beg := _fbb
-		if _egaa, _gab := _c.GetIndirect(_fbb); _gab {
-			_beg = _egaa.PdfObject
+func _caa(_dc _dd.PdfObject) ([]_dd.PdfObject, error) {
+	_fbg := make([]_dd.PdfObject, 0)
+	if _dc != nil {
+		_ged := _dc
+		if _bfd, _fbd := _dd.GetIndirect(_dc); _fbd {
+			_ged = _bfd.PdfObject
 		}
-		if _gbb, _eee := _c.GetArray(_beg); _eee {
-			_dfe = _gbb.Elements()
+		if _fegc, _fbf := _dd.GetArray(_ged); _fbf {
+			_fbg = _fegc.Elements()
 		} else {
-			return nil, _e.New("\u0075n\u0065\u0078\u0070\u0065c\u0074\u0065\u0064\u0020\u0061n\u006eo\u0074s\u0027\u0020\u006f\u0062\u006a\u0065\u0063t")
+			return nil, _d.New("\u0075n\u0065\u0078\u0070\u0065c\u0074\u0065\u0064\u0020\u0061n\u006eo\u0074s\u0027\u0020\u006f\u0062\u006a\u0065\u0063t")
 		}
 	}
-	return _dfe, nil
+	return _fbg, nil
 }
-func (_ecg *defaultDiffPolicy) compareAnnots(_dgd int, _cfa, _deg []_c.PdfObject) error {
-	_dcc := make(map[int64]*_c.PdfObjectDictionary)
-	for _, _gcf := range _cfa {
-		_feb, _aae := _c.GetIndirect(_gcf)
-		if !_aae {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+func (_feg *defaultDiffPolicy) compareAnnots(_dfg int, _ada, _abb []_dd.PdfObject) error {
+	_def := make(map[int64]*_dd.PdfObjectDictionary)
+	for _, _aee := range _ada {
+		_faa, _ebf := _dd.GetIndirect(_aee)
+		if !_ebf {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
 		}
-		_ccf, _aae := _c.GetDict(_feb.PdfObject)
-		if !_aae {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+		_dee, _ebf := _dd.GetDict(_faa.PdfObject)
+		if !_ebf {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
 		}
-		_dcc[_feb.ObjectNumber] = _ccf
+		_def[_faa.ObjectNumber] = _dee
 	}
-	for _, _dff := range _deg {
-		_cee, _feg := _c.GetIndirect(_dff)
-		if !_feg {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+	for _, _dgfg := range _abb {
+		_bbb, _dbc := _dd.GetIndirect(_dgfg)
+		if !_dbc {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
 		}
-		_gge, _feg := _c.GetDict(_cee.PdfObject)
-		if !_feg {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
+		_deb, _dbc := _dd.GetDict(_bbb.PdfObject)
+		if !_dbc {
+			return _d.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
 		}
-		_cd, _ := _c.GetStringVal(_gge.Get("\u0054"))
-		_gfba, _ := _c.GetNameVal(_gge.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
-		if _, _bfe := _dcc[_cee.ObjectNumber]; !_bfe {
-			switch _ecg._d {
+		_dfgf, _ := _dd.GetStringVal(_deb.Get("\u0054"))
+		_egf, _ := _dd.GetNameVal(_deb.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
+		if _, _ceg := _def[_bbb.ObjectNumber]; !_ceg {
+			switch _feg._ac {
 			case NoRestrictions, FillFormsAndAnnots:
-				_ecg._eg.addWarningWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _gfba, _cd))
+				_feg._e.addWarningWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _egf, _dfgf))
 			default:
-				_fcaf, _aaf := _c.GetDict(_cee.PdfObject)
-				if !_aaf {
-					return _e.New("u\u006ed\u0065\u0066\u0069\u006e\u0065\u0064\u0020\u0061n\u006e\u006f\u0074\u0061ti\u006f\u006e")
+				_fefe, _ge := _dd.GetDict(_bbb.PdfObject)
+				if !_ge {
+					return _d.New("u\u006ed\u0065\u0066\u0069\u006e\u0065\u0064\u0020\u0061n\u006e\u006f\u0074\u0061ti\u006f\u006e")
 				}
-				_eca, _aaf := _c.GetNameVal(_fcaf.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
-				if !_aaf {
-					return _e.New("\u0075\u006e\u0064\u0065\u0066\u0069\u006e\u0065\u0064\u0020a\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0027\u0073\u0020\u0073\u0075\u0062\u0074\u0079\u0070\u0065")
+				_afb, _ge := _dd.GetNameVal(_fefe.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
+				if !_ge {
+					return _d.New("\u0075\u006e\u0064\u0065\u0066\u0069\u006e\u0065\u0064\u0020a\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0027\u0073\u0020\u0073\u0075\u0062\u0074\u0079\u0070\u0065")
 				}
-				if _eca == "\u0057\u0069\u0064\u0067\u0065\u0074" {
-					switch _ecg._d {
+				if _afb == "\u0057\u0069\u0064\u0067\u0065\u0074" {
+					switch _feg._ac {
 					case NoRestrictions, FillFormsAndAnnots, FillForms:
-						_ecg._eg.addWarningWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _gfba, _cd))
+						_feg._e.addWarningWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _egf, _dfgf))
 					default:
-						_ecg._eg.addErrorWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _gfba, _cd))
+						_feg._e.addErrorWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _egf, _dfgf))
 					}
 				} else {
-					_ecg._eg.addErrorWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _gfba, _cd))
+					_feg._e.addErrorWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0020\u0025\u0073\u0020\u0077\u0061\u0073\u0020\u0061d\u0064\u0065\u0064", _egf, _dfgf))
 				}
 			}
 		} else {
-			delete(_dcc, _cee.ObjectNumber)
-			if _fgbg, _gfg := _ecg._ef[_cee.ObjectNumber]; _gfg {
-				switch _ecg._d {
+			delete(_def, _bbb.ObjectNumber)
+			if _caf, _abbc := _feg._a[_bbb.ObjectNumber]; _abbc {
+				switch _feg._ac {
 				case NoRestrictions, FillFormsAndAnnots:
-					_ecg._eg.addWarningWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _gfba, _cd))
+					_feg._e.addWarningWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _egf, _dfgf))
 				default:
-					_adg, _acb := _c.GetIndirect(_fgbg)
-					if !_acb {
-						return _e.New("u\u006ed\u0065\u0066\u0069\u006e\u0065\u0064\u0020\u0061n\u006e\u006f\u0074\u0061ti\u006f\u006e")
+					_gef, _daa := _dd.GetIndirect(_caf)
+					if !_daa {
+						return _d.New("u\u006ed\u0065\u0066\u0069\u006e\u0065\u0064\u0020\u0061n\u006e\u006f\u0074\u0061ti\u006f\u006e")
 					}
-					_gbe, _acb := _c.GetDict(_adg.PdfObject)
-					if !_acb {
-						return _e.New("u\u006ed\u0065\u0066\u0069\u006e\u0065\u0064\u0020\u0061n\u006e\u006f\u0074\u0061ti\u006f\u006e")
+					_dgda, _daa := _dd.GetDict(_gef.PdfObject)
+					if !_daa {
+						return _d.New("u\u006ed\u0065\u0066\u0069\u006e\u0065\u0064\u0020\u0061n\u006e\u006f\u0074\u0061ti\u006f\u006e")
 					}
-					_ga, _acb := _c.GetNameVal(_gbe.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
-					if !_acb {
-						return _e.New("\u0075\u006e\u0064\u0065\u0066\u0069\u006e\u0065\u0064\u0020a\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0027\u0073\u0020\u0073\u0075\u0062\u0074\u0079\u0070\u0065")
+					_ecg, _daa := _dd.GetNameVal(_dgda.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
+					if !_daa {
+						return _d.New("\u0075\u006e\u0064\u0065\u0066\u0069\u006e\u0065\u0064\u0020a\u006e\u006e\u006f\u0074\u0061\u0074\u0069o\u006e\u0027\u0073\u0020\u0073\u0075\u0062\u0074\u0079\u0070\u0065")
 					}
-					if _ga == "\u0057\u0069\u0064\u0067\u0065\u0074" {
-						switch _ecg._d {
+					if _ecg == "\u0057\u0069\u0064\u0067\u0065\u0074" {
+						switch _feg._ac {
 						case NoRestrictions, FillFormsAndAnnots, FillForms:
-							_ecg._eg.addWarningWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _gfba, _cd))
+							_feg._e.addWarningWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _egf, _dfgf))
 						default:
-							_ecg._eg.addErrorWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _gfba, _cd))
+							_feg._e.addErrorWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _egf, _dfgf))
 						}
 					} else {
-						_ecg._eg.addErrorWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _gfba, _cd))
+						_feg._e.addErrorWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0063\u0068\u0061\u006eg\u0065\u0064", _egf, _dfgf))
 					}
 				}
 			}
 		}
 	}
-	for _, _ddb := range _dcc {
-		_bc, _ := _c.GetStringVal(_ddb.Get("\u0054"))
-		_cfd, _ := _c.GetNameVal(_ddb.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
-		switch _ecg._d {
+	for _, _bad := range _def {
+		_cfa, _ := _dd.GetStringVal(_bad.Get("\u0054"))
+		_dba, _ := _dd.GetNameVal(_bad.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
+		switch _feg._ac {
 		case NoRestrictions, FillFormsAndAnnots:
-			_ecg._eg.addWarningWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0072\u0065\u006d\u006fv\u0065\u0064", _cfd, _bc))
+			_feg._e.addWarningWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0072\u0065\u006d\u006fv\u0065\u0064", _dba, _cfa))
 		default:
-			_ecg._eg.addErrorWithDescription(_dgd, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0072\u0065\u006d\u006fv\u0065\u0064", _cfd, _bc))
-		}
-	}
-	return nil
-}
-func (_df *defaultDiffPolicy) compareFields(_fe int, _ad, _fb []_c.PdfObject) error {
-	_fgb := make(map[int64]*_c.PdfObjectDictionary)
-	for _, _gg := range _ad {
-		_bga, _af := _c.GetIndirect(_gg)
-		if !_af {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0066\u0069\u0065\u006cd\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
-		}
-		_efaf, _af := _c.GetDict(_bga.PdfObject)
-		if !_af {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0061\u006e\u006e\u006ft\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
-		}
-		_fgb[_bga.ObjectNumber] = _efaf
-	}
-	for _, _fbc := range _fb {
-		_fbg, _cbd := _c.GetIndirect(_fbc)
-		if !_cbd {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0066\u0069\u0065\u006cd\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
-		}
-		_dc, _cbd := _c.GetDict(_fbg.PdfObject)
-		if !_cbd {
-			return _e.New("\u0075\u006e\u0065\u0078p\u0065\u0063\u0074\u0065\u0064\u0020\u0066\u0069\u0065\u006cd\u0027s\u0020\u0073\u0074\u0072\u0075\u0063\u0074u\u0072\u0065")
-		}
-		T := _dc.Get("\u0054")
-		if _, _abg := _df._ef[_fbg.ObjectNumber]; _abg {
-			switch _df._d {
-			case NoRestrictions, FillForms, FillFormsAndAnnots:
-				_df._eg.addWarningWithDescription(_fe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", T))
-			default:
-				_df._eg.addErrorWithDescription(_fe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", T))
-			}
-		}
-		if _, _cfg := _fgb[_fbg.ObjectNumber]; !_cfg {
-			switch _df._d {
-			case NoRestrictions, FillForms, FillFormsAndAnnots:
-				_df._eg.addWarningWithDescription(_fe, _g.Sprintf("\u0046i\u0065l\u0064\u0020\u0025\u0073\u0020w\u0061\u0073 \u0061\u0064\u0064\u0065\u0064", _dc.Get("\u0054")))
-			default:
-				_df._eg.addErrorWithDescription(_fe, _g.Sprintf("\u0046i\u0065l\u0064\u0020\u0025\u0073\u0020w\u0061\u0073 \u0061\u0064\u0064\u0065\u0064", _dc.Get("\u0054")))
-			}
-		} else {
-			delete(_fgb, _fbg.ObjectNumber)
-			if _, _ae := _df._ef[_fbg.ObjectNumber]; _ae {
-				switch _df._d {
-				case NoRestrictions, FillForms, FillFormsAndAnnots:
-					_df._eg.addWarningWithDescription(_fe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", _dc.Get("\u0054")))
-				default:
-					_df._eg.addErrorWithDescription(_fe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0063\u0068\u0061ng\u0065\u0064", _dc.Get("\u0054")))
-				}
-			}
-		}
-		if FT, _cc := _c.GetNameVal(_dc.Get("\u0046\u0054")); _cc {
-			if FT == "\u0053\u0069\u0067" {
-				if _da, _ec := _c.GetIndirect(_dc.Get("\u0056")); _ec {
-					if _, _efe := _df._ef[_da.ObjectNumber]; _efe {
-						switch _df._d {
-						case NoRestrictions, FillForms, FillFormsAndAnnots:
-							_df._eg.addWarningWithDescription(_fe, _g.Sprintf("\u0053\u0069\u0067na\u0074\u0075\u0072\u0065\u0020\u0066\u006f\u0072\u0020%\u0073 \u0066i\u0065l\u0064\u0020\u0077\u0061\u0073\u0020\u0063\u0068\u0061\u006e\u0067\u0065\u0064", T))
-						default:
-							_df._eg.addErrorWithDescription(_fe, _g.Sprintf("\u0053\u0069\u0067na\u0074\u0075\u0072\u0065\u0020\u0066\u006f\u0072\u0020%\u0073 \u0066i\u0065l\u0064\u0020\u0077\u0061\u0073\u0020\u0063\u0068\u0061\u006e\u0067\u0065\u0064", T))
-						}
-					}
-				}
-			}
-		}
-	}
-	for _, _ecb := range _fgb {
-		switch _df._d {
-		case NoRestrictions:
-			_df._eg.addWarningWithDescription(_fe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0072\u0065\u006dov\u0065\u0064", _ecb.Get("\u0054")))
-		default:
-			_df._eg.addErrorWithDescription(_fe, _g.Sprintf("F\u0069e\u006c\u0064\u0020\u0025\u0073\u0020\u0077\u0061s\u0020\u0072\u0065\u006dov\u0065\u0064", _ecb.Get("\u0054")))
+			_feg._e.addErrorWithDescription(_dfg, _g.Sprintf("\u0025\u0073\u0020\u0061n\u006e\u006f\u0074\u0061\u0074\u0069\u006f\u006e\u0020\u0025s\u0020w\u0061\u0073\u0020\u0072\u0065\u006d\u006fv\u0065\u0064", _dba, _cfa))
 		}
 	}
 	return nil
