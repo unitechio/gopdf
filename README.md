@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"bitbucket.org/shenghui0779/gopdf/common"
@@ -28,13 +29,6 @@ import (
 )
 
 func main() {
-	err := RunPdfReport("sample.pdf")
-	if err != nil {
-		panic(err)
-	}
-}
-
-func RunPdfReport(outputPath string) error {
 	helvetica, _ := model.NewStandard14Font("Helvetica")
 	helveticaBold, _ := model.NewStandard14Font("Helvetica-Bold")
 
@@ -52,26 +46,12 @@ func RunPdfReport(outputPath string) error {
 	lstyle.FontSize = 14
 	toc.SetLineStyle(lstyle)
 
-	logoImg, err := c.NewImageFromFile("go-travel.jpg")
-	if err != nil {
-		return err
-	}
-
-	logoImg.ScaleToHeight(25)
-	logoImg.SetPos(58, 20)
-
 	DoDocumentControl(c, helvetica, helveticaBold)
 	DoFeatureOverview(c, helvetica, helveticaBold)
 
 	// Setup a front page (always placed first).
 	c.CreateFrontPage(func(args creator.FrontpageFunctionArgs) {
 		DoFirstPage(c, helvetica, helveticaBold)
-	})
-
-	// Draw a header on each page.
-	c.DrawHeader(func(block *creator.Block, args creator.HeaderFunctionArgs) {
-		// Draw the header on a block. The block size is the size of the page's top margins.
-		block.Draw(logoImg)
 	})
 
 	// Draw footer on each page.
@@ -93,7 +73,9 @@ func RunPdfReport(outputPath string) error {
 		block.Draw(p)
 	})
 
-	return c.WriteToFile(outputPath)
+	if err := c.WriteToFile("sample.pdf"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Generates the front page.
@@ -279,7 +261,6 @@ func DoDocumentControl(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 }
 
 // Chapter giving an overview of features.
-// TODO: Add code snippets and show more styles and options.
 func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold *model.PdfFont) {
 	// Ensure that the chapter starts on a new page.
 	c.NewPage()
@@ -369,26 +350,6 @@ func DoFeatureOverview(c *creator.Creator, fontRegular *model.PdfFont, fontBold 
 		}
 	}
 	sc.Add(priTable)
-
-	sc = ch.NewSubchapter("Images")
-	sc.GetHeading().SetMargins(0, 0, 20, 0)
-	sc.GetHeading().SetFont(chapterFont)
-	sc.GetHeading().SetFontSize(chapterFontSize)
-	sc.GetHeading().SetColor(chapterFontColor)
-
-	p = c.NewParagraph("Images can be loaded from multiple file formats, example from a PNG image:")
-	p.SetFont(normalFont)
-	p.SetFontSize(normalFontSize)
-	p.SetColor(normalFontColor)
-	p.SetMargins(0, 0, 5, 5)
-	sc.Add(p)
-
-	img, err := c.NewImageFromFile("go-travel.jpg")
-	if err != nil {
-		panic(err)
-	}
-	img.ScaleToHeight(50)
-	sc.Add(img)
 
 	sc = ch.NewSubchapter("Headers and footers")
 	sc.GetHeading().SetMargins(0, 0, 20, 0)
