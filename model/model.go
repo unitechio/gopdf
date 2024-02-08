@@ -2520,7 +2520,6 @@ type PdfActionGoToR struct {
 
 // AddPage adds a page to the PDF file. The new page should be an indirect object.
 func (_fbgdc *PdfWriter) AddPage(page *PdfPage) error {
-	const _geegdg = "\u006d\u006f\u0064el\u003a\u0050\u0064\u0066\u0057\u0072\u0069\u0074\u0065\u0072\u002e\u0041\u0064\u0064\u0050\u0061\u0067\u0065"
 	_dccea(page)
 	_dfaba := page.ToPdfObject()
 	_ag.Log.Trace("\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d")
@@ -11698,8 +11697,6 @@ func _dccea(_dcagbd *PdfPage) {
 	_agadf = append(_agadf, _b.Sprintf("\u002f%\u0073\u0020\u0031\u0034\u0020\u0054f", _aecbb.String()))
 	_agadf = append(_agadf, "\u0031\u0020\u0030\u0020\u0030\u0020\u0072\u0067")
 	_agadf = append(_agadf, "\u0031\u0030\u0020\u0031\u0030\u0020\u0054\u0064")
-	_eegfcg := "\u0055\u006e\u006c\u0069\u0063\u0065\u006e\u0073\u0065\u0064\u0020\u0055\u006e\u0069\u0044o\u0063\u0020\u002d\u0020\u0047\u0065\u0074\u0020\u0061\u0020\u006c\u0069\u0063e\u006e\u0073\u0065\u0020\u006f\u006e\u0020\u0068\u0074\u0074\u0070\u0073:/\u002f\u0075\u006e\u0069\u0064\u006f\u0063\u002e\u0069\u006f"
-	_agadf = append(_agadf, _b.Sprintf("\u0028%\u0073\u0029\u0020\u0054\u006a", _eegfcg))
 	_agadf = append(_agadf, "\u0045\u0054")
 	_agadf = append(_agadf, "\u0051")
 	_fcaeb := _ga.Join(_agadf, "\u000a")
