@@ -9,7 +9,6 @@ import (
 	_fb "errors"
 	_bg "fmt"
 	_g "io"
-	_d "io/ioutil"
 	_c "net/http"
 	_b "time"
 
@@ -51,7 +50,7 @@ func (_cg *CRLClient) MakeRequest(serverURL string, cert *_ae.Certificate) ([]by
 		return nil, _fbb
 	}
 	defer _ad.Body.Close()
-	_ac, _fbb := _d.ReadAll(_ad.Body)
+	_ac, _fbb := _g.ReadAll(_ad.Body)
 	if _fbb != nil {
 		return nil, _fbb
 	}
@@ -83,7 +82,7 @@ func (_ga *CertClient) Get(url string) (*_ae.Certificate, error) {
 		return nil, _afe
 	}
 	defer _gf.Body.Close()
-	_ca, _afe := _d.ReadAll(_gf.Body)
+	_ca, _afe := _g.ReadAll(_gf.Body)
 	if _afe != nil {
 		return nil, _afe
 	}
@@ -136,7 +135,7 @@ func (_ceg *OCSPClient) MakeRequest(serverURL string, cert, issuer *_ae.Certific
 		return nil, nil, _bgg
 	}
 	defer _cec.Body.Close()
-	_bc, _bgg := _d.ReadAll(_cec.Body)
+	_bc, _bgg := _g.ReadAll(_cec.Body)
 	if _bgg != nil {
 		return nil, nil, _bgg
 	}
@@ -213,7 +212,7 @@ func (_fa *TimestampClient) GetEncodedToken(serverURL string, req *_af.Request) 
 		return nil, _caa
 	}
 	defer _fc.Body.Close()
-	_bag, _caa := _d.ReadAll(_fc.Body)
+	_bag, _caa := _g.ReadAll(_fc.Body)
 	if _caa != nil {
 		return nil, _caa
 	}

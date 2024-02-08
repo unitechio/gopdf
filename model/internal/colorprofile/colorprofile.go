@@ -7,7 +7,6 @@ import (
 	_b "errors"
 	_db "fmt"
 	_ea "io"
-	_d "io/ioutil"
 	_cg "os"
 	_ad "path/filepath"
 	_eg "strconv"
@@ -196,7 +195,7 @@ func RestoreAsset(dir, name string) error {
 	if _cea != nil {
 		return _cea
 	}
-	_cea = _d.WriteFile(_gee(dir, name), _fac, _bgc.Mode())
+	_cea = _cg.WriteFile(_gee(dir, name), _fac, _bgc.Mode())
 	if _cea != nil {
 		return _cea
 	}

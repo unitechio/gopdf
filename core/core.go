@@ -14,7 +14,6 @@ import (
 	_ga "image/color"
 	_eb "image/jpeg"
 	_fg "io"
-	_e "io/ioutil"
 	_bc "reflect"
 	_ce "regexp"
 	_gg "sort"
@@ -1003,7 +1002,7 @@ func (_bbec *CCITTFaxEncoder) DecodeBytes(encoded []byte) ([]byte, error) {
 	if _gfcd != nil {
 		return nil, _gfcd
 	}
-	_bcfd, _gfcd := _e.ReadAll(_fefc)
+	_bcfd, _gfcd := _fg.ReadAll(_fefc)
 	if _gfcd != nil {
 		return nil, _gfcd
 	}

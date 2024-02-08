@@ -17,7 +17,6 @@ import (
 	_ "image/gif"
 	_ "image/png"
 	_cf "io"
-	_gf "io/ioutil"
 	_cg "math"
 	_cb "math/rand"
 	_eb "os"
@@ -9270,7 +9269,7 @@ func (_dcbe *PdfColorDeviceRGB) ToInteger(bits int) [3]uint32 {
 func NewPdfFontFromTTF(r _cf.ReadSeeker) (*PdfFont, error) {
 	const _gcba = _bd.CharCode(32)
 	const _begca = _bd.CharCode(255)
-	_aebec, _ggad := _gf.ReadAll(r)
+	_aebec, _ggad := _cf.ReadAll(r)
 	if _ggad != nil {
 		_ag.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0055\u006e\u0061\u0062\u006c\u0065 \u0074\u006f\u0020\u0072\u0065\u0061d\u0020\u0066\u006f\u006e\u0074\u0020\u0063\u006f\u006e\u0074\u0065\u006e\u0074s\u003a\u0020\u0025\u0076", _ggad)
 		return nil, _ggad
@@ -14694,7 +14693,7 @@ func (_bcfd *PdfReader) newPdfPageFromDict(_ggef *_dg.PdfObjectDictionary) (*Pdf
 // TODO: May be extended in the future to support a larger variety of CMaps and vertical fonts.
 // NOTE: For simple fonts, use NewPdfFontFromTTF.
 func NewCompositePdfFontFromTTF(r _cf.ReadSeeker) (*PdfFont, error) {
-	_dcgg, _egedc := _gf.ReadAll(r)
+	_dcgg, _egedc := _cf.ReadAll(r)
 	if _egedc != nil {
 		_ag.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0055\u006e\u0061\u0062\u006c\u0065 \u0074\u006f\u0020\u0072\u0065\u0061d\u0020\u0066\u006f\u006e\u0074\u0020\u0063\u006f\u006e\u0074\u0065\u006e\u0074s\u003a\u0020\u0025\u0076", _egedc)
 		return nil, _egedc
