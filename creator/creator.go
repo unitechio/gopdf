@@ -773,13 +773,11 @@ func (_gdccf *Creator) WriteToFile(outputPath string) error {
 	if _cagd = _ed.MkdirAll(_p.Dir(abspath), 0775); _cagd != nil {
 		return _cagd
 	}
-
 	_bgc, _cagd := _ed.OpenFile(abspath, _ed.O_RDWR|_ed.O_CREATE|_ed.O_TRUNC, 0775)
 	if _cagd != nil {
 		return _cagd
 	}
 	defer _bgc.Close()
-
 	return _gdccf.Write(_bgc)
 }
 

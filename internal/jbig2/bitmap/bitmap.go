@@ -6,14 +6,12 @@ import (
 	_ea "math"
 	_ff "sort"
 	_c "strings"
-	_f "testing"
 
 	_ca "bitbucket.org/shenghui0779/gopdf/common"
 	_ce "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
 	_g "bitbucket.org/shenghui0779/gopdf/internal/imageutil"
 	_ac "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
 	_e "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
-	_d "github.com/stretchr/testify/require"
 )
 
 func _acbb(_bacfg *Bitmap, _ddag, _dbgb int, _fbafd, _gcdg int, _efda RasterOperator) {
@@ -68,59 +66,6 @@ func _acbb(_bacfg *Bitmap, _ddag, _dbgb int, _fbafd, _gcdg int, _efda RasterOper
 
 type RasterOperator int
 
-func TstWordBitmap(t *_f.T, scale ...int) *Bitmap {
-	_ggab := 1
-	if len(scale) > 0 {
-		_ggab = scale[0]
-	}
-	_cabf := 3
-	_aadgg := 9 + 7 + 15 + 2*_cabf
-	_bfcca := 5 + _cabf + 5
-	_cffbd := New(_aadgg*_ggab, _bfcca*_ggab)
-	_cagf := &Bitmaps{}
-	var _afgfa *int
-	_cabf *= _ggab
-	_bfaea := 0
-	_afgfa = &_bfaea
-	_bbfg := 0
-	_ecac := TstDSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstOSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, _cabf)
-	_ecac = TstISymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstTSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, _cabf)
-	_ecac = TstNSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstOSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstWSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 0)
-	*_afgfa = 0
-	_bbfg = 5*_ggab + _cabf
-	_ecac = TstOSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstRSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, _cabf)
-	_ecac = TstNSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstESymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstVSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstESymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 1*_ggab)
-	_ecac = TstRSymbol(t, scale...)
-	TstAddSymbol(t, _cagf, _ecac, _afgfa, _bbfg, 0)
-	TstWriteSymbols(t, _cagf, _cffbd)
-	return _cffbd
-}
-func TstTSymbol(t *_f.T, scale ...int) *Bitmap {
-	_ddde, _fdbc := NewWithData(5, 5, []byte{0xF8, 0x20, 0x20, 0x20, 0x20})
-	_d.NoError(t, _fdbc)
-	return TstGetScaledSymbol(t, _ddde, scale...)
-}
 func _cfaba(_ecgfb *Bitmap, _ffgf, _daec, _gfeg, _fgefd int, _eafcf RasterOperator, _gaebc *Bitmap, _efdf, _cgfd int) error {
 	var (
 		_efadf         bool
@@ -1633,11 +1578,6 @@ func (_abgc *Bitmap) Equals(s *Bitmap) bool {
 	}
 	return true
 }
-func TstOSymbol(t *_f.T, scale ...int) *Bitmap {
-	_bgabb, _ffgg := NewWithData(4, 5, []byte{0xF0, 0x90, 0x90, 0x90, 0xF0})
-	_d.NoError(t, _ffgg)
-	return TstGetScaledSymbol(t, _bgabb, scale...)
-}
 func (_gdcee *ClassedPoints) SortByY()       { _gdcee._acab = _gdcee.ySortFunction(); _ff.Sort(_gdcee) }
 func (_begf *Bitmap) GetBitOffset(x int) int { return x & 0x07 }
 func (_caab Points) GetIntX(i int) (int, error) {
@@ -1659,7 +1599,6 @@ func (_ggfg *Bitmap) resizeImageData(_gfde *Bitmap) error {
 	_ggfg.RowStride = _gfde.RowStride
 	return nil
 }
-func TstImageBitmapData() []byte { return _gabd.Data }
 func RankHausTest(p1, p2, p3, p4 *Bitmap, delX, delY float32, maxDiffW, maxDiffH, area1, area3 int, rank float32, tab8 []int) (_dgdc bool, _ecdg error) {
 	const _bcea = "\u0052\u0061\u006ek\u0048\u0061\u0075\u0073\u0054\u0065\u0073\u0074"
 	_aega, _dfbf := p1.Width, p1.Height
@@ -2603,11 +2542,6 @@ func (_bedcd *Bitmap) setFourBytes(_acfa int, _ecbf uint32) error {
 	_bedcd.Data[_acfa+3] = byte(_ecbf & 0xff)
 	return nil
 }
-func TstISymbol(t *_f.T, scale ...int) *Bitmap {
-	_aeef, _gaab := NewWithData(1, 5, []byte{0x80, 0x80, 0x80, 0x80, 0x80})
-	_d.NoError(t, _gaab)
-	return TstGetScaledSymbol(t, _aeef, scale...)
-}
 func (_dgdb MorphProcess) getWidthHeight() (_fdag, _gfe int) {
 	return _dgdb.Arguments[0], _dgdb.Arguments[1]
 }
@@ -2649,12 +2583,6 @@ func (_ged *Boxes) makeSizeIndicator(_ddge, _bafb int, _fada LocationFilter, _gf
 		_bgad.AddInt(_fgef)
 	}
 	return _bgad
-}
-func TstAddSymbol(t *_f.T, bms *Bitmaps, sym *Bitmap, x *int, y int, space int) {
-	bms.AddBitmap(sym)
-	_aegg := _aa.Rect(*x, y, *x+sym.Width, y+sym.Height)
-	bms.AddBox(&_aegg)
-	*x += sym.Width + space
 }
 
 var _fdde = [5]int{1, 2, 3, 0, 4}
@@ -3326,28 +3254,6 @@ func (_fbbg *Bitmap) And(s *Bitmap) (_bbdc *Bitmap, _fbbgf error) {
 	}
 	return _bbdc, nil
 }
-func TstPSymbol(t *_f.T) *Bitmap {
-	t.Helper()
-	_cgdd := New(5, 8)
-	_d.NoError(t, _cgdd.SetPixel(0, 0, 1))
-	_d.NoError(t, _cgdd.SetPixel(1, 0, 1))
-	_d.NoError(t, _cgdd.SetPixel(2, 0, 1))
-	_d.NoError(t, _cgdd.SetPixel(3, 0, 1))
-	_d.NoError(t, _cgdd.SetPixel(4, 1, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 1, 1))
-	_d.NoError(t, _cgdd.SetPixel(4, 2, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 2, 1))
-	_d.NoError(t, _cgdd.SetPixel(4, 3, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 3, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 4, 1))
-	_d.NoError(t, _cgdd.SetPixel(1, 4, 1))
-	_d.NoError(t, _cgdd.SetPixel(2, 4, 1))
-	_d.NoError(t, _cgdd.SetPixel(3, 4, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 5, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 6, 1))
-	_d.NoError(t, _cgdd.SetPixel(0, 7, 1))
-	return _cgdd
-}
 func (_edfab *Bitmaps) HeightSorter() func(_ccgde, _cgfdb int) bool {
 	return func(_ccfa, _ebbfb int) bool {
 		_cgfdg := _edfab.Values[_ccfa].Height < _edfab.Values[_ebbfb].Height
@@ -3836,7 +3742,6 @@ func (_bege *Bitmap) countPixels() int {
 	}
 	return _cgga
 }
-func TstImageBitmap() *Bitmap { return _gabd.Copy() }
 func Rect(x, y, w, h int) (*_aa.Rectangle, error) {
 	const _fbaf = "b\u0069\u0074\u006d\u0061\u0070\u002e\u0052\u0065\u0063\u0074"
 	if x < 0 {
@@ -3865,8 +3770,6 @@ const (
 	SizeSelectIfGTE
 	SizeSelectIfEQ
 )
-
-func TstFrameBitmap() *Bitmap { return _cbff.Copy() }
 
 type Boxes []*_aa.Rectangle
 type ClassedPoints struct {
@@ -4270,7 +4173,6 @@ const (
 var _ _ff.Interface = &ClassedPoints{}
 
 func _fcgbg(_dbaf uint, _fabd byte) byte { return _fabd >> _dbaf << _dbaf }
-func TstFrameBitmapData() []byte         { return _cbff.Data }
 func (_eeac *Points) Add(pt *Points) error {
 	const _dgeb = "\u0050\u006f\u0069\u006e\u0074\u0073\u002e\u0041\u0064\u0064"
 	if _eeac == nil {
@@ -4397,11 +4299,6 @@ func (_ffea *Bitmaps) makeSizeIndicator(_fcag, _ccfc int, _bcbbec LocationFilter
 		_beedb.AddInt(_cccc)
 	}
 	return _beedb, nil
-}
-func TstRSymbol(t *_f.T, scale ...int) *Bitmap {
-	_baba, _cceg := NewWithData(4, 5, []byte{0xF0, 0x90, 0xF0, 0xA0, 0x90})
-	_d.NoError(t, _cceg)
-	return TstGetScaledSymbol(t, _baba, scale...)
 }
 func _eeabd(_bffa, _gabe byte, _afba CombinationOperator) byte {
 	switch _afba {
@@ -4549,11 +4446,6 @@ func _ffb(_ageb, _gefb *Bitmap, _cefa CombinationOperator) *Bitmap {
 	}
 	return _afgfe
 }
-func TstNSymbol(t *_f.T, scale ...int) *Bitmap {
-	_dgcg, _cdbaa := NewWithData(4, 5, []byte{0x90, 0xD0, 0xB0, 0x90, 0x90})
-	_d.NoError(t, _cdbaa)
-	return TstGetScaledSymbol(t, _dgcg, scale...)
-}
 func SelCreateBrick(h, w int, cy, cx int, tp SelectionValue) *Selection {
 	_ffdb := _ggdga(h, w, "")
 	_ffdb.setOrigin(cy, cx)
@@ -4564,11 +4456,6 @@ func SelCreateBrick(h, w int, cy, cx int, tp SelectionValue) *Selection {
 		}
 	}
 	return _ffdb
-}
-func TstImageBitmapInverseData() []byte {
-	_efab := _gabd.Copy()
-	_efab.InverseData()
-	return _efab.Data
 }
 func (_bbag *Bitmaps) GroupByHeight() (*BitmapsArray, error) {
 	const _fcdcc = "\u0047\u0072\u006f\u0075\u0070\u0042\u0079\u0048\u0065\u0069\u0067\u0068\u0074"
@@ -4674,17 +4561,6 @@ func _ceec(_fca, _efc *Bitmap, _eaba, _fabb, _dff, _aagge, _ffdd int, _gdfg Comb
 	}
 	return nil
 }
-func TstGetScaledSymbol(t *_f.T, sm *Bitmap, scale ...int) *Bitmap {
-	if len(scale) == 0 {
-		return sm
-	}
-	if scale[0] == 1 {
-		return sm
-	}
-	_befga, _eagg := MorphSequence(sm, MorphProcess{Operation: MopReplicativeBinaryExpansion, Arguments: scale})
-	_d.NoError(t, _eagg)
-	return _befga
-}
 func (_gdde *Bitmaps) SortByWidth() { _affg := (*byWidth)(_gdde); _ff.Sort(_affg) }
 
 type Getter interface{ GetBitmap() *Bitmap }
@@ -4698,11 +4574,6 @@ func (_eadcf *Boxes) Get(i int) (*_aa.Rectangle, error) {
 		return nil, _e.Errorf(_cddb, "\u0069n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006fu\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006e\u0067\u0065", i)
 	}
 	return (*_eadcf)[i], nil
-}
-func TstVSymbol(t *_f.T, scale ...int) *Bitmap {
-	_cbae, _dgcb := NewWithData(5, 5, []byte{0x88, 0x88, 0x88, 0x50, 0x20})
-	_d.NoError(t, _dgcb)
-	return TstGetScaledSymbol(t, _cbae, scale...)
 }
 
 type LocationFilter int
@@ -4779,30 +4650,6 @@ func _cfee(_debe *_ac.Stack) (_bdcd *fillSegment, _dgcd error) {
 	return _bdcd, nil
 }
 func MakePixelCentroidTab8() []int { return _egdf() }
-func TstASymbol(t *_f.T) *Bitmap {
-	t.Helper()
-	_ecc := New(6, 6)
-	_d.NoError(t, _ecc.SetPixel(1, 0, 1))
-	_d.NoError(t, _ecc.SetPixel(2, 0, 1))
-	_d.NoError(t, _ecc.SetPixel(3, 0, 1))
-	_d.NoError(t, _ecc.SetPixel(4, 0, 1))
-	_d.NoError(t, _ecc.SetPixel(5, 1, 1))
-	_d.NoError(t, _ecc.SetPixel(1, 2, 1))
-	_d.NoError(t, _ecc.SetPixel(2, 2, 1))
-	_d.NoError(t, _ecc.SetPixel(3, 2, 1))
-	_d.NoError(t, _ecc.SetPixel(4, 2, 1))
-	_d.NoError(t, _ecc.SetPixel(5, 2, 1))
-	_d.NoError(t, _ecc.SetPixel(0, 3, 1))
-	_d.NoError(t, _ecc.SetPixel(5, 3, 1))
-	_d.NoError(t, _ecc.SetPixel(0, 4, 1))
-	_d.NoError(t, _ecc.SetPixel(5, 4, 1))
-	_d.NoError(t, _ecc.SetPixel(1, 5, 1))
-	_d.NoError(t, _ecc.SetPixel(2, 5, 1))
-	_d.NoError(t, _ecc.SetPixel(3, 5, 1))
-	_d.NoError(t, _ecc.SetPixel(4, 5, 1))
-	_d.NoError(t, _ecc.SetPixel(5, 5, 1))
-	return _ecc
-}
 func (_cefb *Bitmap) setEightPartlyBytes(_dcdg, _bcgd int, _fed uint64) (_bffe error) {
 	var (
 		_gaga  byte
@@ -4892,25 +4739,6 @@ func _fbac(_efb, _gef *Bitmap, _gae int, _bff []byte, _bbd int) (_cbba error) {
 
 type SelectionValue int
 
-func TstCSymbol(t *_f.T) *Bitmap {
-	t.Helper()
-	_dcfdd := New(6, 6)
-	_d.NoError(t, _dcfdd.SetPixel(1, 0, 1))
-	_d.NoError(t, _dcfdd.SetPixel(2, 0, 1))
-	_d.NoError(t, _dcfdd.SetPixel(3, 0, 1))
-	_d.NoError(t, _dcfdd.SetPixel(4, 0, 1))
-	_d.NoError(t, _dcfdd.SetPixel(0, 1, 1))
-	_d.NoError(t, _dcfdd.SetPixel(5, 1, 1))
-	_d.NoError(t, _dcfdd.SetPixel(0, 2, 1))
-	_d.NoError(t, _dcfdd.SetPixel(0, 3, 1))
-	_d.NoError(t, _dcfdd.SetPixel(0, 4, 1))
-	_d.NoError(t, _dcfdd.SetPixel(5, 4, 1))
-	_d.NoError(t, _dcfdd.SetPixel(1, 5, 1))
-	_d.NoError(t, _dcfdd.SetPixel(2, 5, 1))
-	_d.NoError(t, _dcfdd.SetPixel(3, 5, 1))
-	_d.NoError(t, _dcfdd.SetPixel(4, 5, 1))
-	return _dcfdd
-}
 func _gf(_cbc, _ec *Bitmap) (_gc error) {
 	const _fd = "\u0065\u0078\u0070\u0061nd\u0042\u0069\u006e\u0061\u0072\u0079\u0046\u0061\u0063\u0074\u006f\u0072\u0034"
 	_ee := _ec.RowStride
@@ -5300,54 +5128,6 @@ func init() {
 		panic(_e.Wrap(_gdbcd, _aaaad, "i\u006d\u0061\u0067\u0065\u0042\u0069\u0074\u006d\u0061\u0070"))
 	}
 }
-func TstWordBitmapWithSpaces(t *_f.T, scale ...int) *Bitmap {
-	_cedgf := 1
-	if len(scale) > 0 {
-		_cedgf = scale[0]
-	}
-	_afaa := 3
-	_afbaf := 9 + 7 + 15 + 2*_afaa + 2*_afaa
-	_bgfg := 5 + _afaa + 5 + 2*_afaa
-	_gfegd := New(_afbaf*_cedgf, _bgfg*_cedgf)
-	_cbafg := &Bitmaps{}
-	var _ccbag *int
-	_afaa *= _cedgf
-	_cbag := _afaa
-	_ccbag = &_cbag
-	_ccab := _afaa
-	_bade := TstDSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstOSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, _afaa)
-	_bade = TstISymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstTSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, _afaa)
-	_bade = TstNSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstOSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstWSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 0)
-	*_ccbag = _afaa
-	_ccab = 5*_cedgf + _afaa
-	_bade = TstOSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstRSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, _afaa)
-	_bade = TstNSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstESymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstVSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstESymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 1*_cedgf)
-	_bade = TstRSymbol(t, scale...)
-	TstAddSymbol(t, _cbafg, _bade, _ccbag, _ccab, 0)
-	TstWriteSymbols(t, _cbafg, _gfegd)
-	return _gfegd
-}
 func (_fagc *Bitmap) RemoveBorder(borderSize int) (*Bitmap, error) {
 	if borderSize == 0 {
 		return _fagc.Copy(), nil
@@ -5564,37 +5344,14 @@ func _bgge(_dcba, _fabf *Bitmap, _bgce, _bbda int) (_fadg error) {
 	}
 	return nil
 }
-func TstWSymbol(t *_f.T, scale ...int) *Bitmap {
-	_dggd, _bffd := NewWithData(5, 5, []byte{0x88, 0x88, 0xA8, 0xD8, 0x88})
-	_d.NoError(t, _bffd)
-	return TstGetScaledSymbol(t, _dggd, scale...)
-}
 func (_fcg *Bitmap) createTemplate() *Bitmap {
 	return &Bitmap{Width: _fcg.Width, Height: _fcg.Height, RowStride: _fcg.RowStride, Color: _fcg.Color, Text: _fcg.Text, BitmapNumber: _fcg.BitmapNumber, Special: _fcg.Special, Data: make([]byte, len(_fcg.Data))}
-}
-func TstDSymbol(t *_f.T, scale ...int) *Bitmap {
-	_cggc, _agacf := NewWithData(4, 5, []byte{0xf0, 0x90, 0x90, 0x90, 0xE0})
-	_d.NoError(t, _agacf)
-	return TstGetScaledSymbol(t, _cggc, scale...)
 }
 func (_degf *Bitmap) GetChocolateData() []byte {
 	if _degf.Color == Vanilla {
 		_degf.inverseData()
 	}
 	return _degf.Data
-}
-func TstESymbol(t *_f.T, scale ...int) *Bitmap {
-	_cfcg, _caeg := NewWithData(4, 5, []byte{0xF0, 0x80, 0xE0, 0x80, 0xF0})
-	_d.NoError(t, _caeg)
-	return TstGetScaledSymbol(t, _cfcg, scale...)
-}
-func TstWriteSymbols(t *_f.T, bms *Bitmaps, src *Bitmap) {
-	for _adff := 0; _adff < bms.Size(); _adff++ {
-		_bedcf := bms.Values[_adff]
-		_eebb := bms.Boxes[_adff]
-		_fagce := src.RasterOperation(_eebb.Min.X, _eebb.Min.Y, _bedcf.Width, _bedcf.Height, PixSrc, _bedcf, 0, 0)
-		_d.NoError(t, _fagce)
-	}
 }
 func _facd(_gedfe, _cefaa *Bitmap, _cebaf, _fbfb int) (*Bitmap, error) {
 	const _fdfe = "\u0063\u006c\u006f\u0073\u0065\u0053\u0061\u0066\u0065B\u0072\u0069\u0063\u006b"
