@@ -1,389 +1,248 @@
 package docutil
 
 import (
-	_b "errors"
-	_f "fmt"
+	_c "errors"
+	_d "fmt"
 
-	_a "bitbucket.org/shenghui0779/gopdf/common"
-	_d "bitbucket.org/shenghui0779/gopdf/core"
+	_e "bitbucket.org/shenghui0779/gopdf/common"
+	_da "bitbucket.org/shenghui0779/gopdf/core"
 )
 
-func (_fe *Catalog) GetMetadata() (*_d.PdfObjectStream, bool) {
-	_ee, _eb := _d.GetStream(_fe.Object.Get("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061"))
-	return _ee, _eb
-}
-func (_gda *Catalog) SetMetadata(data []byte) error {
-	_gf, _ed := _d.MakeStream(data, nil)
-	if _ed != nil {
-		return _ed
-	}
-	_gf.Set("\u0054\u0079\u0070\u0065", _d.MakeName("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061"))
-	_gf.Set("\u0053u\u0062\u0074\u0079\u0070\u0065", _d.MakeName("\u0058\u004d\u004c"))
-	_gda.Object.Set("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061", _gf)
-	_gda._g.Objects = append(_gda._g.Objects, _gf)
-	return nil
-}
-func (_gca *Document) FindCatalog() (*Catalog, bool) {
-	var _abd *_d.PdfObjectDictionary
-	for _, _eag := range _gca.Objects {
-		_cf, _be := _d.GetDict(_eag)
-		if !_be {
-			continue
-		}
-		if _bd, _efc := _d.GetName(_cf.Get("\u0054\u0079\u0070\u0065")); _efc && *_bd == "\u0043a\u0074\u0061\u006c\u006f\u0067" {
-			_abd = _cf
-			break
-		}
-	}
-	if _abd == nil {
-		return nil, false
-	}
-	return &Catalog{Object: _abd, _g: _gca}, true
-}
-func (_fcg Content) GetData() ([]byte, error) {
-	_ff, _cad := _d.NewEncoderFromStream(_fcg.Stream)
-	if _cad != nil {
-		return nil, _cad
-	}
-	_cgfg, _cad := _ff.DecodeStream(_fcg.Stream)
-	if _cad != nil {
-		return nil, _cad
-	}
-	return _cgfg, nil
-}
-func (_gc *Catalog) GetMarkInfo() (*_d.PdfObjectDictionary, bool) {
-	_da, _dd := _d.GetDict(_gc.Object.Get("\u004d\u0061\u0072\u006b\u0049\u006e\u0066\u006f"))
-	return _da, _dd
-}
-func (_cfb Page) GetResources() (*_d.PdfObjectDictionary, bool) {
-	return _d.GetDict(_cfb.Object.Get("\u0052e\u0073\u006f\u0075\u0072\u0063\u0065s"))
+func (_ddee Page) GetResources() (*_da.PdfObjectDictionary, bool) {
+	return _da.GetDict(_ddee.Object.Get("\u0052e\u0073\u006f\u0075\u0072\u0063\u0065s"))
 }
 
-type ImageSMask struct {
-	Image  *Image
-	Stream *_d.PdfObjectStream
-}
+type OutputIntent struct{ Object *_da.PdfObjectDictionary }
 
-func (_e *Catalog) SetVersion() {
-	_e.Object.Set("\u0056e\u0072\u0073\u0069\u006f\u006e", _d.MakeName(_f.Sprintf("\u0025\u0064\u002e%\u0064", _e._g.Version.Major, _e._g.Version.Minor)))
+func (_fde *Catalog) SetMarkInfo(mi _da.PdfObject) {
+	_eg := _da.MakeIndirectObject(mi)
+	_fde.Object.Set("\u004d\u0061\u0072\u006b\u0049\u006e\u0066\u006f", _eg)
+	_fde._f.Objects = append(_fde._f.Objects, _eg)
 }
-func (_cde *OutputIntents) Get(i int) (OutputIntent, bool) {
-	if _cde._fb == nil {
+func (_aed *OutputIntents) Get(i int) (OutputIntent, bool) {
+	if _aed._aea == nil {
 		return OutputIntent{}, false
 	}
-	if i >= _cde._fb.Len() {
+	if i >= _aed._aea.Len() {
 		return OutputIntent{}, false
 	}
-	_egf := _cde._fb.Get(i)
-	_agf, _abf := _d.GetIndirect(_egf)
-	if !_abf {
-		_dg, _efb := _d.GetDict(_egf)
-		return OutputIntent{Object: _dg}, _efb
+	_db := _aed._aea.Get(i)
+	_bae, _gec := _da.GetIndirect(_db)
+	if !_gec {
+		_dab, _gee := _da.GetDict(_db)
+		return OutputIntent{Object: _dab}, _gee
 	}
-	_eff, _ccd := _d.GetDict(_agf.PdfObject)
-	return OutputIntent{Object: _eff}, _ccd
+	_dde, _ege := _da.GetDict(_bae.PdfObject)
+	return OutputIntent{Object: _dde}, _ege
 }
-func (_cd *Catalog) GetPages() ([]Page, bool) {
-	_gd, _ec := _d.GetDict(_cd.Object.Get("\u0050\u0061\u0067e\u0073"))
-	if !_ec {
-		return nil, false
-	}
-	_cg, _ecb := _d.GetArray(_gd.Get("\u004b\u0069\u0064\u0073"))
-	if !_ecb {
-		return nil, false
-	}
-	_gdb := make([]Page, _cg.Len())
-	for _cgb, _ae := range _cg.Elements() {
-		_ca, _cc := _d.GetDict(_ae)
-		if !_cc {
-			continue
-		}
-		_gdb[_cgb] = Page{Object: _ca, _bag: _cgb + 1, _fgg: _cd._g}
-	}
-	return _gdb, true
+func (_de *Page) Number() int                         { return _de._aeb }
+func (_ae *Catalog) NewOutputIntents() *OutputIntents { return &OutputIntents{_egb: _ae._f} }
+func (_cb *Catalog) GetMetadata() (*_da.PdfObjectStream, bool) {
+	_af, _aff := _da.GetStream(_cb.Object.Get("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061"))
+	return _af, _aff
 }
-func (_ab *Catalog) SetMarkInfo(mi _d.PdfObject) {
-	_db := _d.MakeIndirectObject(mi)
-	_ab.Object.Set("\u004d\u0061\u0072\u006b\u0049\u006e\u0066\u006f", _db)
-	_ab._g.Objects = append(_ab._g.Objects, _db)
-}
-func (_aec *OutputIntents) Len() int { return _aec._fb.Len() }
-
-type Document struct {
-	ID             [2]string
-	Version        _d.Version
-	Objects        []_d.PdfObject
-	Info           _d.PdfObject
-	Crypt          *_d.PdfCrypt
-	UseHashBasedID bool
-}
-type OutputIntents struct {
-	_fb  *_d.PdfObjectArray
-	_fee *Document
-	_cba *_d.PdfIndirectObject
-}
-
-func (_fc Page) FindXObjectImages() ([]*Image, error) {
-	_af, _aa := _fc.GetResourcesXObject()
-	if !_aa {
-		return nil, nil
-	}
-	var _bg []*Image
-	var _fggf error
-	_bda := map[*_d.PdfObjectStream]int{}
-	_dab := map[*_d.PdfObjectStream]struct{}{}
-	var _beg int
-	for _, _fcc := range _af.Keys() {
-		_bcf, _fcd := _d.GetStream(_af.Get(_fcc))
-		if !_fcd {
-			continue
+func _ab(_bd _da.PdfObject) (_da.PdfObjectName, error) {
+	var _ee *_da.PdfObjectName
+	var _bdd *_da.PdfObjectArray
+	if _cba, _dbg := _bd.(*_da.PdfIndirectObject); _dbg {
+		if _cbe, _gf := _cba.PdfObject.(*_da.PdfObjectArray); _gf {
+			_bdd = _cbe
+		} else if _ffd, _ebe := _cba.PdfObject.(*_da.PdfObjectName); _ebe {
+			_ee = _ffd
 		}
-		if _, _df := _bda[_bcf]; _df {
-			continue
-		}
-		_ebg, _edd := _d.GetName(_bcf.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
-		if !_edd || _ebg.String() != "\u0049\u006d\u0061g\u0065" {
-			continue
-		}
-		_dbd := Image{BitsPerComponent: 8, Stream: _bcf, Name: string(_fcc)}
-		if _dbd.Colorspace, _fggf = _fdb(_bcf.PdfObjectDictionary.Get("\u0043\u006f\u006c\u006f\u0072\u0053\u0070\u0061\u0063\u0065")); _fggf != nil {
-			_a.Log.Error("\u0045\u0072\u0072\u006f\u0072\u0020\u0064\u0065\u0074\u0065r\u006d\u0069\u006e\u0065\u0020\u0063\u006fl\u006f\u0072\u0020\u0073\u0070\u0061\u0063\u0065\u0020\u0025\u0073", _fggf)
-			continue
-		}
-		if _deg, _gcf := _d.GetIntVal(_bcf.PdfObjectDictionary.Get("\u0042\u0069t\u0073\u0050\u0065r\u0043\u006f\u006d\u0070\u006f\u006e\u0065\u006e\u0074")); _gcf {
-			_dbd.BitsPerComponent = _deg
-		}
-		if _dcd, _ace := _d.GetIntVal(_bcf.PdfObjectDictionary.Get("\u0057\u0069\u0064t\u0068")); _ace {
-			_dbd.Width = _dcd
-		}
-		if _feaef, _cbed := _d.GetIntVal(_bcf.PdfObjectDictionary.Get("\u0048\u0065\u0069\u0067\u0068\u0074")); _cbed {
-			_dbd.Height = _feaef
-		}
-		if _cfd, _dbe := _d.GetStream(_bcf.Get("\u0053\u004d\u0061s\u006b")); _dbe {
-			_dbd.SMask = &ImageSMask{Image: &_dbd, Stream: _cfd}
-			_dab[_cfd] = struct{}{}
-		}
-		switch _dbd.Colorspace {
-		case "\u0044e\u0076\u0069\u0063\u0065\u0052\u0047B":
-			_dbd.ColorComponents = 3
-		case "\u0044\u0065\u0076\u0069\u0063\u0065\u0047\u0072\u0061\u0079":
-			_dbd.ColorComponents = 1
-		case "\u0044\u0065\u0076\u0069\u0063\u0065\u0043\u004d\u0059\u004b":
-			_dbd.ColorComponents = 4
-		default:
-			_dbd.ColorComponents = -1
-		}
-		_bda[_bcf] = _beg
-		_bg = append(_bg, &_dbd)
-		_beg++
+	} else if _eaa, _gd := _bd.(*_da.PdfObjectArray); _gd {
+		_bdd = _eaa
+	} else if _dbge, _cag := _bd.(*_da.PdfObjectName); _cag {
+		_ee = _dbge
 	}
-	var _agg []int
-	for _, _cbb := range _bg {
-		if _cbb.SMask != nil {
-			_gcb, _cdd := _bda[_cbb.SMask.Stream]
-			if _cdd {
-				_agg = append(_agg, _gcb)
-			}
-		}
-	}
-	_acg := make([]*Image, len(_bg)-len(_agg))
-	_beg = 0
-_efe:
-	for _ega, _ccde := range _bg {
-		for _, _cac := range _agg {
-			if _ega == _cac {
-				continue _efe
-			}
-		}
-		_acg[_beg] = _ccde
-		_beg++
-	}
-	return _bg, nil
-}
-func (_ccf *OutputIntents) Add(oi _d.PdfObject) error {
-	_eg, _fbf := oi.(*_d.PdfObjectDictionary)
-	if !_fbf {
-		return _b.New("\u0069\u006e\u0070\u0075\u0074\u0020\u006f\u0075\u0074\u0070\u0075\u0074\u0020\u0069\u006e\u0074\u0065\u006et\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u0062\u0065\u0020\u0061\u006e\u0020\u006f\u0062\u006a\u0065\u0063t\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
-	}
-	if _cdb, _aed := _d.GetStream(_eg.Get("\u0044\u0065\u0073\u0074\u004f\u0075\u0074\u0070\u0075\u0074\u0050\u0072o\u0066\u0069\u006c\u0065")); _aed {
-		_ccf._fee.Objects = append(_ccf._fee.Objects, _cdb)
-	}
-	_dc, _ef := oi.(*_d.PdfIndirectObject)
-	if !_ef {
-		_dc = _d.MakeIndirectObject(oi)
-	}
-	if _ccf._fb == nil {
-		_ccf._fb = _d.MakeArray(_dc)
-	} else {
-		_ccf._fb.Append(_dc)
-	}
-	_ccf._fee.Objects = append(_ccf._fee.Objects, _dc)
-	return nil
-}
-func (_gga Page) GetContents() ([]Content, bool) {
-	_ce, _dda := _d.GetArray(_gga.Object.Get("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073"))
-	if !_dda {
-		_dgb, _dec := _d.GetStream(_gga.Object.Get("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073"))
-		if !_dec {
-			return nil, false
-		}
-		return []Content{{Stream: _dgb, _eeg: _gga, _dfb: 0}}, true
-	}
-	_ac := make([]Content, _ce.Len())
-	for _bcd, _faf := range _ce.Elements() {
-		_gad, _bea := _d.GetStream(_faf)
-		if !_bea {
-			continue
-		}
-		_ac[_bcd] = Content{Stream: _gad, _eeg: _gga, _dfb: _bcd}
-	}
-	return _ac, true
-}
-func (_cb *Catalog) SetOutputIntents(outputIntents *OutputIntents) {
-	if _ecc := _cb.Object.Get("\u004f\u0075\u0074\u0070\u0075\u0074\u0049\u006e\u0074\u0065\u006e\u0074\u0073"); _ecc != nil {
-		for _ag, _fea := range _cb._g.Objects {
-			if _fea == _ecc {
-				if outputIntents._cba == _ecc {
-					return
-				}
-				_cb._g.Objects = append(_cb._g.Objects[:_ag], _cb._g.Objects[_ag+1:]...)
-				break
-			}
-		}
-	}
-	_fd := outputIntents._cba
-	if _fd == nil {
-		_fd = _d.MakeIndirectObject(outputIntents._fb)
-	}
-	_cb.Object.Set("\u004f\u0075\u0074\u0070\u0075\u0074\u0049\u006e\u0074\u0065\u006e\u0074\u0073", _fd)
-	_cb._g.Objects = append(_cb._g.Objects, _fd)
-}
-func (_bdb *Page) Number() int                         { return _bdb._bag }
-func (_eca *Catalog) NewOutputIntents() *OutputIntents { return &OutputIntents{_fee: _eca._g} }
-func (_gg *Document) GetPages() ([]Page, bool) {
-	_bbc, _eaa := _gg.FindCatalog()
-	if !_eaa {
-		return nil, false
-	}
-	return _bbc.GetPages()
-}
-
-type Page struct {
-	_bag   int
-	Object *_d.PdfObjectDictionary
-	_fgg   *Document
-}
-type OutputIntent struct {
-	Object *_d.PdfObjectDictionary
-}
-
-func (_bc Page) GetResourcesXObject() (*_d.PdfObjectDictionary, bool) {
-	_cgf, _edg := _bc.GetResources()
-	if !_edg {
-		return nil, false
-	}
-	return _d.GetDict(_cgf.Get("\u0058O\u0062\u006a\u0065\u0063\u0074"))
-}
-func (_fbb Page) FindXObjectForms() []*_d.PdfObjectStream {
-	_aedg, _bgf := _fbb.GetResourcesXObject()
-	if !_bgf {
-		return nil
-	}
-	_ege := map[*_d.PdfObjectStream]struct{}{}
-	var _abe func(_bab *_d.PdfObjectDictionary, _egc map[*_d.PdfObjectStream]struct{})
-	_abe = func(_cab *_d.PdfObjectDictionary, _cbdf map[*_d.PdfObjectStream]struct{}) {
-		for _, _acd := range _cab.Keys() {
-			_gdad, _cdbc := _d.GetStream(_cab.Get(_acd))
-			if !_cdbc {
-				continue
-			}
-			if _, _gec := _cbdf[_gdad]; _gec {
-				continue
-			}
-			_dcb, _fda := _d.GetName(_gdad.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
-			if !_fda || _dcb.String() != "\u0046\u006f\u0072\u006d" {
-				continue
-			}
-			_cbdf[_gdad] = struct{}{}
-			_bac, _fda := _d.GetDict(_gdad.Get("\u0052e\u0073\u006f\u0075\u0072\u0063\u0065s"))
-			if !_fda {
-				continue
-			}
-			_ddb, _cdbg := _d.GetDict(_bac.Get("\u0058O\u0062\u006a\u0065\u0063\u0074"))
-			if _cdbg {
-				_abe(_ddb, _cbdf)
-			}
-		}
-	}
-	_abe(_aedg, _ege)
-	var _edcc []*_d.PdfObjectStream
-	for _cacc := range _ege {
-		_edcc = append(_edcc, _cacc)
-	}
-	return _edcc
-}
-func (_ead *Document) AddIndirectObject(indirect *_d.PdfIndirectObject) {
-	for _, _efg := range _ead.Objects {
-		if _efg == indirect {
-			return
-		}
-	}
-	_ead.Objects = append(_ead.Objects, indirect)
-}
-func _fdb(_fg _d.PdfObject) (_d.PdfObjectName, error) {
-	var _cbd *_d.PdfObjectName
-	var _ede *_d.PdfObjectArray
-	if _bbcb, _fa := _fg.(*_d.PdfIndirectObject); _fa {
-		if _cag, _fab := _bbcb.PdfObject.(*_d.PdfObjectArray); _fab {
-			_ede = _cag
-		} else if _ge, _fae := _bbcb.PdfObject.(*_d.PdfObjectName); _fae {
-			_cbd = _ge
-		}
-	} else if _gag, _dge := _fg.(*_d.PdfObjectArray); _dge {
-		_ede = _gag
-	} else if _feae, _de := _fg.(*_d.PdfObjectName); _de {
-		_cbd = _feae
-	}
-	if _cbd != nil {
-		switch *_cbd {
+	if _ee != nil {
+		switch *_ee {
 		case "\u0044\u0065\u0076\u0069\u0063\u0065\u0047\u0072\u0061\u0079", "\u0044e\u0076\u0069\u0063\u0065\u0052\u0047B", "\u0044\u0065\u0076\u0069\u0063\u0065\u0043\u004d\u0059\u004b":
-			return *_cbd, nil
+			return *_ee, nil
 		case "\u0050a\u0074\u0074\u0065\u0072\u006e":
-			return *_cbd, nil
+			return *_ee, nil
 		}
 	}
-	if _ede != nil && _ede.Len() > 0 {
-		if _fed, _edf := _ede.Get(0).(*_d.PdfObjectName); _edf {
-			switch *_fed {
+	if _bdd != nil && _bdd.Len() > 0 {
+		if _bec, _cgf := _bdd.Get(0).(*_da.PdfObjectName); _cgf {
+			switch *_bec {
 			case "\u0044\u0065\u0076\u0069\u0063\u0065\u0047\u0072\u0061\u0079", "\u0044e\u0076\u0069\u0063\u0065\u0052\u0047B", "\u0044\u0065\u0076\u0069\u0063\u0065\u0043\u004d\u0059\u004b":
-				if _ede.Len() == 1 {
-					return *_fed, nil
+				if _bdd.Len() == 1 {
+					return *_bec, nil
 				}
 			case "\u0043a\u006c\u0047\u0072\u0061\u0079", "\u0043\u0061\u006c\u0052\u0047\u0042", "\u004c\u0061\u0062":
-				return *_fed, nil
+				return *_bec, nil
 			case "\u0049\u0043\u0043\u0042\u0061\u0073\u0065\u0064", "\u0050a\u0074\u0074\u0065\u0072\u006e", "\u0049n\u0064\u0065\u0078\u0065\u0064":
-				return *_fed, nil
+				return *_bec, nil
 			case "\u0053\u0065\u0070\u0061\u0072\u0061\u0074\u0069\u006f\u006e", "\u0044e\u0076\u0069\u0063\u0065\u004e":
-				return *_fed, nil
+				return *_bec, nil
 			}
 		}
 	}
 	return "", nil
 }
-func (_eec *Content) SetData(data []byte) error {
-	_afb, _dcba := _d.MakeStream(data, _d.NewFlateEncoder())
-	if _dcba != nil {
-		return _dcba
+func (_ad *Catalog) HasMetadata() bool {
+	_ceg := _ad.Object.Get("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061")
+	return _ceg != nil
+}
+
+type Document struct {
+	ID             [2]string
+	Version        _da.Version
+	Objects        []_da.PdfObject
+	Info           _da.PdfObject
+	Crypt          *_da.PdfCrypt
+	UseHashBasedID bool
+}
+type Catalog struct {
+	Object *_da.PdfObjectDictionary
+	_f     *Document
+}
+
+func (_ec *Catalog) SetMetadata(data []byte) error {
+	_fd, _ag := _da.MakeStream(data, nil)
+	if _ag != nil {
+		return _ag
 	}
-	_bca, _ad := _d.GetArray(_eec._eeg.Object.Get("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073"))
-	if !_ad && _eec._dfb == 0 {
-		_eec._eeg.Object.Set("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073", _afb)
-	} else {
-		if _dcba = _bca.Set(_eec._dfb, _afb); _dcba != nil {
-			return _dcba
+	_fd.Set("\u0054\u0079\u0070\u0065", _da.MakeName("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061"))
+	_fd.Set("\u0053u\u0062\u0074\u0079\u0070\u0065", _da.MakeName("\u0058\u004d\u004c"))
+	_ec.Object.Set("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061", _fd)
+	_ec._f.Objects = append(_ec._f.Objects, _fd)
+	return nil
+}
+
+type ImageSMask struct {
+	Image  *Image
+	Stream *_da.PdfObjectStream
+}
+
+func (_g *Catalog) SetVersion() {
+	_g.Object.Set("\u0056e\u0072\u0073\u0069\u006f\u006e", _da.MakeName(_d.Sprintf("\u0025\u0064\u002e%\u0064", _g._f.Version.Major, _g._f.Version.Minor)))
+}
+func (_df Page) GetContents() ([]Content, bool) {
+	_geeb, _ebee := _da.GetArray(_df.Object.Get("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073"))
+	if !_ebee {
+		_cge, _baeg := _da.GetStream(_df.Object.Get("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073"))
+		if !_baeg {
+			return nil, false
+		}
+		return []Content{{Stream: _cge, _bf: _df, _ddf: 0}}, true
+	}
+	_dbe := make([]Content, _geeb.Len())
+	for _eba, _ccc := range _geeb.Elements() {
+		_dgg, _dfc := _da.GetStream(_ccc)
+		if !_dfc {
+			continue
+		}
+		_dbe[_eba] = Content{Stream: _dgg, _bf: _df, _ddf: _eba}
+	}
+	return _dbe, true
+}
+func (_b *Catalog) GetPages() ([]Page, bool) {
+	_ac, _ef := _da.GetDict(_b.Object.Get("\u0050\u0061\u0067e\u0073"))
+	if !_ef {
+		return nil, false
+	}
+	_ce, _ba := _da.GetArray(_ac.Get("\u004b\u0069\u0064\u0073"))
+	if !_ba {
+		return nil, false
+	}
+	_fc := make([]Page, _ce.Len())
+	for _gg, _gc := range _ce.Elements() {
+		_eb, _cg := _da.GetDict(_gc)
+		if !_cg {
+			continue
+		}
+		_fc[_gg] = Page{Object: _eb, _aeb: _gg + 1, _gfb: _b._f}
+	}
+	return _fc, true
+}
+func (_bac *Document) GetPages() ([]Page, bool) {
+	_dcf, _beb := _bac.FindCatalog()
+	if !_beb {
+		return nil, false
+	}
+	return _dcf.GetPages()
+}
+func (_cgd Content) GetData() ([]byte, error) {
+	_afeb, _cad := _da.NewEncoderFromStream(_cgd.Stream)
+	if _cad != nil {
+		return nil, _cad
+	}
+	_bee, _cad := _afeb.DecodeStream(_cgd.Stream)
+	if _cad != nil {
+		return nil, _cad
+	}
+	return _bee, nil
+}
+
+type Content struct {
+	Stream *_da.PdfObjectStream
+	_ddf   int
+	_bf    Page
+}
+
+func (_fdf Page) GetResourcesXObject() (*_da.PdfObjectDictionary, bool) {
+	_bba, _cdcc := _fdf.GetResources()
+	if !_cdcc {
+		return nil, false
+	}
+	return _da.GetDict(_bba.Get("\u0058O\u0062\u006a\u0065\u0063\u0074"))
+}
+func (_ca *Catalog) GetOutputIntents() (*OutputIntents, bool) {
+	_dc := _ca.Object.Get("\u004f\u0075\u0074\u0070\u0075\u0074\u0049\u006e\u0074\u0065\u006e\u0074\u0073")
+	if _dc == nil {
+		return nil, false
+	}
+	_ge, _cea := _da.GetIndirect(_dc)
+	if !_cea {
+		return nil, false
+	}
+	_dac, _fff := _da.GetArray(_ge.PdfObject)
+	if !_fff {
+		return nil, false
+	}
+	return &OutputIntents{_fcb: _ge, _aea: _dac, _egb: _ca._f}, true
+}
+
+type OutputIntents struct {
+	_aea *_da.PdfObjectArray
+	_egb *Document
+	_fcb *_da.PdfIndirectObject
+}
+
+func (_agd *Document) FindCatalog() (*Catalog, bool) {
+	var _ebg *_da.PdfObjectDictionary
+	for _, _gce := range _agd.Objects {
+		_acg, _bag := _da.GetDict(_gce)
+		if !_bag {
+			continue
+		}
+		if _fdg, _aca := _da.GetName(_acg.Get("\u0054\u0079\u0070\u0065")); _aca && *_fdg == "\u0043a\u0074\u0061\u006c\u006f\u0067" {
+			_ebg = _acg
+			break
 		}
 	}
-	_eec._eeg._fgg.Objects = append(_eec._eeg._fgg.Objects, _afb)
+	if _ebg == nil {
+		return nil, false
+	}
+	return &Catalog{Object: _ebg, _f: _agd}, true
+}
+func (_dcd *OutputIntents) Len() int { return _dcd._aea.Len() }
+func (_afc *Content) SetData(data []byte) error {
+	_bef, _efc := _da.MakeStream(data, _da.NewFlateEncoder())
+	if _efc != nil {
+		return _efc
+	}
+	_ccd, _bgd := _da.GetArray(_afc._bf.Object.Get("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073"))
+	if !_bgd && _afc._ddf == 0 {
+		_afc._bf.Object.Set("\u0043\u006f\u006e\u0074\u0065\u006e\u0074\u0073", _bef)
+	} else {
+		if _efc = _ccd.Set(_afc._ddf, _bef); _efc != nil {
+			return _efc
+		}
+	}
+	_afc._bf._gfb.Objects = append(_afc._bf._gfb.Objects, _bef)
 	return nil
 }
 
@@ -391,48 +250,191 @@ type Image struct {
 	Name             string
 	Width            int
 	Height           int
-	Colorspace       _d.PdfObjectName
+	Colorspace       _da.PdfObjectName
 	ColorComponents  int
 	BitsPerComponent int
 	SMask            *ImageSMask
-	Stream           *_d.PdfObjectStream
+	Stream           *_da.PdfObjectStream
 }
 
-func (_bb *Catalog) HasMetadata() bool {
-	_ga := _bb.Object.Get("\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061")
-	return _ga != nil
-}
-func (_gfg *Catalog) GetOutputIntents() (*OutputIntents, bool) {
-	_cdg := _gfg.Object.Get("\u004f\u0075\u0074\u0070\u0075\u0074\u0049\u006e\u0074\u0065\u006e\u0074\u0073")
-	if _cdg == nil {
-		return nil, false
+func (_agf Page) FindXObjectImages() ([]*Image, error) {
+	_aaab, _dbf := _agf.GetResourcesXObject()
+	if !_dbf {
+		return nil, nil
 	}
-	_edc, _gaa := _d.GetIndirect(_cdg)
-	if !_gaa {
-		return nil, false
+	var _eaaa []*Image
+	var _bc error
+	_dgb := map[*_da.PdfObjectStream]int{}
+	_eae := map[*_da.PdfObjectStream]struct{}{}
+	var _cac int
+	for _, _ggg := range _aaab.Keys() {
+		_dad, _agb := _da.GetStream(_aaab.Get(_ggg))
+		if !_agb {
+			continue
+		}
+		if _, _dadf := _dgb[_dad]; _dadf {
+			continue
+		}
+		_acd, _cf := _da.GetName(_dad.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
+		if !_cf || _acd.String() != "\u0049\u006d\u0061g\u0065" {
+			continue
+		}
+		_dba := Image{BitsPerComponent: 8, Stream: _dad, Name: string(_ggg)}
+		if _dba.Colorspace, _bc = _ab(_dad.PdfObjectDictionary.Get("\u0043\u006f\u006c\u006f\u0072\u0053\u0070\u0061\u0063\u0065")); _bc != nil {
+			_e.Log.Error("\u0045\u0072\u0072\u006f\u0072\u0020\u0064\u0065\u0074\u0065r\u006d\u0069\u006e\u0065\u0020\u0063\u006fl\u006f\u0072\u0020\u0073\u0070\u0061\u0063\u0065\u0020\u0025\u0073", _bc)
+			continue
+		}
+		if _cfa, _bg := _da.GetIntVal(_dad.PdfObjectDictionary.Get("\u0042\u0069t\u0073\u0050\u0065r\u0043\u006f\u006d\u0070\u006f\u006e\u0065\u006e\u0074")); _bg {
+			_dba.BitsPerComponent = _cfa
+		}
+		if _cef, _efd := _da.GetIntVal(_dad.PdfObjectDictionary.Get("\u0057\u0069\u0064t\u0068")); _efd {
+			_dba.Width = _cef
+		}
+		if _dbfb, _afe := _da.GetIntVal(_dad.PdfObjectDictionary.Get("\u0048\u0065\u0069\u0067\u0068\u0074")); _afe {
+			_dba.Height = _dbfb
+		}
+		if _dga, _dfg := _da.GetStream(_dad.Get("\u0053\u004d\u0061s\u006b")); _dfg {
+			_dba.SMask = &ImageSMask{Image: &_dba, Stream: _dga}
+			_eae[_dga] = struct{}{}
+		}
+		switch _dba.Colorspace {
+		case "\u0044e\u0076\u0069\u0063\u0065\u0052\u0047B":
+			_dba.ColorComponents = 3
+		case "\u0044\u0065\u0076\u0069\u0063\u0065\u0047\u0072\u0061\u0079":
+			_dba.ColorComponents = 1
+		case "\u0044\u0065\u0076\u0069\u0063\u0065\u0043\u004d\u0059\u004b":
+			_dba.ColorComponents = 4
+		default:
+			_dba.ColorComponents = -1
+		}
+		_dgb[_dad] = _cac
+		_eaaa = append(_eaaa, &_dba)
+		_cac++
 	}
-	_gab, _cbe := _d.GetArray(_edc.PdfObject)
-	if !_cbe {
-		return nil, false
+	var _cca []int
+	for _, _gdd := range _eaaa {
+		if _gdd.SMask != nil {
+			_cfb, _affg := _dgb[_gdd.SMask.Stream]
+			if _affg {
+				_cca = append(_cca, _cfb)
+			}
+		}
 	}
-	return &OutputIntents{_cba: _edc, _fb: _gab, _fee: _gfg._g}, true
+	_ceb := make([]*Image, len(_eaaa)-len(_cca))
+	_cac = 0
+_fda:
+	for _ed, _cab := range _eaaa {
+		for _, _ecc := range _cca {
+			if _ed == _ecc {
+				continue _fda
+			}
+		}
+		_ceb[_cac] = _cab
+		_cac++
+	}
+	return _eaaa, nil
 }
 
-type Catalog struct {
-	Object *_d.PdfObjectDictionary
-	_g     *Document
-}
-type Content struct {
-	Stream *_d.PdfObjectStream
-	_dfb   int
-	_eeg   Page
+type Page struct {
+	_aeb   int
+	Object *_da.PdfObjectDictionary
+	_gfb   *Document
 }
 
-func (_ba *Document) AddStream(stream *_d.PdfObjectStream) {
-	for _, _dag := range _ba.Objects {
-		if _dag == stream {
+func (_fffb *OutputIntents) Add(oi _da.PdfObject) error {
+	_ea, _be := oi.(*_da.PdfObjectDictionary)
+	if !_be {
+		return _c.New("\u0069\u006e\u0070\u0075\u0074\u0020\u006f\u0075\u0074\u0070\u0075\u0074\u0020\u0069\u006e\u0074\u0065\u006et\u0020\u0073\u0068\u006f\u0075\u006c\u0064 \u0062\u0065\u0020\u0061\u006e\u0020\u006f\u0062\u006a\u0065\u0063t\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
+	}
+	if _ead, _fg := _da.GetStream(_ea.Get("\u0044\u0065\u0073\u0074\u004f\u0075\u0074\u0070\u0075\u0074\u0050\u0072o\u0066\u0069\u006c\u0065")); _fg {
+		_fffb._egb.Objects = append(_fffb._egb.Objects, _ead)
+	}
+	_aaa, _cc := oi.(*_da.PdfIndirectObject)
+	if !_cc {
+		_aaa = _da.MakeIndirectObject(oi)
+	}
+	if _fffb._aea == nil {
+		_fffb._aea = _da.MakeArray(_aaa)
+	} else {
+		_fffb._aea.Append(_aaa)
+	}
+	_fffb._egb.Objects = append(_fffb._egb.Objects, _aaa)
+	return nil
+}
+func (_ff *Catalog) GetMarkInfo() (*_da.PdfObjectDictionary, bool) {
+	_cd, _cgb := _da.GetDict(_ff.Object.Get("\u004d\u0061\u0072\u006b\u0049\u006e\u0066\u006f"))
+	return _cd, _cgb
+}
+func (_dd *Catalog) SetOutputIntents(outputIntents *OutputIntents) {
+	if _cdc := _dd.Object.Get("\u004f\u0075\u0074\u0070\u0075\u0074\u0049\u006e\u0074\u0065\u006e\u0074\u0073"); _cdc != nil {
+		for _bb, _aga := range _dd._f.Objects {
+			if _aga == _cdc {
+				if outputIntents._fcb == _cdc {
+					return
+				}
+				_dd._f.Objects = append(_dd._f.Objects[:_bb], _dd._f.Objects[_bb+1:]...)
+				break
+			}
+		}
+	}
+	_aa := outputIntents._fcb
+	if _aa == nil {
+		_aa = _da.MakeIndirectObject(outputIntents._aea)
+	}
+	_dd.Object.Set("\u004f\u0075\u0074\u0070\u0075\u0074\u0049\u006e\u0074\u0065\u006e\u0074\u0073", _aa)
+	_dd._f.Objects = append(_dd._f.Objects, _aa)
+}
+func (_cdb Page) FindXObjectForms() []*_da.PdfObjectStream {
+	_fad, _abd := _cdb.GetResourcesXObject()
+	if !_abd {
+		return nil
+	}
+	_gaa := map[*_da.PdfObjectStream]struct{}{}
+	var _fbd func(_eeg *_da.PdfObjectDictionary, _bga map[*_da.PdfObjectStream]struct{})
+	_fbd = func(_cfe *_da.PdfObjectDictionary, _cfc map[*_da.PdfObjectStream]struct{}) {
+		for _, _gad := range _cfe.Keys() {
+			_gag, _gab := _da.GetStream(_cfe.Get(_gad))
+			if !_gab {
+				continue
+			}
+			if _, _abc := _cfc[_gag]; _abc {
+				continue
+			}
+			_ffa, _fbb := _da.GetName(_gag.Get("\u0053u\u0062\u0074\u0079\u0070\u0065"))
+			if !_fbb || _ffa.String() != "\u0046\u006f\u0072\u006d" {
+				continue
+			}
+			_cfc[_gag] = struct{}{}
+			_cee, _fbb := _da.GetDict(_gag.Get("\u0052e\u0073\u006f\u0075\u0072\u0063\u0065s"))
+			if !_fbb {
+				continue
+			}
+			_abe, _adf := _da.GetDict(_cee.Get("\u0058O\u0062\u006a\u0065\u0063\u0074"))
+			if _adf {
+				_fbd(_abe, _cfc)
+			}
+		}
+	}
+	_fbd(_fad, _gaa)
+	var _cfee []*_da.PdfObjectStream
+	for _dcb := range _gaa {
+		_cfee = append(_cfee, _dcb)
+	}
+	return _cfee
+}
+func (_ga *Document) AddIndirectObject(indirect *_da.PdfIndirectObject) {
+	for _, _fab := range _ga.Objects {
+		if _fab == indirect {
 			return
 		}
 	}
-	_ba.Objects = append(_ba.Objects, stream)
+	_ga.Objects = append(_ga.Objects, indirect)
+}
+func (_dg *Document) AddStream(stream *_da.PdfObjectStream) {
+	for _, _ega := range _dg.Objects {
+		if _ega == stream {
+			return
+		}
+	}
+	_dg.Objects = append(_dg.Objects, stream)
 }

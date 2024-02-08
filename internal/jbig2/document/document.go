@@ -1,519 +1,330 @@
 package document
 
 import (
-	_c "encoding/binary"
-	_cc "fmt"
-	_ea "io"
-	_ec "math"
-	_ccb "runtime/debug"
+	_d "encoding/binary"
+	_cb "fmt"
+	_g "io"
+	_ca "math"
+	_f "runtime/debug"
 
-	_f "bitbucket.org/shenghui0779/gopdf/common"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_a "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
-	_ee "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
-	_ecd "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document/segments"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/encoder/classer"
-	_ab "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_a "bitbucket.org/shenghui0779/gopdf/common"
+	_ac "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_gf "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
+	_ag "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
+	_ae "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document/segments"
+	_b "bitbucket.org/shenghui0779/gopdf/internal/jbig2/encoder/classer"
+	_df "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
 )
 
-func (_gdge *Document) determineRandomDataOffsets(_cce []*_ecd.Header, _bfc uint64) {
-	if _gdge.OrganizationType != _ecd.ORandom {
-		return
+func (_cfg *Document) encodeEOFHeader(_cdc _ac.BinaryWriter) (_fdd int, _ge error) {
+	_abdb := &_ae.Header{SegmentNumber: _cfg.nextSegmentNumber(), Type: _ae.TEndOfFile}
+	if _fdd, _ge = _abdb.Encode(_cdc); _ge != nil {
+		return 0, _df.Wrap(_ge, "\u0065n\u0063o\u0064\u0065\u0045\u004f\u0046\u0048\u0065\u0061\u0064\u0065\u0072", "")
 	}
-	for _, _fabb := range _cce {
-		_fabb.SegmentDataStartOffset = _bfc
-		_bfc += _fabb.SegmentDataLength
-	}
+	return _fdd, nil
 }
-
-type Globals struct{ Segments []*_ecd.Header }
-
-func (_cag *Page) String() string {
-	return _cc.Sprintf("\u0050\u0061\u0067\u0065\u0020\u0023\u0025\u0064", _cag.PageNumber)
+func (_ccf *Page) GetResolutionX() (int, error) { return _ccf.getResolutionX() }
+func (_fgca *Page) String() string {
+	return _cb.Sprintf("\u0050\u0061\u0067\u0065\u0020\u0023\u0025\u0064", _fgca.PageNumber)
 }
-func (_gda *Document) produceClassifiedPage(_ccg *Page, _de *_ecd.Header) (_aba error) {
-	const _ebd = "p\u0072\u006f\u0064\u0075ce\u0043l\u0061\u0073\u0073\u0069\u0066i\u0065\u0064\u0050\u0061\u0067\u0065"
-	var _edb map[int]int
-	_gb := _gda._db
-	_ddf := []*_ecd.Header{_de}
-	if len(_gda._dc[_ccg.PageNumber]) > 0 {
-		_edb = map[int]int{}
-		_eed, _ae := _gda.addSymbolDictionary(_ccg.PageNumber, _gda.Classer.UndilatedTemplates, _gda._dc[_ccg.PageNumber], _edb, false)
-		if _ae != nil {
-			return _ab.Wrap(_ae, _ebd, "")
-		}
-		_ddf = append(_ddf, _eed)
-		_gb += len(_gda._dc[_ccg.PageNumber])
-	}
-	_dca := _gda._da[_ccg.PageNumber]
-	_f.Log.Debug("P\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020c\u006f\u006d\u0070\u0073: \u0025\u0076", _ccg.PageNumber, _dca)
-	_ccg.addTextRegionSegment(_ddf, _gda._dgf, _edb, _gda._da[_ccg.PageNumber], _gda.Classer.PtaLL, _gda.Classer.UndilatedTemplates, _gda.Classer.ClassIDs, nil, _ad(_gb), len(_gda._da[_ccg.PageNumber]))
-	return nil
-}
-
-const (
-	GenericEM EncodingMethod = iota
-	CorrelationEM
-	RankHausEM
-)
-
-func (_bdd *Document) GetPage(pageNumber int) (_ecd.Pager, error) {
-	const _cd = "\u0044\u006fc\u0075\u006d\u0065n\u0074\u002e\u0047\u0065\u0074\u0050\u0061\u0067\u0065"
-	if pageNumber < 0 {
-		_f.Log.Debug("\u004a\u0042\u0049\u00472\u0020\u0050\u0061\u0067\u0065\u0020\u002d\u0020\u0047e\u0074\u0050\u0061\u0067\u0065\u003a\u0020\u0025\u0064\u002e\u0020\u0050\u0061\u0067\u0065\u0020\u0063\u0061n\u006e\u006f\u0074\u0020\u0062e\u0020\u006c\u006f\u0077\u0065\u0072\u0020\u0074\u0068\u0061\u006e\u0020\u0030\u002e\u0020\u0025\u0073", pageNumber, _ccb.Stack())
-		return nil, _ab.Errorf(_cd, "\u0069\u006e\u0076\u0061l\u0069\u0064\u0020\u006a\u0062\u0069\u0067\u0032\u0020d\u006f\u0063\u0075\u006d\u0065\u006e\u0074\u0020\u002d\u0020\u0070\u0072\u006f\u0076\u0069\u0064\u0065\u0064 \u0069\u006e\u0076\u0061\u006ci\u0064\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u003a\u0020\u0025\u0064", pageNumber)
-	}
-	if pageNumber > len(_bdd.Pages) {
-		_f.Log.Debug("\u0050\u0061\u0067\u0065 n\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u003a\u0020\u0025\u0064\u002e\u0020%\u0073", pageNumber, _ccb.Stack())
-		return nil, _ab.Error(_cd, "\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u006a\u0062\u0069\u0067\u0032 \u0064\u006f\u0063\u0075\u006d\u0065n\u0074\u0020\u002d\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
-	}
-	_dgd, _deb := _bdd.Pages[pageNumber]
-	if !_deb {
-		_f.Log.Debug("\u0050\u0061\u0067\u0065 n\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u003a\u0020\u0025\u0064\u002e\u0020%\u0073", pageNumber, _ccb.Stack())
-		return nil, _ab.Errorf(_cd, "\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u006a\u0062\u0069\u0067\u0032 \u0064\u006f\u0063\u0075\u006d\u0065n\u0074\u0020\u002d\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
-	}
-	return _dgd, nil
-}
-func (_fdgd *Page) getResolutionX() (int, error) {
-	const _afda = "\u0067\u0065\u0074\u0052\u0065\u0073\u006f\u006c\u0075t\u0069\u006f\u006e\u0058"
-	if _fdgd.ResolutionX != 0 {
-		return _fdgd.ResolutionX, nil
-	}
-	_fada := _fdgd.getPageInformationSegment()
-	if _fada == nil {
-		return 0, _ab.Error(_afda, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
-	}
-	_cfbb, _eefg := _fada.GetSegmentData()
-	if _eefg != nil {
-		return 0, _ab.Wrap(_eefg, _afda, "")
-	}
-	_aea, _dcfa := _cfbb.(*_ecd.PageInformationSegment)
-	if !_dcfa {
-		return 0, _ab.Errorf(_afda, "\u0070\u0061\u0067\u0065\u0020\u0069n\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0020\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073 \u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070e\u003a \u0027\u0025\u0054\u0027", _cfbb)
-	}
-	_fdgd.ResolutionX = _aea.ResolutionX
-	return _fdgd.ResolutionX, nil
-}
-func _ad(_bgc int) int {
-	_faf := 0
-	_abf := (_bgc & (_bgc - 1)) == 0
-	_bgc >>= 1
-	for ; _bgc != 0; _bgc >>= 1 {
-		_faf++
-	}
-	if _abf {
-		return _faf
-	}
-	return _faf + 1
-}
-func (_ebaa *Document) completeSymbols() (_edd error) {
-	const _ca = "\u0063o\u006dp\u006c\u0065\u0074\u0065\u0053\u0079\u006d\u0062\u006f\u006c\u0073"
-	if _ebaa.Classer == nil {
+func (_gd *Document) completeSymbols() (_eda error) {
+	const _eg = "\u0063o\u006dp\u006c\u0065\u0074\u0065\u0053\u0079\u006d\u0062\u006f\u006c\u0073"
+	if _gd.Classer == nil {
 		return nil
 	}
-	if _ebaa.Classer.UndilatedTemplates == nil {
-		return _ab.Error(_ca, "\u006e\u006f t\u0065\u006d\u0070l\u0061\u0074\u0065\u0073 de\u0066in\u0065\u0064\u0020\u0066\u006f\u0072\u0020th\u0065\u0020\u0063\u006c\u0061\u0073\u0073e\u0072")
+	if _gd.Classer.UndilatedTemplates == nil {
+		return _df.Error(_eg, "\u006e\u006f t\u0065\u006d\u0070l\u0061\u0074\u0065\u0073 de\u0066in\u0065\u0064\u0020\u0066\u006f\u0072\u0020th\u0065\u0020\u0063\u006c\u0061\u0073\u0073e\u0072")
 	}
-	_caa := len(_ebaa.Pages) == 1
-	_fab := make([]int, _ebaa.Classer.UndilatedTemplates.Size())
-	var _bef int
-	for _ccde := 0; _ccde < _ebaa.Classer.ClassIDs.Size(); _ccde++ {
-		_bef, _edd = _ebaa.Classer.ClassIDs.Get(_ccde)
-		if _edd != nil {
-			return _ab.Wrap(_edd, _ca, "\u0063\u006c\u0061\u0073\u0073\u0020\u0049\u0044\u0027\u0073")
+	_aga := len(_gd.Pages) == 1
+	_cf := make([]int, _gd.Classer.UndilatedTemplates.Size())
+	var _bac int
+	for _cdf := 0; _cdf < _gd.Classer.ClassIDs.Size(); _cdf++ {
+		_bac, _eda = _gd.Classer.ClassIDs.Get(_cdf)
+		if _eda != nil {
+			return _df.Wrap(_eda, _eg, "\u0063\u006c\u0061\u0073\u0073\u0020\u0049\u0044\u0027\u0073")
 		}
-		_fab[_bef]++
+		_cf[_bac]++
 	}
-	var _ga []int
-	for _ba := 0; _ba < _ebaa.Classer.UndilatedTemplates.Size(); _ba++ {
-		if _fab[_ba] == 0 {
-			return _ab.Error(_ca, "\u006eo\u0020\u0073y\u006d\u0062\u006f\u006cs\u0020\u0069\u006es\u0074\u0061\u006e\u0063\u0065\u0073\u0020\u0066\u006fun\u0064\u0020\u0066o\u0072\u0020g\u0069\u0076\u0065\u006e\u0020\u0063l\u0061\u0073s\u003f\u0020")
+	var _bae []int
+	for _db := 0; _db < _gd.Classer.UndilatedTemplates.Size(); _db++ {
+		if _cf[_db] == 0 {
+			return _df.Error(_eg, "\u006eo\u0020\u0073y\u006d\u0062\u006f\u006cs\u0020\u0069\u006es\u0074\u0061\u006e\u0063\u0065\u0073\u0020\u0066\u006fun\u0064\u0020\u0066o\u0072\u0020g\u0069\u0076\u0065\u006e\u0020\u0063l\u0061\u0073s\u003f\u0020")
 		}
-		if _fab[_ba] > 1 || _caa {
-			_ga = append(_ga, _ba)
-		}
-	}
-	_ebaa._db = len(_ga)
-	var _gba, _cf int
-	for _ade := 0; _ade < _ebaa.Classer.ComponentPageNumbers.Size(); _ade++ {
-		_gba, _edd = _ebaa.Classer.ComponentPageNumbers.Get(_ade)
-		if _edd != nil {
-			return _ab.Wrapf(_edd, _ca, "p\u0061\u0067\u0065\u003a\u0020\u0027\u0025\u0064\u0027 \u006e\u006f\u0074\u0020\u0066\u006f\u0075nd\u0020\u0069\u006e\u0020t\u0068\u0065\u0020\u0063\u006c\u0061\u0073\u0073\u0065r \u0070\u0061g\u0065\u006e\u0075\u006d\u0062\u0065\u0072\u0073", _ade)
-		}
-		_cf, _edd = _ebaa.Classer.ClassIDs.Get(_ade)
-		if _edd != nil {
-			return _ab.Wrapf(_edd, _ca, "\u0063\u0061\u006e\u0027\u0074\u0020\u0067e\u0074\u0020\u0073y\u006d\u0062\u006f\u006c \u0066\u006f\u0072\u0020\u0070\u0061\u0067\u0065\u0020\u0027\u0025\u0064\u0027\u0020\u0066\u0072\u006f\u006d\u0020\u0063\u006c\u0061\u0073\u0073\u0065\u0072", _gba)
-		}
-		if _fab[_cf] == 1 && !_caa {
-			_ebaa._dc[_gba] = append(_ebaa._dc[_gba], _cf)
+		if _cf[_db] > 1 || _aga {
+			_bae = append(_bae, _db)
 		}
 	}
-	if _edd = _ebaa.Classer.ComputeLLCorners(); _edd != nil {
-		return _ab.Wrap(_edd, _ca, "")
+	_gd._cbc = len(_bae)
+	var _acc, _agd int
+	for _cc := 0; _cc < _gd.Classer.ComponentPageNumbers.Size(); _cc++ {
+		_acc, _eda = _gd.Classer.ComponentPageNumbers.Get(_cc)
+		if _eda != nil {
+			return _df.Wrapf(_eda, _eg, "p\u0061\u0067\u0065\u003a\u0020\u0027\u0025\u0064\u0027 \u006e\u006f\u0074\u0020\u0066\u006f\u0075nd\u0020\u0069\u006e\u0020t\u0068\u0065\u0020\u0063\u006c\u0061\u0073\u0073\u0065r \u0070\u0061g\u0065\u006e\u0075\u006d\u0062\u0065\u0072\u0073", _cc)
+		}
+		_agd, _eda = _gd.Classer.ClassIDs.Get(_cc)
+		if _eda != nil {
+			return _df.Wrapf(_eda, _eg, "\u0063\u0061\u006e\u0027\u0074\u0020\u0067e\u0074\u0020\u0073y\u006d\u0062\u006f\u006c \u0066\u006f\u0072\u0020\u0070\u0061\u0067\u0065\u0020\u0027\u0025\u0064\u0027\u0020\u0066\u0072\u006f\u006d\u0020\u0063\u006c\u0061\u0073\u0073\u0065\u0072", _acc)
+		}
+		if _cf[_agd] == 1 && !_aga {
+			_gd._gb[_acc] = append(_gd._gb[_acc], _agd)
+		}
+	}
+	if _eda = _gd.Classer.ComputeLLCorners(); _eda != nil {
+		return _df.Wrap(_eda, _eg, "")
 	}
 	return nil
 }
-func (_febg *Page) addTextRegionSegment(_cfb []*_ecd.Header, _dea, _ecde map[int]int, _dgdc []int, _cgd *_ee.Points, _abgb *_ee.Bitmaps, _dcc *_a.IntSlice, _gbf *_ee.Boxes, _abe, _cdce int) {
-	_ggcc := &_ecd.TextRegion{NumberOfSymbols: uint32(_cdce)}
-	_ggcc.InitEncode(_dea, _ecde, _dgdc, _cgd, _abgb, _dcc, _gbf, _febg.FinalWidth, _febg.FinalHeight, _abe)
-	_gbg := &_ecd.Header{RTSegments: _cfb, SegmentData: _ggcc, PageAssociation: _febg.PageNumber, Type: _ecd.TImmediateTextRegion}
-	_gcf := _ecd.TPageInformation
-	if _ecde != nil {
-		_gcf = _ecd.TSymbolDictionary
+func (_gbf *Page) getWidth() (int, error) {
+	const _fed = "\u0067\u0065\u0074\u0057\u0069\u0064\u0074\u0068"
+	if _gbf.FinalWidth != 0 {
+		return _gbf.FinalWidth, nil
 	}
-	var _egf int
-	for ; _egf < len(_febg.Segments); _egf++ {
-		if _febg.Segments[_egf].Type == _gcf {
-			_egf++
+	_afb := _gbf.getPageInformationSegment()
+	if _afb == nil {
+		return 0, _df.Error(_fed, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
+	}
+	_dcb, _gaga := _afb.GetSegmentData()
+	if _gaga != nil {
+		return 0, _df.Wrap(_gaga, _fed, "")
+	}
+	_aaedc, _fee := _dcb.(*_ae.PageInformationSegment)
+	if !_fee {
+		return 0, _df.Errorf(_fed, "\u0070\u0061\u0067\u0065\u0020\u0069n\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0020\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073 \u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070e\u003a \u0027\u0025\u0054\u0027", _dcb)
+	}
+	_gbf.FinalWidth = _aaedc.PageBMWidth
+	return _gbf.FinalWidth, nil
+}
+func (_geg *Page) AddEndOfPageSegment() {
+	_cfc := &_ae.Header{Type: _ae.TEndOfPage, PageAssociation: _geg.PageNumber}
+	_geg.Segments = append(_geg.Segments, _cfc)
+}
+func (_bdg *Page) GetHeight() (int, error) { return _bdg.getHeight() }
+func (_ce *Document) completeClassifiedPages() (_fg error) {
+	const _eb = "\u0063\u006f\u006dpl\u0065\u0074\u0065\u0043\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064\u0050\u0061\u0067\u0065\u0073"
+	if _ce.Classer == nil {
+		return nil
+	}
+	_ce._ab = make([]int, _ce.Classer.UndilatedTemplates.Size())
+	for _gbg := 0; _gbg < _ce.Classer.ClassIDs.Size(); _gbg++ {
+		_cba, _bd := _ce.Classer.ClassIDs.Get(_gbg)
+		if _bd != nil {
+			return _df.Wrapf(_bd, _eb, "\u0063\u006c\u0061\u0073s \u0077\u0069\u0074\u0068\u0020\u0069\u0064\u003a\u0020\u0027\u0025\u0064\u0027", _gbg)
+		}
+		_ce._ab[_cba]++
+	}
+	var _fa []int
+	for _dfg := 0; _dfg < _ce.Classer.UndilatedTemplates.Size(); _dfg++ {
+		if _ce.NumberOfPages == 1 || _ce._ab[_dfg] > 1 {
+			_fa = append(_fa, _dfg)
+		}
+	}
+	var (
+		_fad *Page
+		_acg bool
+	)
+	for _feb, _ee := range *_ce.Classer.ComponentPageNumbers {
+		if _fad, _acg = _ce.Pages[_ee]; !_acg {
+			return _df.Errorf(_eb, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _feb)
+		}
+		if _fad.EncodingMethod == GenericEM {
+			_a.Log.Error("\u0047\u0065\u006e\u0065\u0072\u0069c\u0020\u0070\u0061g\u0065\u0020\u0077i\u0074\u0068\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u003a \u0027\u0025\u0064\u0027\u0020ma\u0070\u0070\u0065\u0064\u0020\u0061\u0073\u0020\u0063\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064\u0020\u0070\u0061\u0067\u0065", _feb)
+			continue
+		}
+		_ce._da[_ee] = append(_ce._da[_ee], _feb)
+		_gga, _gbb := _ce.Classer.ClassIDs.Get(_feb)
+		if _gbb != nil {
+			return _df.Wrapf(_gbb, _eb, "\u006e\u006f\u0020\u0073uc\u0068\u0020\u0063\u006c\u0061\u0073\u0073\u0049\u0044\u003a\u0020\u0025\u0064", _feb)
+		}
+		if _ce._ab[_gga] == 1 && _ce.NumberOfPages != 1 {
+			_bg := append(_ce._gb[_ee], _gga)
+			_ce._gb[_ee] = _bg
+		}
+	}
+	if _fg = _ce.Classer.ComputeLLCorners(); _fg != nil {
+		return _df.Wrap(_fg, _eb, "")
+	}
+	if _, _fg = _ce.addSymbolDictionary(0, _ce.Classer.UndilatedTemplates, _fa, _ce._ea, false); _fg != nil {
+		return _df.Wrap(_fg, _eb, "")
+	}
+	return nil
+}
+func (_ggc *Page) addTextRegionSegment(_eef []*_ae.Header, _aaa, _dcd map[int]int, _ecc []int, _cge *_ag.Points, _fga *_ag.Bitmaps, _abed *_gf.IntSlice, _abee *_ag.Boxes, _aff, _ddd int) {
+	_gbeag := &_ae.TextRegion{NumberOfSymbols: uint32(_ddd)}
+	_gbeag.InitEncode(_aaa, _dcd, _ecc, _cge, _fga, _abed, _abee, _ggc.FinalWidth, _ggc.FinalHeight, _aff)
+	_eefb := &_ae.Header{RTSegments: _eef, SegmentData: _gbeag, PageAssociation: _ggc.PageNumber, Type: _ae.TImmediateTextRegion}
+	_cec := _ae.TPageInformation
+	if _dcd != nil {
+		_cec = _ae.TSymbolDictionary
+	}
+	var _bdd int
+	for ; _bdd < len(_ggc.Segments); _bdd++ {
+		if _ggc.Segments[_bdd].Type == _cec {
+			_bdd++
 			break
 		}
 	}
-	_febg.Segments = append(_febg.Segments, nil)
-	copy(_febg.Segments[_egf+1:], _febg.Segments[_egf:])
-	_febg.Segments[_egf] = _gbg
+	_ggc.Segments = append(_ggc.Segments, nil)
+	copy(_ggc.Segments[_bdd+1:], _ggc.Segments[_bdd:])
+	_ggc.Segments[_bdd] = _eefb
 }
-func _bfe(_gfa _g.StreamReader, _abd *Globals) (*Document, error) {
-	_dfc := &Document{Pages: make(map[int]*Page), InputStream: _gfa, OrganizationType: _ecd.OSequential, NumberOfPagesUnknown: true, GlobalSegments: _abd, _gd: 9}
-	if _dfc.GlobalSegments == nil {
-		_dfc.GlobalSegments = &Globals{}
-	}
-	if _ebfd := _dfc.mapData(); _ebfd != nil {
-		return nil, _ebfd
-	}
-	return _dfc, nil
+func (_acgf *Page) fitsPage(_fcg *_ae.PageInformationSegment, _aaed *_ag.Bitmap) bool {
+	return _acgf.countRegions() == 1 && _fcg.DefaultPixelValue == 0 && _fcg.PageBMWidth == _aaed.Width && _fcg.PageBMHeight == _aaed.Height
 }
-func (_cfd *Page) composePageBitmap() error {
-	const _adg = "\u0063\u006f\u006d\u0070\u006f\u0073\u0065\u0050\u0061\u0067\u0065\u0042i\u0074\u006d\u0061\u0070"
-	if _cfd.PageNumber == 0 {
+func (_def *Document) determineRandomDataOffsets(_dbf []*_ae.Header, _fdab uint64) {
+	if _def.OrganizationType != _ae.ORandom {
+		return
+	}
+	for _, _bce := range _dbf {
+		_bce.SegmentDataStartOffset = _fdab
+		_fdab += _bce.SegmentDataLength
+	}
+}
+func (_cbd *Page) getHeight() (int, error) {
+	const _bfee = "\u0067e\u0074\u0048\u0065\u0069\u0067\u0068t"
+	if _cbd.FinalHeight != 0 {
+		return _cbd.FinalHeight, nil
+	}
+	_dcdc := _cbd.getPageInformationSegment()
+	if _dcdc == nil {
+		return 0, _df.Error(_bfee, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
+	}
+	_gagf, _aeec := _dcdc.GetSegmentData()
+	if _aeec != nil {
+		return 0, _df.Wrap(_aeec, _bfee, "")
+	}
+	_ged, _fbf := _gagf.(*_ae.PageInformationSegment)
+	if !_fbf {
+		return 0, _df.Errorf(_bfee, "\u0070\u0061\u0067\u0065\u0020\u0069n\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0020\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073 \u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070e\u003a \u0027\u0025\u0054\u0027", _gagf)
+	}
+	if _ged.PageBMHeight == _ca.MaxInt32 {
+		_, _aeec = _cbd.GetBitmap()
+		if _aeec != nil {
+			return 0, _df.Wrap(_aeec, _bfee, "")
+		}
+	} else {
+		_cbd.FinalHeight = _ged.PageBMHeight
+	}
+	return _cbd.FinalHeight, nil
+}
+func _gegb(_fafb *Document, _ced int) *Page {
+	return &Page{Document: _fafb, PageNumber: _ced, Segments: []*_ae.Header{}}
+}
+func (_bab *Page) Encode(w _ac.BinaryWriter) (_dddb int, _fadd error) {
+	const _ggg = "P\u0061\u0067\u0065\u002e\u0045\u006e\u0063\u006f\u0064\u0065"
+	var _gaf int
+	for _, _feg := range _bab.Segments {
+		if _gaf, _fadd = _feg.Encode(w); _fadd != nil {
+			return _dddb, _df.Wrap(_fadd, _ggg, "")
+		}
+		_dddb += _gaf
+	}
+	return _dddb, nil
+}
+func (_faf *Document) GetGlobalSegment(i int) (*_ae.Header, error) {
+	_fdea, _bcg := _faf.GlobalSegments.GetSegment(i)
+	if _bcg != nil {
+		return nil, _df.Wrap(_bcg, "\u0047\u0065t\u0047\u006c\u006fb\u0061\u006c\u0053\u0065\u0067\u006d\u0065\u006e\u0074", "")
+	}
+	return _fdea, nil
+}
+func (_dcf *Page) GetWidth() (int, error) { return _dcf.getWidth() }
+func (_gfc *Page) composePageBitmap() error {
+	const _egb = "\u0063\u006f\u006d\u0070\u006f\u0073\u0065\u0050\u0061\u0067\u0065\u0042i\u0074\u006d\u0061\u0070"
+	if _gfc.PageNumber == 0 {
 		return nil
 	}
-	_dbg := _cfd.getPageInformationSegment()
-	if _dbg == nil {
-		return _ab.Error(_adg, "\u0070\u0061\u0067e \u0069\u006e\u0066\u006f\u0072\u006d\u0061\u0074\u0069o\u006e \u0073e\u0067m\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
+	_fded := _gfc.getPageInformationSegment()
+	if _fded == nil {
+		return _df.Error(_egb, "\u0070\u0061\u0067e \u0069\u006e\u0066\u006f\u0072\u006d\u0061\u0074\u0069o\u006e \u0073e\u0067m\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
 	}
-	_ggcb, _cba := _dbg.GetSegmentData()
-	if _cba != nil {
-		return _cba
+	_fecg, _cbbg := _fded.GetSegmentData()
+	if _cbbg != nil {
+		return _cbbg
 	}
-	_afcf, _ecg := _ggcb.(*_ecd.PageInformationSegment)
-	if !_ecg {
-		return _ab.Error(_adg, "\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006da\u0074\u0069\u006f\u006e \u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073\u0020\u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070\u0065")
+	_fdfg, _cae := _fecg.(*_ae.PageInformationSegment)
+	if !_cae {
+		return _df.Error(_egb, "\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006da\u0074\u0069\u006f\u006e \u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073\u0020\u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070\u0065")
 	}
-	if _cba = _cfd.createPage(_afcf); _cba != nil {
-		return _ab.Wrap(_cba, _adg, "")
+	if _cbbg = _gfc.createPage(_fdfg); _cbbg != nil {
+		return _df.Wrap(_cbbg, _egb, "")
 	}
-	_cfd.clearSegmentData()
+	_gfc.clearSegmentData()
 	return nil
 }
-func (_babec *Page) GetBitmap() (_gge *_ee.Bitmap, _gfgf error) {
-	_f.Log.Trace(_cc.Sprintf("\u005b\u0050\u0041G\u0045\u005d\u005b\u0023%\u0064\u005d\u0020\u0047\u0065\u0074\u0042i\u0074\u006d\u0061\u0070\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e", _babec.PageNumber))
+func (_fgg *Page) getCombinationOperator(_debb *_ae.PageInformationSegment, _ecf _ag.CombinationOperator) _ag.CombinationOperator {
+	if _debb.CombinationOperatorOverrideAllowed() {
+		return _ecf
+	}
+	return _debb.CombinationOperator()
+}
+func (_dcbg *Page) nextSegmentNumber() uint32 { return _dcbg.Document.nextSegmentNumber() }
+func _dbg(_cdfd *_ac.Reader, _fcf *Globals) (*Document, error) {
+	_aad := &Document{Pages: make(map[int]*Page), InputStream: _cdfd, OrganizationType: _ae.OSequential, NumberOfPagesUnknown: true, GlobalSegments: _fcf, _e: 9}
+	if _aad.GlobalSegments == nil {
+		_aad.GlobalSegments = &Globals{}
+	}
+	if _accg := _aad.mapData(); _accg != nil {
+		return nil, _accg
+	}
+	return _aad, nil
+}
+func (_abg *Globals) GetSymbolDictionary() (*_ae.Header, error) {
+	const _gbeg = "G\u006c\u006f\u0062\u0061\u006c\u0073.\u0047\u0065\u0074\u0053\u0079\u006d\u0062\u006f\u006cD\u0069\u0063\u0074i\u006fn\u0061\u0072\u0079"
+	if _abg == nil {
+		return nil, _df.Error(_gbeg, "\u0067\u006c\u006f\u0062al\u0073\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066\u0069\u006e\u0065\u0064")
+	}
+	if len(_abg.Segments) == 0 {
+		return nil, _df.Error(_gbeg, "\u0067\u006c\u006f\u0062\u0061\u006c\u0073\u0020\u0061\u0072\u0065\u0020e\u006d\u0070\u0074\u0079")
+	}
+	for _, _ddf := range _abg.Segments {
+		if _ddf.Type == _ae.TSymbolDictionary {
+			return _ddf, nil
+		}
+	}
+	return nil, _df.Error(_gbeg, "\u0067\u006c\u006fba\u006c\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0020d\u0069c\u0074i\u006fn\u0061\u0072\u0079\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
+}
+func (_bfa *Page) GetBitmap() (_gcf *_ag.Bitmap, _edg error) {
+	_a.Log.Trace(_cb.Sprintf("\u005b\u0050\u0041G\u0045\u005d\u005b\u0023%\u0064\u005d\u0020\u0047\u0065\u0074\u0042i\u0074\u006d\u0061\u0070\u0020\u0062\u0065\u0067\u0069\u006e\u0073\u002e\u002e\u002e", _bfa.PageNumber))
 	defer func() {
-		if _gfgf != nil {
-			_f.Log.Trace(_cc.Sprintf("\u005b\u0050\u0041\u0047\u0045\u005d\u005b\u0023\u0025\u0064\u005d\u0020\u0047\u0065\u0074B\u0069t\u006d\u0061\u0070\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0076", _babec.PageNumber, _gfgf))
+		if _edg != nil {
+			_a.Log.Trace(_cb.Sprintf("\u005b\u0050\u0041\u0047\u0045\u005d\u005b\u0023\u0025\u0064\u005d\u0020\u0047\u0065\u0074B\u0069t\u006d\u0061\u0070\u0020\u0066\u0061\u0069\u006c\u0065\u0064\u002e\u0020\u0025\u0076", _bfa.PageNumber, _edg))
 		} else {
-			_f.Log.Trace(_cc.Sprintf("\u005b\u0050\u0041\u0047\u0045\u005d\u005b\u0023\u0025\u0064]\u0020\u0047\u0065\u0074\u0042\u0069\u0074m\u0061\u0070\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064", _babec.PageNumber))
+			_a.Log.Trace(_cb.Sprintf("\u005b\u0050\u0041\u0047\u0045\u005d\u005b\u0023\u0025\u0064]\u0020\u0047\u0065\u0074\u0042\u0069\u0074m\u0061\u0070\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064", _bfa.PageNumber))
 		}
 	}()
-	if _babec.Bitmap != nil {
-		return _babec.Bitmap, nil
+	if _bfa.Bitmap != nil {
+		return _bfa.Bitmap, nil
 	}
-	_gfgf = _babec.composePageBitmap()
-	if _gfgf != nil {
-		return nil, _gfgf
+	_edg = _bfa.composePageBitmap()
+	if _edg != nil {
+		return nil, _edg
 	}
-	return _babec.Bitmap, nil
+	return _bfa.Bitmap, nil
 }
-func (_efe *Document) nextSegmentNumber() uint32 {
-	_agd := _efe.CurrentSegmentNumber
-	_efe.CurrentSegmentNumber++
-	return _agd
-}
-func (_becb *Document) mapData() error {
-	const _cda = "\u006da\u0070\u0044\u0061\u0074\u0061"
-	var (
-		_caf []*_ecd.Header
-		_gag int64
-		_aff _ecd.Type
-	)
-	_cfe, _bgee := _becb.isFileHeaderPresent()
-	if _bgee != nil {
-		return _ab.Wrap(_bgee, _cda, "")
+func (_efa *Document) produceClassifiedPage(_ba *Page, _ggb *_ae.Header) (_bgg error) {
+	const _fd = "p\u0072\u006f\u0064\u0075ce\u0043l\u0061\u0073\u0073\u0069\u0066i\u0065\u0064\u0050\u0061\u0067\u0065"
+	var _ebb map[int]int
+	_bgf := _efa._cbc
+	_bad := []*_ae.Header{_ggb}
+	if len(_efa._gb[_ba.PageNumber]) > 0 {
+		_ebb = map[int]int{}
+		_fdf, _efd := _efa.addSymbolDictionary(_ba.PageNumber, _efa.Classer.UndilatedTemplates, _efa._gb[_ba.PageNumber], _ebb, false)
+		if _efd != nil {
+			return _df.Wrap(_efd, _fd, "")
+		}
+		_bad = append(_bad, _fdf)
+		_bgf += len(_efa._gb[_ba.PageNumber])
 	}
-	if _cfe {
-		if _bgee = _becb.parseFileHeader(); _bgee != nil {
-			return _ab.Wrap(_bgee, _cda, "")
-		}
-		_gag += int64(_becb._gd)
-		_becb.FullHeaders = true
-	}
-	var (
-		_dcg *Page
-		_fgb bool
-	)
-	for _aff != 51 && !_fgb {
-		_bfbf, _fef := _ecd.NewHeader(_becb, _becb.InputStream, _gag, _becb.OrganizationType)
-		if _fef != nil {
-			return _ab.Wrap(_fef, _cda, "")
-		}
-		_f.Log.Trace("\u0044\u0065c\u006f\u0064\u0069\u006eg\u0020\u0073e\u0067\u006d\u0065\u006e\u0074\u0020\u006e\u0075m\u0062\u0065\u0072\u003a\u0020\u0025\u0064\u002c\u0020\u0054\u0079\u0070e\u003a\u0020\u0025\u0073", _bfbf.SegmentNumber, _bfbf.Type)
-		_aff = _bfbf.Type
-		if _aff != _ecd.TEndOfFile {
-			if _bfbf.PageAssociation != 0 {
-				_dcg = _becb.Pages[_bfbf.PageAssociation]
-				if _dcg == nil {
-					_dcg = _dgc(_becb, _bfbf.PageAssociation)
-					_becb.Pages[_bfbf.PageAssociation] = _dcg
-					if _becb.NumberOfPagesUnknown {
-						_becb.NumberOfPages++
-					}
-				}
-				_dcg.Segments = append(_dcg.Segments, _bfbf)
-			} else {
-				_becb.GlobalSegments.AddSegment(_bfbf)
-			}
-		}
-		_caf = append(_caf, _bfbf)
-		_gag = _becb.InputStream.StreamPosition()
-		if _becb.OrganizationType == _ecd.OSequential {
-			_gag += int64(_bfbf.SegmentDataLength)
-		}
-		_fgb, _fef = _becb.reachedEOF(_gag)
-		if _fef != nil {
-			_f.Log.Debug("\u006a\u0062\u0069\u0067\u0032 \u0064\u006f\u0063\u0075\u006d\u0065\u006e\u0074\u0020\u0072\u0065\u0061\u0063h\u0065\u0064\u0020\u0045\u004f\u0046\u0020\u0077\u0069\u0074\u0068\u0020\u0065\u0072\u0072\u006f\u0072\u003a\u0020\u0025\u0076", _fef)
-			return _ab.Wrap(_fef, _cda, "")
-		}
-	}
-	_becb.determineRandomDataOffsets(_caf, uint64(_gag))
+	_cga := _efa._da[_ba.PageNumber]
+	_a.Log.Debug("P\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020c\u006f\u006d\u0070\u0073: \u0025\u0076", _ba.PageNumber, _cga)
+	_ba.addTextRegionSegment(_bad, _efa._ea, _ebb, _efa._da[_ba.PageNumber], _efa.Classer.PtaLL, _efa.Classer.UndilatedTemplates, _efa.Classer.ClassIDs, nil, _dc(_bgf), len(_efa._da[_ba.PageNumber]))
 	return nil
 }
-func (_fad *Document) encodeSegment(_dbc *_ecd.Header, _eca *int) error {
-	const _dbb = "\u0065\u006e\u0063\u006f\u0064\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074"
-	_dbc.SegmentNumber = _fad.nextSegmentNumber()
-	_dec, _gf := _dbc.Encode(_fad._eec)
-	if _gf != nil {
-		return _ab.Wrapf(_gf, _dbb, "\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u003a\u0020\u0027\u0025\u0064\u0027", _dbc.SegmentNumber)
-	}
-	*_eca += _dec
-	return nil
-}
-func (_fgea *Page) getWidth() (int, error) {
-	const _faa = "\u0067\u0065\u0074\u0057\u0069\u0064\u0074\u0068"
-	if _fgea.FinalWidth != 0 {
-		return _fgea.FinalWidth, nil
-	}
-	_bgd := _fgea.getPageInformationSegment()
-	if _bgd == nil {
-		return 0, _ab.Error(_faa, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
-	}
-	_dcee, _bce := _bgd.GetSegmentData()
-	if _bce != nil {
-		return 0, _ab.Wrap(_bce, _faa, "")
-	}
-	_fca, _afd := _dcee.(*_ecd.PageInformationSegment)
-	if !_afd {
-		return 0, _ab.Errorf(_faa, "\u0070\u0061\u0067\u0065\u0020\u0069n\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0020\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073 \u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070e\u003a \u0027\u0025\u0054\u0027", _dcee)
-	}
-	_fgea.FinalWidth = _fca.PageBMWidth
-	return _fgea.FinalWidth, nil
-}
-func (_gff *Page) createStripedPage(_ffc *_ecd.PageInformationSegment) error {
-	const _eedf = "\u0063\u0072\u0065\u0061\u0074\u0065\u0053\u0074\u0072\u0069\u0070\u0065d\u0050\u0061\u0067\u0065"
-	_ge, _gfc := _gff.collectPageStripes()
-	if _gfc != nil {
-		return _ab.Wrap(_gfc, _eedf, "")
-	}
-	var _aeda int
-	for _, _adgf := range _ge {
-		if _bdf, _bbg := _adgf.(*_ecd.EndOfStripe); _bbg {
-			_aeda = _bdf.LineNumber() + 1
-		} else {
-			_ece := _adgf.(_ecd.Regioner)
-			_feff := _ece.GetRegionInfo()
-			_cga := _gff.getCombinationOperator(_ffc, _feff.CombinaionOperator)
-			_cfbd, _aaf := _ece.GetRegionBitmap()
-			if _aaf != nil {
-				return _ab.Wrap(_aaf, _eedf, "")
-			}
-			_aaf = _ee.Blit(_cfbd, _gff.Bitmap, int(_feff.XLocation), _aeda, _cga)
-			if _aaf != nil {
-				return _ab.Wrap(_aaf, _eedf, "")
-			}
-		}
-	}
-	return nil
-}
-func (_dece *Document) GetGlobalSegment(i int) (*_ecd.Header, error) {
-	_bge, _fbf := _dece.GlobalSegments.GetSegment(i)
-	if _fbf != nil {
-		return nil, _ab.Wrap(_fbf, "\u0047\u0065t\u0047\u006c\u006fb\u0061\u006c\u0053\u0065\u0067\u006d\u0065\u006e\u0074", "")
-	}
-	return _bge, nil
-}
-func InitEncodeDocument(fullHeaders bool) *Document {
-	return &Document{FullHeaders: fullHeaders, _eec: _g.BufferedMSB(), Pages: map[int]*Page{}, _dc: map[int][]int{}, _dgf: map[int]int{}, _da: map[int][]int{}}
-}
-func (_beca *Page) createPage(_dcff *_ecd.PageInformationSegment) error {
-	var _fbd error
-	if !_dcff.IsStripe || _dcff.PageBMHeight != -1 {
-		_fbd = _beca.createNormalPage(_dcff)
-	} else {
-		_fbd = _beca.createStripedPage(_dcff)
-	}
-	return _fbd
-}
-func (_gdd *Document) nextPageNumber() uint32 { _gdd.NumberOfPages++; return _gdd.NumberOfPages }
-func (_ggcf *Document) GetNumberOfPages() (uint32, error) {
-	if _ggcf.NumberOfPagesUnknown || _ggcf.NumberOfPages == 0 {
-		if len(_ggcf.Pages) == 0 {
-			if _bab := _ggcf.mapData(); _bab != nil {
-				return 0, _ab.Wrap(_bab, "\u0044o\u0063\u0075\u006d\u0065n\u0074\u002e\u0047\u0065\u0074N\u0075m\u0062e\u0072\u004f\u0066\u0050\u0061\u0067\u0065s", "")
-			}
-		}
-		return uint32(len(_ggcf.Pages)), nil
-	}
-	return _ggcf.NumberOfPages, nil
-}
-func DecodeDocument(input _g.StreamReader, globals *Globals) (*Document, error) {
-	return _bfe(input, globals)
-}
-
-var _dg = []byte{0x97, 0x4A, 0x42, 0x32, 0x0D, 0x0A, 0x1A, 0x0A}
-
-func (_ded *Page) nextSegmentNumber() uint32 { return _ded.Document.nextSegmentNumber() }
-func (_fdd *Page) AddPageInformationSegment() {
-	_dag := &_ecd.PageInformationSegment{PageBMWidth: _fdd.FinalWidth, PageBMHeight: _fdd.FinalHeight, ResolutionX: _fdd.ResolutionX, ResolutionY: _fdd.ResolutionY, IsLossless: _fdd.IsLossless}
-	if _fdd.BlackIsOne {
-		_dag.DefaultPixelValue = uint8(0x1)
-	}
-	_dce := &_ecd.Header{PageAssociation: _fdd.PageNumber, SegmentDataLength: uint64(_dag.Size()), SegmentData: _dag, Type: _ecd.TPageInformation}
-	_fdd.Segments = append(_fdd.Segments, _dce)
-}
-func (_bg *Document) AddClassifiedPage(bm *_ee.Bitmap, method _d.Method) (_af error) {
-	const _eb = "\u0044\u006f\u0063\u0075\u006d\u0065\u006e\u0074\u002e\u0041\u0064d\u0043\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064P\u0061\u0067\u0065"
-	if !_bg.FullHeaders && _bg.NumberOfPages != 0 {
-		return _ab.Error(_eb, "\u0064\u006f\u0063\u0075\u006de\u006e\u0074\u0020\u0061\u006c\u0072\u0065a\u0064\u0079\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e\u0073\u0020\u0070\u0061\u0067\u0065\u002e\u0020\u0046\u0069\u006c\u0065\u004d\u006f\u0064\u0065\u0020\u0064\u0069\u0073\u0061\u006c\u006c\u006f\u0077\u0073\u0020\u0061\u0064\u0064i\u006e\u0067\u0020\u006d\u006f\u0072\u0065\u0020\u0074\u0068\u0061\u006e \u006f\u006e\u0065\u0020\u0070\u0061g\u0065")
-	}
-	if _bg.Classer == nil {
-		if _bg.Classer, _af = _d.Init(_d.DefaultSettings()); _af != nil {
-			return _ab.Wrap(_af, _eb, "")
-		}
-	}
-	_bf := int(_bg.nextPageNumber())
-	_ce := &Page{Segments: []*_ecd.Header{}, Bitmap: bm, Document: _bg, FinalHeight: bm.Height, FinalWidth: bm.Width, PageNumber: _bf}
-	_bg.Pages[_bf] = _ce
-	switch method {
-	case _d.RankHaus:
-		_ce.EncodingMethod = RankHausEM
-	case _d.Correlation:
-		_ce.EncodingMethod = CorrelationEM
-	}
-	_ce.AddPageInformationSegment()
-	if _af = _bg.Classer.AddPage(bm, _bf, method); _af != nil {
-		return _ab.Wrap(_af, _eb, "")
-	}
-	if _bg.FullHeaders {
-		_ce.AddEndOfPageSegment()
-	}
-	return nil
-}
-func (_decb *Page) GetSegment(number int) (*_ecd.Header, error) {
-	const _bfgc = "\u0050a\u0067e\u002e\u0047\u0065\u0074\u0053\u0065\u0067\u006d\u0065\u006e\u0074"
-	for _, _faeac := range _decb.Segments {
-		if _faeac.SegmentNumber == uint32(number) {
-			return _faeac, nil
-		}
-	}
-	_adee := make([]uint32, len(_decb.Segments))
-	for _fbb, _beb := range _decb.Segments {
-		_adee[_fbb] = _beb.SegmentNumber
-	}
-	return nil, _ab.Errorf(_bfgc, "\u0073e\u0067\u006d\u0065n\u0074\u0020\u0077i\u0074h \u006e\u0075\u006d\u0062\u0065\u0072\u003a \u0027\u0025\u0064\u0027\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u0020\u0069\u006e\u0020\u0074\u0068\u0065\u0020\u0070\u0061\u0067\u0065\u003a\u0020'%\u0064'\u002e\u0020\u004b\u006e\u006f\u0077n\u0020\u0073\u0065\u0067\u006de\u006e\u0074\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0073\u003a \u0025\u0076", number, _decb.PageNumber, _adee)
-}
-func (_bda *Page) collectPageStripes() (_gfd []_ecd.Segmenter, _fbfg error) {
-	const _fdb = "\u0063o\u006cl\u0065\u0063\u0074\u0050\u0061g\u0065\u0053t\u0072\u0069\u0070\u0065\u0073"
-	var _fce _ecd.Segmenter
-	for _, _ceg := range _bda.Segments {
-		switch _ceg.Type {
-		case 6, 7, 22, 23, 38, 39, 42, 43:
-			_fce, _fbfg = _ceg.GetSegmentData()
-			if _fbfg != nil {
-				return nil, _ab.Wrap(_fbfg, _fdb, "")
-			}
-			_gfd = append(_gfd, _fce)
-		case 50:
-			_fce, _fbfg = _ceg.GetSegmentData()
-			if _fbfg != nil {
-				return nil, _fbfg
-			}
-			_edbg, _bfeg := _fce.(*_ecd.EndOfStripe)
-			if !_bfeg {
-				return nil, _ab.Errorf(_fdb, "\u0045\u006e\u0064\u004f\u0066\u0053\u0074\u0072\u0069\u0070\u0065\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u006f\u0066\u0020\u0076\u0061l\u0069\u0064\u0020\u0074\u0079p\u0065\u003a \u0027\u0025\u0054\u0027", _fce)
-			}
-			_gfd = append(_gfd, _edbg)
-			_bda.FinalHeight = _edbg.LineNumber()
-		}
-	}
-	return _gfd, nil
-}
-func (_ddd *Document) encodeFileHeader(_ccc _g.BinaryWriter) (_cea int, _abg error) {
-	const _ac = "\u0065\u006ec\u006f\u0064\u0065F\u0069\u006c\u0065\u0048\u0065\u0061\u0064\u0065\u0072"
-	_cea, _abg = _ccc.Write(_dg)
-	if _abg != nil {
-		return _cea, _ab.Wrap(_abg, _ac, "\u0069\u0064")
-	}
-	if _abg = _ccc.WriteByte(0x01); _abg != nil {
-		return _cea, _ab.Wrap(_abg, _ac, "\u0066\u006c\u0061g\u0073")
-	}
-	_cea++
-	_aed := make([]byte, 4)
-	_c.BigEndian.PutUint32(_aed, _ddd.NumberOfPages)
-	_aad, _abg := _ccc.Write(_aed)
-	if _abg != nil {
-		return _aad, _ab.Wrap(_abg, _ac, "p\u0061\u0067\u0065\u0020\u006e\u0075\u006d\u0062\u0065\u0072")
-	}
-	_cea += _aad
-	return _cea, nil
-}
-func (_afa *Page) GetWidth() (int, error)       { return _afa.getWidth() }
-func (_dcf *Page) GetResolutionX() (int, error) { return _dcf.getResolutionX() }
-func (_cace *Page) Encode(w _g.BinaryWriter) (_ffa int, _cdca error) {
-	const _ffg = "P\u0061\u0067\u0065\u002e\u0045\u006e\u0063\u006f\u0064\u0065"
-	var _fgg int
-	for _, _gbfg := range _cace.Segments {
-		if _fgg, _cdca = _gbfg.Encode(w); _cdca != nil {
-			return _ffa, _ab.Wrap(_cdca, _ffg, "")
-		}
-		_ffa += _fgg
-	}
-	return _ffa, nil
-}
-func (_cef *Globals) AddSegment(segment *_ecd.Header) { _cef.Segments = append(_cef.Segments, segment) }
-func (_eda *Document) isFileHeaderPresent() (bool, error) {
-	_eda.InputStream.Mark()
-	for _, _daef := range _dg {
-		_gbdg, _fag := _eda.InputStream.ReadByte()
-		if _fag != nil {
-			return false, _fag
-		}
-		if _daef != _gbdg {
-			_eda.InputStream.Reset()
-			return false, nil
-		}
-	}
-	_eda.InputStream.Reset()
-	return true, nil
-}
-func (_aae *Page) clearSegmentData() {
-	for _ddg := range _aae.Segments {
-		_aae.Segments[_ddg].CleanSegmentData()
-	}
-}
-func (_agdc *Page) GetHeight() (int, error) { return _agdc.getHeight() }
 
 type Page struct {
-	Segments           []*_ecd.Header
+	Segments           []*_ae.Header
 	PageNumber         int
-	Bitmap             *_ee.Bitmap
+	Bitmap             *_ag.Bitmap
 	FinalHeight        int
 	FinalWidth         int
 	ResolutionX        int
@@ -525,132 +336,495 @@ type Page struct {
 	BlackIsOne         bool
 }
 
-func (_dba *Document) produceClassifiedPages() (_gg error) {
-	const _ccd = "\u0070\u0072\u006f\u0064uc\u0065\u0043\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064\u0050\u0061\u0067e\u0073"
-	if _dba.Classer == nil {
-		return nil
+func (_ebf *Page) getResolutionY() (int, error) {
+	const _aadd = "\u0067\u0065\u0074\u0052\u0065\u0073\u006f\u006c\u0075t\u0069\u006f\u006e\u0059"
+	if _ebf.ResolutionY != 0 {
+		return _ebf.ResolutionY, nil
 	}
-	var (
-		_dab *Page
-		_ed  bool
-		_ggc *_ecd.Header
-	)
-	for _feb := 1; _feb <= int(_dba.NumberOfPages); _feb++ {
-		if _dab, _ed = _dba.Pages[_feb]; !_ed {
-			return _ab.Errorf(_ccd, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _feb)
-		}
-		if _dab.EncodingMethod == GenericEM {
-			continue
-		}
-		if _ggc == nil {
-			if _ggc, _gg = _dba.GlobalSegments.GetSymbolDictionary(); _gg != nil {
-				return _ab.Wrap(_gg, _ccd, "")
+	_bfae := _ebf.getPageInformationSegment()
+	if _bfae == nil {
+		return 0, _df.Error(_aadd, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
+	}
+	_cdga, _bee := _bfae.GetSegmentData()
+	if _bee != nil {
+		return 0, _df.Wrap(_bee, _aadd, "")
+	}
+	_ecfg, _ebg := _cdga.(*_ae.PageInformationSegment)
+	if !_ebg {
+		return 0, _df.Errorf(_aadd, "\u0070\u0061\u0067\u0065\u0020\u0069\u006e\u0066o\u0072\u006d\u0061ti\u006f\u006e\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u0020\u0069\u0073\u0020\u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006ci\u0064\u0020\u0074\u0079\u0070\u0065\u003a\u0027%\u0054\u0027", _cdga)
+	}
+	_ebf.ResolutionY = _ecfg.ResolutionY
+	return _ebf.ResolutionY, nil
+}
+func (_gcb *Page) createStripedPage(_efc *_ae.PageInformationSegment) error {
+	const _dfgc = "\u0063\u0072\u0065\u0061\u0074\u0065\u0053\u0074\u0072\u0069\u0070\u0065d\u0050\u0061\u0067\u0065"
+	_ade, _ggce := _gcb.collectPageStripes()
+	if _ggce != nil {
+		return _df.Wrap(_ggce, _dfgc, "")
+	}
+	var _bbe int
+	for _, _aadf := range _ade {
+		if _add, _aee := _aadf.(*_ae.EndOfStripe); _aee {
+			_bbe = _add.LineNumber() + 1
+		} else {
+			_edga := _aadf.(_ae.Regioner)
+			_eec := _edga.GetRegionInfo()
+			_abdbg := _gcb.getCombinationOperator(_efc, _eec.CombinaionOperator)
+			_gcad, _bdcc := _edga.GetRegionBitmap()
+			if _bdcc != nil {
+				return _df.Wrap(_bdcc, _dfgc, "")
+			}
+			_bdcc = _ag.Blit(_gcad, _gcb.Bitmap, int(_eec.XLocation), _bbe, _abdbg)
+			if _bdcc != nil {
+				return _df.Wrap(_bdcc, _dfgc, "")
 			}
 		}
-		if _gg = _dba.produceClassifiedPage(_dab, _ggc); _gg != nil {
-			return _ab.Wrapf(_gg, _ccd, "\u0070\u0061\u0067\u0065\u003a\u0020\u0027\u0025\u0064\u0027", _feb)
+	}
+	return nil
+}
+func (_gaa *Document) parseFileHeader() error {
+	const _gfe = "\u0070a\u0072s\u0065\u0046\u0069\u006c\u0065\u0048\u0065\u0061\u0064\u0065\u0072"
+	_, _ceb := _gaa.InputStream.Seek(8, _g.SeekStart)
+	if _ceb != nil {
+		return _df.Wrap(_ceb, _gfe, "\u0069\u0064")
+	}
+	_, _ceb = _gaa.InputStream.ReadBits(5)
+	if _ceb != nil {
+		return _df.Wrap(_ceb, _gfe, "\u0072\u0065\u0073\u0065\u0072\u0076\u0065\u0064\u0020\u0062\u0069\u0074\u0073")
+	}
+	_fecd, _ceb := _gaa.InputStream.ReadBit()
+	if _ceb != nil {
+		return _df.Wrap(_ceb, _gfe, "\u0065x\u0074e\u006e\u0064\u0065\u0064\u0020t\u0065\u006dp\u006c\u0061\u0074\u0065\u0073")
+	}
+	if _fecd == 1 {
+		_gaa.GBUseExtTemplate = true
+	}
+	_fecd, _ceb = _gaa.InputStream.ReadBit()
+	if _ceb != nil {
+		return _df.Wrap(_ceb, _gfe, "\u0075\u006e\u006b\u006eow\u006e\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u0075\u006d\u0062\u0065\u0072")
+	}
+	if _fecd != 1 {
+		_gaa.NumberOfPagesUnknown = false
+	}
+	_fecd, _ceb = _gaa.InputStream.ReadBit()
+	if _ceb != nil {
+		return _df.Wrap(_ceb, _gfe, "\u006f\u0072\u0067\u0061\u006e\u0069\u007a\u0061\u0074\u0069\u006f\u006e \u0074\u0079\u0070\u0065")
+	}
+	_gaa.OrganizationType = _ae.OrganizationType(_fecd)
+	if !_gaa.NumberOfPagesUnknown {
+		_gaa.NumberOfPages, _ceb = _gaa.InputStream.ReadUint32()
+		if _ceb != nil {
+			return _df.Wrap(_ceb, _gfe, "\u006eu\u006db\u0065\u0072\u0020\u006f\u0066\u0020\u0070\u0061\u0067\u0065\u0073")
+		}
+		_gaa._e = 13
+	}
+	return nil
+}
+func (_fcd *Page) createNormalPage(_deb *_ae.PageInformationSegment) error {
+	const _gbbd = "\u0063\u0072e\u0061\u0074\u0065N\u006f\u0072\u006d\u0061\u006c\u0050\u0061\u0067\u0065"
+	_fcd.Bitmap = _ag.New(_deb.PageBMWidth, _deb.PageBMHeight)
+	if _deb.DefaultPixelValue != 0 {
+		_fcd.Bitmap.SetDefaultPixel()
+	}
+	for _, _gca := range _fcd.Segments {
+		switch _gca.Type {
+		case 6, 7, 22, 23, 38, 39, 42, 43:
+			_a.Log.Trace("\u0047\u0065\u0074\u0074in\u0067\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u003a\u0020\u0025\u0064", _gca.SegmentNumber)
+			_gad, _caa := _gca.GetSegmentData()
+			if _caa != nil {
+				return _caa
+			}
+			_afdc, _bcf := _gad.(_ae.Regioner)
+			if !_bcf {
+				_a.Log.Debug("\u0053\u0065g\u006d\u0065\u006e\u0074\u003a\u0020\u0025\u0054\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0052\u0065\u0067\u0069on\u0065\u0072", _gad)
+				return _df.Errorf(_gbbd, "i\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u006a\u0062i\u0067\u0032\u0020\u0073\u0065\u0067\u006den\u0074\u0020\u0074\u0079p\u0065\u0020\u002d\u0020\u006e\u006f\u0074\u0020\u0061 R\u0065\u0067i\u006f\u006e\u0065\u0072\u003a\u0020\u0025\u0054", _gad)
+			}
+			_ece, _caa := _afdc.GetRegionBitmap()
+			if _caa != nil {
+				return _df.Wrap(_caa, _gbbd, "")
+			}
+			if _fcd.fitsPage(_deb, _ece) {
+				_fcd.Bitmap = _ece
+			} else {
+				_fafd := _afdc.GetRegionInfo()
+				_gagg := _fcd.getCombinationOperator(_deb, _fafd.CombinaionOperator)
+				_caa = _ag.Blit(_ece, _fcd.Bitmap, int(_fafd.XLocation), int(_fafd.YLocation), _gagg)
+				if _caa != nil {
+					return _df.Wrap(_caa, _gbbd, "")
+				}
+			}
 		}
 	}
 	return nil
 }
-func (_eag *Document) completeClassifiedPages() (_bfb error) {
-	const _ff = "\u0063\u006f\u006dpl\u0065\u0074\u0065\u0043\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064\u0050\u0061\u0067\u0065\u0073"
-	if _eag.Classer == nil {
+func (_gfec *Globals) AddSegment(segment *_ae.Header) {
+	_gfec.Segments = append(_gfec.Segments, segment)
+}
+func (_eab *Globals) GetSegmentByIndex(index int) (*_ae.Header, error) {
+	const _bed = "\u0047l\u006f\u0062\u0061\u006cs\u002e\u0047\u0065\u0074\u0053e\u0067m\u0065n\u0074\u0042\u0079\u0049\u006e\u0064\u0065x"
+	if _eab == nil {
+		return nil, _df.Error(_bed, "\u0067\u006c\u006f\u0062al\u0073\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066\u0069\u006e\u0065\u0064")
+	}
+	if len(_eab.Segments) == 0 {
+		return nil, _df.Error(_bed, "\u0067\u006c\u006f\u0062\u0061\u006c\u0073\u0020\u0061\u0072\u0065\u0020e\u006d\u0070\u0074\u0079")
+	}
+	if index > len(_eab.Segments)-1 {
+		return nil, _df.Error(_bed, "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
+	}
+	return _eab.Segments[index], nil
+}
+func (_cg *Document) produceClassifiedPages() (_dd error) {
+	const _abd = "\u0070\u0072\u006f\u0064uc\u0065\u0043\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064\u0050\u0061\u0067e\u0073"
+	if _cg.Classer == nil {
 		return nil
 	}
-	_eag._fa = make([]int, _eag.Classer.UndilatedTemplates.Size())
-	for _dae := 0; _dae < _eag.Classer.ClassIDs.Size(); _dae++ {
-		_eg, _bfg := _eag.Classer.ClassIDs.Get(_dae)
-		if _bfg != nil {
-			return _ab.Wrapf(_bfg, _ff, "\u0063\u006c\u0061\u0073s \u0077\u0069\u0074\u0068\u0020\u0069\u0064\u003a\u0020\u0027\u0025\u0064\u0027", _dae)
+	var (
+		_bdc *Page
+		_bgd bool
+		_bf  *_ae.Header
+	)
+	for _bda := 1; _bda <= int(_cg.NumberOfPages); _bda++ {
+		if _bdc, _bgd = _cg.Pages[_bda]; !_bgd {
+			return _df.Errorf(_abd, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _bda)
 		}
-		_eag._fa[_eg]++
+		if _bdc.EncodingMethod == GenericEM {
+			continue
+		}
+		if _bf == nil {
+			if _bf, _dd = _cg.GlobalSegments.GetSymbolDictionary(); _dd != nil {
+				return _df.Wrap(_dd, _abd, "")
+			}
+		}
+		if _dd = _cg.produceClassifiedPage(_bdc, _bf); _dd != nil {
+			return _df.Wrapf(_dd, _abd, "\u0070\u0061\u0067\u0065\u003a\u0020\u0027\u0025\u0064\u0027", _bda)
+		}
 	}
-	var _eba []int
-	for _dd := 0; _dd < _eag.Classer.UndilatedTemplates.Size(); _dd++ {
-		if _eag.NumberOfPages == 1 || _eag._fa[_dd] > 1 {
-			_eba = append(_eba, _dd)
+	return nil
+}
+func (_dea *Page) AddPageInformationSegment() {
+	_gff := &_ae.PageInformationSegment{PageBMWidth: _dea.FinalWidth, PageBMHeight: _dea.FinalHeight, ResolutionX: _dea.ResolutionX, ResolutionY: _dea.ResolutionY, IsLossless: _dea.IsLossless}
+	if _dea.BlackIsOne {
+		_gff.DefaultPixelValue = uint8(0x1)
+	}
+	_cdbc := &_ae.Header{PageAssociation: _dea.PageNumber, SegmentDataLength: uint64(_gff.Size()), SegmentData: _gff, Type: _ae.TPageInformation}
+	_dea.Segments = append(_dea.Segments, _cdbc)
+}
+func (_gggc *Page) GetSegment(number int) (*_ae.Header, error) {
+	const _ebd = "\u0050a\u0067e\u002e\u0047\u0065\u0074\u0053\u0065\u0067\u006d\u0065\u006e\u0074"
+	for _, _ede := range _gggc.Segments {
+		if _ede.SegmentNumber == uint32(number) {
+			return _ede, nil
+		}
+	}
+	_cce := make([]uint32, len(_gggc.Segments))
+	for _afe, _cfgd := range _gggc.Segments {
+		_cce[_afe] = _cfgd.SegmentNumber
+	}
+	return nil, _df.Errorf(_ebd, "\u0073e\u0067\u006d\u0065n\u0074\u0020\u0077i\u0074h \u006e\u0075\u006d\u0062\u0065\u0072\u003a \u0027\u0025\u0064\u0027\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u0020\u0069\u006e\u0020\u0074\u0068\u0065\u0020\u0070\u0061\u0067\u0065\u003a\u0020'%\u0064'\u002e\u0020\u004b\u006e\u006f\u0077n\u0020\u0073\u0065\u0067\u006de\u006e\u0074\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0073\u003a \u0025\u0076", number, _gggc.PageNumber, _cce)
+}
+func (_fda *Document) GetNumberOfPages() (uint32, error) {
+	if _fda.NumberOfPagesUnknown || _fda.NumberOfPages == 0 {
+		if len(_fda.Pages) == 0 {
+			if _cag := _fda.mapData(); _cag != nil {
+				return 0, _df.Wrap(_cag, "\u0044o\u0063\u0075\u006d\u0065n\u0074\u002e\u0047\u0065\u0074N\u0075m\u0062e\u0072\u004f\u0066\u0050\u0061\u0067\u0065s", "")
+			}
+		}
+		return uint32(len(_fda.Pages)), nil
+	}
+	return _fda.NumberOfPages, nil
+}
+func (_cdb *Globals) GetSegment(segmentNumber int) (*_ae.Header, error) {
+	const _fbc = "\u0047l\u006fb\u0061\u006c\u0073\u002e\u0047e\u0074\u0053e\u0067\u006d\u0065\u006e\u0074"
+	if _cdb == nil {
+		return nil, _df.Error(_fbc, "\u0067\u006c\u006f\u0062al\u0073\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066\u0069\u006e\u0065\u0064")
+	}
+	if len(_cdb.Segments) == 0 {
+		return nil, _df.Error(_fbc, "\u0067\u006c\u006f\u0062\u0061\u006c\u0073\u0020\u0061\u0072\u0065\u0020e\u006d\u0070\u0074\u0079")
+	}
+	var _aae *_ae.Header
+	for _, _aae = range _cdb.Segments {
+		if _aae.SegmentNumber == uint32(segmentNumber) {
+			break
+		}
+	}
+	if _aae == nil {
+		return nil, _df.Error(_fbc, "\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
+	}
+	return _aae, nil
+}
+func (_bdf *Page) getPageInformationSegment() *_ae.Header {
+	for _, _adg := range _bdf.Segments {
+		if _adg.Type == _ae.TPageInformation {
+			return _adg
+		}
+	}
+	_a.Log.Debug("\u0050\u0061\u0067\u0065\u0020\u0069\u006e\u0066o\u0072\u006d\u0061ti\u006f\u006e\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u0020\u0066o\u0072\u0020\u0070\u0061\u0067\u0065\u003a\u0020%\u0073\u002e", _bdf)
+	return nil
+}
+func (_dgf *Document) Encode() (_agf []byte, _cbb error) {
+	const _bbg = "\u0044o\u0063u\u006d\u0065\u006e\u0074\u002e\u0045\u006e\u0063\u006f\u0064\u0065"
+	var _aed, _agc int
+	if _dgf.FullHeaders {
+		if _aed, _cbb = _dgf.encodeFileHeader(_dgf._dfa); _cbb != nil {
+			return nil, _df.Wrap(_cbb, _bbg, "")
 		}
 	}
 	var (
-		_bb *Page
-		_cb bool
+		_aeff bool
+		_efb  *_ae.Header
+		_gbea *Page
 	)
-	for _cg, _fe := range *_eag.Classer.ComponentPageNumbers {
-		if _bb, _cb = _eag.Pages[_fe]; !_cb {
-			return _ab.Errorf(_ff, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _cg)
-		}
-		if _bb.EncodingMethod == GenericEM {
-			_f.Log.Error("\u0047\u0065\u006e\u0065\u0072\u0069c\u0020\u0070\u0061g\u0065\u0020\u0077i\u0074\u0068\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u003a \u0027\u0025\u0064\u0027\u0020ma\u0070\u0070\u0065\u0064\u0020\u0061\u0073\u0020\u0063\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064\u0020\u0070\u0061\u0067\u0065", _cg)
-			continue
-		}
-		_eag._da[_fe] = append(_eag._da[_fe], _cg)
-		_ege, _dge := _eag.Classer.ClassIDs.Get(_cg)
-		if _dge != nil {
-			return _ab.Wrapf(_dge, _ff, "\u006e\u006f\u0020\u0073uc\u0068\u0020\u0063\u006c\u0061\u0073\u0073\u0049\u0044\u003a\u0020\u0025\u0064", _cg)
-		}
-		if _eag._fa[_ege] == 1 && _eag.NumberOfPages != 1 {
-			_gc := append(_eag._dc[_fe], _ege)
-			_eag._dc[_fe] = _gc
+	if _cbb = _dgf.completeClassifiedPages(); _cbb != nil {
+		return nil, _df.Wrap(_cbb, _bbg, "")
+	}
+	if _cbb = _dgf.produceClassifiedPages(); _cbb != nil {
+		return nil, _df.Wrap(_cbb, _bbg, "")
+	}
+	if _dgf.GlobalSegments != nil {
+		for _, _efb = range _dgf.GlobalSegments.Segments {
+			if _cbb = _dgf.encodeSegment(_efb, &_aed); _cbb != nil {
+				return nil, _df.Wrap(_cbb, _bbg, "")
+			}
 		}
 	}
-	if _bfb = _eag.Classer.ComputeLLCorners(); _bfb != nil {
-		return _ab.Wrap(_bfb, _ff, "")
+	for _gba := 1; _gba <= int(_dgf.NumberOfPages); _gba++ {
+		if _gbea, _aeff = _dgf.Pages[_gba]; !_aeff {
+			return nil, _df.Errorf(_bbg, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _gba)
+		}
+		for _, _efb = range _gbea.Segments {
+			if _cbb = _dgf.encodeSegment(_efb, &_aed); _cbb != nil {
+				return nil, _df.Wrap(_cbb, _bbg, "")
+			}
+		}
 	}
-	if _, _bfb = _eag.addSymbolDictionary(0, _eag.Classer.UndilatedTemplates, _eba, _eag._dgf, false); _bfb != nil {
-		return _ab.Wrap(_bfb, _ff, "")
+	if _dgf.FullHeaders {
+		if _agc, _cbb = _dgf.encodeEOFHeader(_dgf._dfa); _cbb != nil {
+			return nil, _df.Wrap(_cbb, _bbg, "")
+		}
+		_aed += _agc
+	}
+	_agf = _dgf._dfa.Data()
+	if len(_agf) != _aed {
+		_a.Log.Debug("\u0042\u0079\u0074\u0065\u0073 \u0077\u0072\u0069\u0074\u0074\u0065\u006e \u0028\u006e\u0029\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0065\u0071\u0075\u0061\u006c\u0020\u0074\u006f\u0020\u0074\u0068\u0065\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u0020\u006f\u0066\u0020t\u0068\u0065\u0020\u0064\u0061\u0074\u0061\u0020\u0065\u006e\u0063\u006fd\u0065\u0064\u003a\u0020\u0027\u0025d\u0027", _aed, len(_agf))
+	}
+	return _agf, nil
+}
+func (_ec *Document) reachedEOF(_aa int64) (bool, error) {
+	const _dbfa = "\u0072\u0065\u0061\u0063\u0068\u0065\u0064\u0045\u004f\u0046"
+	_, _dfbd := _ec.InputStream.Seek(_aa, _g.SeekStart)
+	if _dfbd != nil {
+		_a.Log.Debug("\u0072\u0065\u0061c\u0068\u0065\u0064\u0045\u004f\u0046\u0020\u002d\u0020\u0064\u002e\u0049\u006e\u0070\u0075\u0074\u0053\u0074\u0072\u0065\u0061\u006d\u002e\u0053\u0065\u0065\u006b\u0020\u0066a\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0076", _dfbd)
+		return false, _df.Wrap(_dfbd, _dbfa, "\u0069n\u0070\u0075\u0074\u0020\u0073\u0074\u0072\u0065\u0061\u006d\u0020s\u0065\u0065\u006b\u0020\u0066\u0061\u0069\u006c\u0065\u0064")
+	}
+	_, _dfbd = _ec.InputStream.ReadBits(32)
+	if _dfbd == _g.EOF {
+		return true, nil
+	} else if _dfbd != nil {
+		return false, _df.Wrap(_dfbd, _dbfa, "")
+	}
+	return false, nil
+}
+
+type Globals struct{ Segments []*_ae.Header }
+
+func InitEncodeDocument(fullHeaders bool) *Document {
+	return &Document{FullHeaders: fullHeaders, _dfa: _ac.BufferedMSB(), Pages: map[int]*Page{}, _gb: map[int][]int{}, _ea: map[int]int{}, _da: map[int][]int{}}
+}
+func (_bdgd *Page) getResolutionX() (int, error) {
+	const _bgdc = "\u0067\u0065\u0074\u0052\u0065\u0073\u006f\u006c\u0075t\u0069\u006f\u006e\u0058"
+	if _bdgd.ResolutionX != 0 {
+		return _bdgd.ResolutionX, nil
+	}
+	_ggcd := _bdgd.getPageInformationSegment()
+	if _ggcd == nil {
+		return 0, _df.Error(_bgdc, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
+	}
+	_baa, _cagg := _ggcd.GetSegmentData()
+	if _cagg != nil {
+		return 0, _df.Wrap(_cagg, _bgdc, "")
+	}
+	_dca, _bedg := _baa.(*_ae.PageInformationSegment)
+	if !_bedg {
+		return 0, _df.Errorf(_bgdc, "\u0070\u0061\u0067\u0065\u0020\u0069n\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0020\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073 \u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070e\u003a \u0027\u0025\u0054\u0027", _baa)
+	}
+	_bdgd.ResolutionX = _dca.ResolutionX
+	return _bdgd.ResolutionX, nil
+}
+func (_ccd *Document) mapData() error {
+	const _fgc = "\u006da\u0070\u0044\u0061\u0074\u0061"
+	var (
+		_abdc []*_ae.Header
+		_cfb  int64
+		_bbfg _ae.Type
+	)
+	_dde, _fb := _ccd.isFileHeaderPresent()
+	if _fb != nil {
+		return _df.Wrap(_fb, _fgc, "")
+	}
+	if _dde {
+		if _fb = _ccd.parseFileHeader(); _fb != nil {
+			return _df.Wrap(_fb, _fgc, "")
+		}
+		_cfb += int64(_ccd._e)
+		_ccd.FullHeaders = true
+	}
+	var (
+		_be   *Page
+		_defd bool
+	)
+	for _bbfg != 51 && !_defd {
+		_efbb, _bcb := _ae.NewHeader(_ccd, _ccd.InputStream, _cfb, _ccd.OrganizationType)
+		if _bcb != nil {
+			return _df.Wrap(_bcb, _fgc, "")
+		}
+		_a.Log.Trace("\u0044\u0065c\u006f\u0064\u0069\u006eg\u0020\u0073e\u0067\u006d\u0065\u006e\u0074\u0020\u006e\u0075m\u0062\u0065\u0072\u003a\u0020\u0025\u0064\u002c\u0020\u0054\u0079\u0070e\u003a\u0020\u0025\u0073", _efbb.SegmentNumber, _efbb.Type)
+		_bbfg = _efbb.Type
+		if _bbfg != _ae.TEndOfFile {
+			if _efbb.PageAssociation != 0 {
+				_be = _ccd.Pages[_efbb.PageAssociation]
+				if _be == nil {
+					_be = _gegb(_ccd, _efbb.PageAssociation)
+					_ccd.Pages[_efbb.PageAssociation] = _be
+					if _ccd.NumberOfPagesUnknown {
+						_ccd.NumberOfPages++
+					}
+				}
+				_be.Segments = append(_be.Segments, _efbb)
+			} else {
+				_ccd.GlobalSegments.AddSegment(_efbb)
+			}
+		}
+		_abdc = append(_abdc, _efbb)
+		_cfb = _ccd.InputStream.AbsolutePosition()
+		if _ccd.OrganizationType == _ae.OSequential {
+			_cfb += int64(_efbb.SegmentDataLength)
+		}
+		_defd, _bcb = _ccd.reachedEOF(_cfb)
+		if _bcb != nil {
+			_a.Log.Debug("\u006a\u0062\u0069\u0067\u0032 \u0064\u006f\u0063\u0075\u006d\u0065\u006e\u0074\u0020\u0072\u0065\u0061\u0063h\u0065\u0064\u0020\u0045\u004f\u0046\u0020\u0077\u0069\u0074\u0068\u0020\u0065\u0072\u0072\u006f\u0072\u003a\u0020\u0025\u0076", _bcb)
+			return _df.Wrap(_bcb, _fgc, "")
+		}
+	}
+	_ccd.determineRandomDataOffsets(_abdc, uint64(_cfb))
+	return nil
+}
+
+type EncodingMethod int
+
+func (_bcd *Page) collectPageStripes() (_cdba []_ae.Segmenter, _cecg error) {
+	const _dfe = "\u0063o\u006cl\u0065\u0063\u0074\u0050\u0061g\u0065\u0053t\u0072\u0069\u0070\u0065\u0073"
+	var _dgc _ae.Segmenter
+	for _, _eabd := range _bcd.Segments {
+		switch _eabd.Type {
+		case 6, 7, 22, 23, 38, 39, 42, 43:
+			_dgc, _cecg = _eabd.GetSegmentData()
+			if _cecg != nil {
+				return nil, _df.Wrap(_cecg, _dfe, "")
+			}
+			_cdba = append(_cdba, _dgc)
+		case 50:
+			_dgc, _cecg = _eabd.GetSegmentData()
+			if _cecg != nil {
+				return nil, _cecg
+			}
+			_bbd, _fgf := _dgc.(*_ae.EndOfStripe)
+			if !_fgf {
+				return nil, _df.Errorf(_dfe, "\u0045\u006e\u0064\u004f\u0066\u0053\u0074\u0072\u0069\u0070\u0065\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u006f\u0066\u0020\u0076\u0061l\u0069\u0064\u0020\u0074\u0079p\u0065\u003a \u0027\u0025\u0054\u0027", _dgc)
+			}
+			_cdba = append(_cdba, _bbd)
+			_bcd.FinalHeight = _bbd.LineNumber()
+		}
+	}
+	return _cdba, nil
+}
+func (_fdeg *Document) nextPageNumber() uint32 { _fdeg.NumberOfPages++; return _fdeg.NumberOfPages }
+func (_cd *Document) AddClassifiedPage(bm *_ag.Bitmap, method _b.Method) (_bb error) {
+	const _ef = "\u0044\u006f\u0063\u0075\u006d\u0065\u006e\u0074\u002e\u0041\u0064d\u0043\u006c\u0061\u0073\u0073\u0069\u0066\u0069\u0065\u0064P\u0061\u0067\u0065"
+	if !_cd.FullHeaders && _cd.NumberOfPages != 0 {
+		return _df.Error(_ef, "\u0064\u006f\u0063\u0075\u006de\u006e\u0074\u0020\u0061\u006c\u0072\u0065a\u0064\u0079\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e\u0073\u0020\u0070\u0061\u0067\u0065\u002e\u0020\u0046\u0069\u006c\u0065\u004d\u006f\u0064\u0065\u0020\u0064\u0069\u0073\u0061\u006c\u006c\u006f\u0077\u0073\u0020\u0061\u0064\u0064i\u006e\u0067\u0020\u006d\u006f\u0072\u0065\u0020\u0074\u0068\u0061\u006e \u006f\u006e\u0065\u0020\u0070\u0061g\u0065")
+	}
+	if _cd.Classer == nil {
+		if _cd.Classer, _bb = _b.Init(_b.DefaultSettings()); _bb != nil {
+			return _df.Wrap(_bb, _ef, "")
+		}
+	}
+	_aec := int(_cd.nextPageNumber())
+	_fe := &Page{Segments: []*_ae.Header{}, Bitmap: bm, Document: _cd, FinalHeight: bm.Height, FinalWidth: bm.Width, PageNumber: _aec}
+	_cd.Pages[_aec] = _fe
+	switch method {
+	case _b.RankHaus:
+		_fe.EncodingMethod = RankHausEM
+	case _b.Correlation:
+		_fe.EncodingMethod = CorrelationEM
+	}
+	_fe.AddPageInformationSegment()
+	if _bb = _cd.Classer.AddPage(bm, _aec, method); _bb != nil {
+		return _df.Wrap(_bb, _ef, "")
+	}
+	if _cd.FullHeaders {
+		_fe.AddEndOfPageSegment()
 	}
 	return nil
 }
-func (_eef *Page) GetResolutionY() (int, error) { return _eef.getResolutionY() }
-func (_egd *Page) getResolutionY() (int, error) {
-	const _cabf = "\u0067\u0065\u0074\u0052\u0065\u0073\u006f\u006c\u0075t\u0069\u006f\u006e\u0059"
-	if _egd.ResolutionY != 0 {
-		return _egd.ResolutionY, nil
+func (_ed *Document) addSymbolDictionary(_agb int, _fgb *_ag.Bitmaps, _bfb []int, _ga map[int]int, _bc bool) (*_ae.Header, error) {
+	const _dfb = "\u0061\u0064\u0064\u0053ym\u0062\u006f\u006c\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079"
+	_fc := &_ae.SymbolDictionary{}
+	if _caf := _fc.InitEncode(_fgb, _bfb, _ga, _bc); _caf != nil {
+		return nil, _caf
 	}
-	_gbe := _egd.getPageInformationSegment()
-	if _gbe == nil {
-		return 0, _ab.Error(_cabf, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
+	_gbe := &_ae.Header{Type: _ae.TSymbolDictionary, PageAssociation: _agb, SegmentData: _fc}
+	if _agb == 0 {
+		if _ed.GlobalSegments == nil {
+			_ed.GlobalSegments = &Globals{}
+		}
+		_ed.GlobalSegments.AddSegment(_gbe)
+		return _gbe, nil
 	}
-	_eae, _cgdg := _gbe.GetSegmentData()
-	if _cgdg != nil {
-		return 0, _ab.Wrap(_cgdg, _cabf, "")
+	_gae, _cdg := _ed.Pages[_agb]
+	if !_cdg {
+		return nil, _df.Errorf(_dfb, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _agb)
 	}
-	_bbc, _fbe := _eae.(*_ecd.PageInformationSegment)
-	if !_fbe {
-		return 0, _ab.Errorf(_cabf, "\u0070\u0061\u0067\u0065\u0020\u0069\u006e\u0066o\u0072\u006d\u0061ti\u006f\u006e\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u0020\u0069\u0073\u0020\u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006ci\u0064\u0020\u0074\u0079\u0070\u0065\u003a\u0027%\u0054\u0027", _eae)
-	}
-	_egd.ResolutionY = _bbc.ResolutionY
-	return _egd.ResolutionY, nil
-}
-func (_cbb *Page) getPageInformationSegment() *_ecd.Header {
-	for _, _deac := range _cbb.Segments {
-		if _deac.Type == _ecd.TPageInformation {
-			return _deac
+	var (
+		_dff int
+		_bfd *_ae.Header
+	)
+	for _dff, _bfd = range _gae.Segments {
+		if _bfd.Type == _ae.TPageInformation {
+			break
 		}
 	}
-	_f.Log.Debug("\u0050\u0061\u0067\u0065\u0020\u0069\u006e\u0066o\u0072\u006d\u0061ti\u006f\u006e\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u0020\u0066o\u0072\u0020\u0070\u0061\u0067\u0065\u003a\u0020%\u0073\u002e", _cbb)
+	_dff++
+	_gae.Segments = append(_gae.Segments, nil)
+	copy(_gae.Segments[_dff+1:], _gae.Segments[_dff:])
+	_gae.Segments[_dff] = _gbe
+	return _gbe, nil
+}
+func (_bfe *Page) GetResolutionY() (int, error) { return _bfe.getResolutionY() }
+func (_dbea *Page) createPage(_ggd *_ae.PageInformationSegment) error {
+	var _aag error
+	if !_ggd.IsStripe || _ggd.PageBMHeight != -1 {
+		_aag = _dbea.createNormalPage(_ggd)
+	} else {
+		_aag = _dbea.createStripedPage(_ggd)
+	}
+	return _aag
+}
+func (_defb *Page) lastSegmentNumber() (_ccde uint32, _egf error) {
+	const _fce = "\u006c\u0061\u0073\u0074\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u004eu\u006d\u0062\u0065\u0072"
+	if len(_defb.Segments) == 0 {
+		return _ccde, _df.Errorf(_fce, "\u006e\u006f\u0020se\u0067\u006d\u0065\u006e\u0074\u0073\u0020\u0066\u006fu\u006ed\u0020i\u006e \u0074\u0068\u0065\u0020\u0070\u0061\u0067\u0065\u0020\u0027\u0025\u0064\u0027", _defb.PageNumber)
+	}
+	return _defb.Segments[len(_defb.Segments)-1].SegmentNumber, nil
+}
+func (_ceg *Document) encodeSegment(_bde *_ae.Header, _cee *int) error {
+	const _ead = "\u0065\u006e\u0063\u006f\u0064\u0065\u0053\u0065\u0067\u006d\u0065\u006e\u0074"
+	_bde.SegmentNumber = _ceg.nextSegmentNumber()
+	_ad, _ebe := _bde.Encode(_ceg._dfa)
+	if _ebe != nil {
+		return _df.Wrapf(_ebe, _ead, "\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u003a\u0020\u0027\u0025\u0064\u0027", _bde.SegmentNumber)
+	}
+	*_cee += _ad
 	return nil
-}
-func (_dbcc *Document) encodeEOFHeader(_bcd _g.BinaryWriter) (_daa int, _gad error) {
-	_fgd := &_ecd.Header{SegmentNumber: _dbcc.nextSegmentNumber(), Type: _ecd.TEndOfFile}
-	if _daa, _gad = _fgd.Encode(_bcd); _gad != nil {
-		return 0, _ab.Wrap(_gad, "\u0065n\u0063o\u0064\u0065\u0045\u004f\u0046\u0048\u0065\u0061\u0064\u0065\u0072", "")
-	}
-	return _daa, nil
-}
-func (_fbc *Globals) GetSegmentByIndex(index int) (*_ecd.Header, error) {
-	const _eedg = "\u0047l\u006f\u0062\u0061\u006cs\u002e\u0047\u0065\u0074\u0053e\u0067m\u0065n\u0074\u0042\u0079\u0049\u006e\u0064\u0065x"
-	if _fbc == nil {
-		return nil, _ab.Error(_eedg, "\u0067\u006c\u006f\u0062al\u0073\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066\u0069\u006e\u0065\u0064")
-	}
-	if len(_fbc.Segments) == 0 {
-		return nil, _ab.Error(_eedg, "\u0067\u006c\u006f\u0062\u0061\u006c\u0073\u0020\u0061\u0072\u0065\u0020e\u006d\u0070\u0074\u0079")
-	}
-	if index > len(_fbc.Segments)-1 {
-		return nil, _ab.Error(_eedg, "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
-	}
-	return _fbc.Segments[index], nil
 }
 
 type Document struct {
@@ -658,320 +832,147 @@ type Document struct {
 	NumberOfPagesUnknown bool
 	NumberOfPages        uint32
 	GBUseExtTemplate     bool
-	InputStream          _g.StreamReader
+	InputStream          *_ac.Reader
 	GlobalSegments       *Globals
-	OrganizationType     _ecd.OrganizationType
-	Classer              *_d.Classer
+	OrganizationType     _ae.OrganizationType
+	Classer              *_b.Classer
 	XRes, YRes           int
 	FullHeaders          bool
 	CurrentSegmentNumber uint32
-	AverageTemplates     *_ee.Bitmaps
+	AverageTemplates     *_ag.Bitmaps
 	BaseIndexes          []int
 	Refinement           bool
 	RefineLevel          int
-	_gd                  uint8
-	_eec                 *_g.BufferedWriter
+	_e                   uint8
+	_dfa                 *_ac.BufferedWriter
 	EncodeGlobals        bool
-	_db                  int
-	_dc                  map[int][]int
+	_cbc                 int
+	_gb                  map[int][]int
 	_da                  map[int][]int
-	_fa                  []int
-	_dgf                 map[int]int
+	_ab                  []int
+	_ea                  map[int]int
 }
 
-func (_cgf *Document) Encode() (_bbf []byte, _fdg error) {
-	const _cab = "\u0044o\u0063u\u006d\u0065\u006e\u0074\u002e\u0045\u006e\u0063\u006f\u0064\u0065"
-	var _bec, _gbd int
-	if _cgf.FullHeaders {
-		if _bec, _fdg = _cgf.encodeFileHeader(_cgf._eec); _fdg != nil {
-			return nil, _ab.Wrap(_fdg, _cab, "")
-		}
-	}
-	var (
-		_efg bool
-		_dda *_ecd.Header
-		_ag  *Page
-	)
-	if _fdg = _cgf.completeClassifiedPages(); _fdg != nil {
-		return nil, _ab.Wrap(_fdg, _cab, "")
-	}
-	if _fdg = _cgf.produceClassifiedPages(); _fdg != nil {
-		return nil, _ab.Wrap(_fdg, _cab, "")
-	}
-	if _cgf.GlobalSegments != nil {
-		for _, _dda = range _cgf.GlobalSegments.Segments {
-			if _fdg = _cgf.encodeSegment(_dda, &_bec); _fdg != nil {
-				return nil, _ab.Wrap(_fdg, _cab, "")
-			}
-		}
-	}
-	for _bc := 1; _bc <= int(_cgf.NumberOfPages); _bc++ {
-		if _ag, _efg = _cgf.Pages[_bc]; !_efg {
-			return nil, _ab.Errorf(_cab, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _bc)
-		}
-		for _, _dda = range _ag.Segments {
-			if _fdg = _cgf.encodeSegment(_dda, &_bec); _fdg != nil {
-				return nil, _ab.Wrap(_fdg, _cab, "")
-			}
-		}
-	}
-	if _cgf.FullHeaders {
-		if _gbd, _fdg = _cgf.encodeEOFHeader(_cgf._eec); _fdg != nil {
-			return nil, _ab.Wrap(_fdg, _cab, "")
-		}
-		_bec += _gbd
-	}
-	_bbf = _cgf._eec.Data()
-	if len(_bbf) != _bec {
-		_f.Log.Debug("\u0042\u0079\u0074\u0065\u0073 \u0077\u0072\u0069\u0074\u0074\u0065\u006e \u0028\u006e\u0029\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0065\u0071\u0075\u0061\u006c\u0020\u0074\u006f\u0020\u0074\u0068\u0065\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u0020\u006f\u0066\u0020t\u0068\u0065\u0020\u0064\u0061\u0074\u0061\u0020\u0065\u006e\u0063\u006fd\u0065\u0064\u003a\u0020\u0027\u0025d\u0027", _bec, len(_bbf))
-	}
-	return _bbf, nil
-}
-func (_gaf *Page) countRegions() int {
-	var _bfga int
-	for _, _aade := range _gaf.Segments {
-		switch _aade.Type {
+const (
+	GenericEM EncodingMethod = iota
+	CorrelationEM
+	RankHausEM
+)
+
+func (_cdcf *Page) countRegions() int {
+	var _bdac int
+	for _, _efae := range _cdcf.Segments {
+		switch _efae.Type {
 		case 6, 7, 22, 23, 38, 39, 42, 43:
-			_bfga++
+			_bdac++
 		}
 	}
-	return _bfga
+	return _bdac
 }
-
-type EncodingMethod int
-
-func (_gfg *Page) AddEndOfPageSegment() {
-	_ace := &_ecd.Header{Type: _ecd.TEndOfPage, PageAssociation: _gfg.PageNumber}
-	_gfg.Segments = append(_gfg.Segments, _ace)
+func (_gag *Document) nextSegmentNumber() uint32 {
+	_dba := _gag.CurrentSegmentNumber
+	_gag.CurrentSegmentNumber++
+	return _dba
 }
-func (_edg *Document) reachedEOF(_faea int64) (bool, error) {
-	const _acc = "\u0072\u0065\u0061\u0063\u0068\u0065\u0064\u0045\u004f\u0046"
-	_, _gcc := _edg.InputStream.Seek(_faea, _ea.SeekStart)
-	if _gcc != nil {
-		_f.Log.Debug("\u0072\u0065\u0061c\u0068\u0065\u0064\u0045\u004f\u0046\u0020\u002d\u0020\u0064\u002e\u0049\u006e\u0070\u0075\u0074\u0053\u0074\u0072\u0065\u0061\u006d\u002e\u0053\u0065\u0065\u006b\u0020\u0066a\u0069\u006c\u0065\u0064\u003a\u0020\u0025\u0076", _gcc)
-		return false, _ab.Wrap(_gcc, _acc, "\u0069n\u0070\u0075\u0074\u0020\u0073\u0074\u0072\u0065\u0061\u006d\u0020s\u0065\u0065\u006b\u0020\u0066\u0061\u0069\u006c\u0065\u0064")
+func (_dbe *Page) AddGenericRegion(bm *_ag.Bitmap, xloc, yloc, template int, tp _ae.Type, duplicateLineRemoval bool) error {
+	const _acgb = "P\u0061\u0067\u0065\u002eAd\u0064G\u0065\u006e\u0065\u0072\u0069c\u0052\u0065\u0067\u0069\u006f\u006e"
+	_cegb := &_ae.GenericRegion{}
+	if _aede := _cegb.InitEncode(bm, xloc, yloc, template, duplicateLineRemoval); _aede != nil {
+		return _df.Wrap(_aede, _acgb, "")
 	}
-	_, _gcc = _edg.InputStream.ReadBits(32)
-	if _gcc == _ea.EOF {
-		return true, nil
-	} else if _gcc != nil {
-		return false, _ab.Wrap(_gcc, _acc, "")
-	}
-	return false, nil
-}
-func (_eab *Page) createNormalPage(_gab *_ecd.PageInformationSegment) error {
-	const _efd = "\u0063\u0072e\u0061\u0074\u0065N\u006f\u0072\u006d\u0061\u006c\u0050\u0061\u0067\u0065"
-	_eab.Bitmap = _ee.New(_gab.PageBMWidth, _gab.PageBMHeight)
-	if _gab.DefaultPixelValue != 0 {
-		_eab.Bitmap.SetDefaultPixel()
-	}
-	for _, _bad := range _eab.Segments {
-		switch _bad.Type {
-		case 6, 7, 22, 23, 38, 39, 42, 43:
-			_f.Log.Trace("\u0047\u0065\u0074\u0074in\u0067\u0020\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u003a\u0020\u0025\u0064", _bad.SegmentNumber)
-			_gadg, _fac := _bad.GetSegmentData()
-			if _fac != nil {
-				return _fac
-			}
-			_fabg, _gbcg := _gadg.(_ecd.Regioner)
-			if !_gbcg {
-				_f.Log.Debug("\u0053\u0065g\u006d\u0065\u006e\u0074\u003a\u0020\u0025\u0054\u0020\u0069\u0073\u0020\u006e\u006f\u0074\u0020\u0061\u0020\u0052\u0065\u0067\u0069on\u0065\u0072", _gadg)
-				return _ab.Errorf(_efd, "i\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u006a\u0062i\u0067\u0032\u0020\u0073\u0065\u0067\u006den\u0074\u0020\u0074\u0079p\u0065\u0020\u002d\u0020\u006e\u006f\u0074\u0020\u0061 R\u0065\u0067i\u006f\u006e\u0065\u0072\u003a\u0020\u0025\u0054", _gadg)
-			}
-			_cfdf, _fac := _fabg.GetRegionBitmap()
-			if _fac != nil {
-				return _ab.Wrap(_fac, _efd, "")
-			}
-			if _eab.fitsPage(_gab, _cfdf) {
-				_eab.Bitmap = _cfdf
-			} else {
-				_cefd := _fabg.GetRegionInfo()
-				_bebg := _eab.getCombinationOperator(_gab, _cefd.CombinaionOperator)
-				_fac = _ee.Blit(_cfdf, _eab.Bitmap, int(_cefd.XLocation), int(_cefd.YLocation), _bebg)
-				if _fac != nil {
-					return _ab.Wrap(_fac, _efd, "")
-				}
-			}
-		}
-	}
+	_cgd := &_ae.Header{Type: _ae.TImmediateGenericRegion, PageAssociation: _dbe.PageNumber, SegmentData: _cegb}
+	_dbe.Segments = append(_dbe.Segments, _cgd)
 	return nil
 }
-func (_df *Document) AddGenericPage(bm *_ee.Bitmap, duplicateLineRemoval bool) (_gdg error) {
-	const _b = "\u0044\u006f\u0063um\u0065\u006e\u0074\u002e\u0041\u0064\u0064\u0047\u0065\u006e\u0065\u0072\u0069\u0063\u0050\u0061\u0067\u0065"
-	if !_df.FullHeaders && _df.NumberOfPages != 0 {
-		return _ab.Error(_b, "\u0064\u006f\u0063\u0075\u006de\u006e\u0074\u0020\u0061\u006c\u0072\u0065a\u0064\u0079\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e\u0073\u0020\u0070\u0061\u0067\u0065\u002e\u0020\u0046\u0069\u006c\u0065\u004d\u006f\u0064\u0065\u0020\u0064\u0069\u0073\u0061\u006c\u006c\u006f\u0077\u0073\u0020\u0061\u0064\u0064i\u006e\u0067\u0020\u006d\u006f\u0072\u0065\u0020\u0074\u0068\u0061\u006e \u006f\u006e\u0065\u0020\u0070\u0061g\u0065")
+func DecodeDocument(input *_ac.Reader, globals *Globals) (*Document, error) {
+	return _dbg(input, globals)
+}
+
+var _gg = []byte{0x97, 0x4A, 0x42, 0x32, 0x0D, 0x0A, 0x1A, 0x0A}
+
+func (_dg *Document) AddGenericPage(bm *_ag.Bitmap, duplicateLineRemoval bool) (_aef error) {
+	const _gc = "\u0044\u006f\u0063um\u0065\u006e\u0074\u002e\u0041\u0064\u0064\u0047\u0065\u006e\u0065\u0072\u0069\u0063\u0050\u0061\u0067\u0065"
+	if !_dg.FullHeaders && _dg.NumberOfPages != 0 {
+		return _df.Error(_gc, "\u0064\u006f\u0063\u0075\u006de\u006e\u0074\u0020\u0061\u006c\u0072\u0065a\u0064\u0079\u0020\u0063\u006f\u006e\u0074\u0061\u0069\u006e\u0073\u0020\u0070\u0061\u0067\u0065\u002e\u0020\u0046\u0069\u006c\u0065\u004d\u006f\u0064\u0065\u0020\u0064\u0069\u0073\u0061\u006c\u006c\u006f\u0077\u0073\u0020\u0061\u0064\u0064i\u006e\u0067\u0020\u006d\u006f\u0072\u0065\u0020\u0074\u0068\u0061\u006e \u006f\u006e\u0065\u0020\u0070\u0061g\u0065")
 	}
-	_ef := &Page{Segments: []*_ecd.Header{}, Bitmap: bm, Document: _df, FinalHeight: bm.Height, FinalWidth: bm.Width, IsLossless: true, BlackIsOne: bm.Color == _ee.Chocolate}
-	_ef.PageNumber = int(_df.nextPageNumber())
-	_df.Pages[_ef.PageNumber] = _ef
+	_abe := &Page{Segments: []*_ae.Header{}, Bitmap: bm, Document: _dg, FinalHeight: bm.Height, FinalWidth: bm.Width, IsLossless: true, BlackIsOne: bm.Color == _ag.Chocolate}
+	_abe.PageNumber = int(_dg.nextPageNumber())
+	_dg.Pages[_abe.PageNumber] = _abe
 	bm.InverseData()
-	_ef.AddPageInformationSegment()
-	if _gdg = _ef.AddGenericRegion(bm, 0, 0, 0, _ecd.TImmediateGenericRegion, duplicateLineRemoval); _gdg != nil {
-		return _ab.Wrap(_gdg, _b, "")
+	_abe.AddPageInformationSegment()
+	if _aef = _abe.AddGenericRegion(bm, 0, 0, 0, _ae.TImmediateGenericRegion, duplicateLineRemoval); _aef != nil {
+		return _df.Wrap(_aef, _gc, "")
 	}
-	if _df.FullHeaders {
-		_ef.AddEndOfPageSegment()
-	}
-	return nil
-}
-func (_dbf *Page) getCombinationOperator(_ffd *_ecd.PageInformationSegment, _edgf _ee.CombinationOperator) _ee.CombinationOperator {
-	if _ffd.CombinationOperatorOverrideAllowed() {
-		return _edgf
-	}
-	return _ffd.CombinationOperator()
-}
-func _dgc(_ggg *Document, _agb int) *Page {
-	return &Page{Document: _ggg, PageNumber: _agb, Segments: []*_ecd.Header{}}
-}
-func (_eafg *Page) AddGenericRegion(bm *_ee.Bitmap, xloc, yloc, template int, tp _ecd.Type, duplicateLineRemoval bool) error {
-	const _fbg = "P\u0061\u0067\u0065\u002eAd\u0064G\u0065\u006e\u0065\u0072\u0069c\u0052\u0065\u0067\u0069\u006f\u006e"
-	_gga := &_ecd.GenericRegion{}
-	if _accg := _gga.InitEncode(bm, xloc, yloc, template, duplicateLineRemoval); _accg != nil {
-		return _ab.Wrap(_accg, _fbg, "")
-	}
-	_aag := &_ecd.Header{Type: _ecd.TImmediateGenericRegion, PageAssociation: _eafg.PageNumber, SegmentData: _gga}
-	_eafg.Segments = append(_eafg.Segments, _aag)
-	return nil
-}
-func (_gec *Page) getHeight() (int, error) {
-	const _ccga = "\u0067e\u0074\u0048\u0065\u0069\u0067\u0068t"
-	if _gec.FinalHeight != 0 {
-		return _gec.FinalHeight, nil
-	}
-	_ebac := _gec.getPageInformationSegment()
-	if _ebac == nil {
-		return 0, _ab.Error(_ccga, "n\u0069l\u0020\u0070\u0061\u0067\u0065\u0020\u0069\u006ef\u006f\u0072\u006d\u0061ti\u006f\u006e")
-	}
-	_adfg, _faed := _ebac.GetSegmentData()
-	if _faed != nil {
-		return 0, _ab.Wrap(_faed, _ccga, "")
-	}
-	_gbb, _daee := _adfg.(*_ecd.PageInformationSegment)
-	if !_daee {
-		return 0, _ab.Errorf(_ccga, "\u0070\u0061\u0067\u0065\u0020\u0069n\u0066\u006f\u0072\u006d\u0061\u0074\u0069\u006f\u006e\u0020\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u0069\u0073 \u006f\u0066\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0074\u0079\u0070e\u003a \u0027\u0025\u0054\u0027", _adfg)
-	}
-	if _gbb.PageBMHeight == _ec.MaxInt32 {
-		_, _faed = _gec.GetBitmap()
-		if _faed != nil {
-			return 0, _ab.Wrap(_faed, _ccga, "")
-		}
-	} else {
-		_gec.FinalHeight = _gbb.PageBMHeight
-	}
-	return _gec.FinalHeight, nil
-}
-func (_bag *Globals) GetSegment(segmentNumber int) (*_ecd.Header, error) {
-	const _daba = "\u0047l\u006fb\u0061\u006c\u0073\u002e\u0047e\u0074\u0053e\u0067\u006d\u0065\u006e\u0074"
-	if _bag == nil {
-		return nil, _ab.Error(_daba, "\u0067\u006c\u006f\u0062al\u0073\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066\u0069\u006e\u0065\u0064")
-	}
-	if len(_bag.Segments) == 0 {
-		return nil, _ab.Error(_daba, "\u0067\u006c\u006f\u0062\u0061\u006c\u0073\u0020\u0061\u0072\u0065\u0020e\u006d\u0070\u0074\u0079")
-	}
-	var _afc *_ecd.Header
-	for _, _afc = range _bag.Segments {
-		if _afc.SegmentNumber == uint32(segmentNumber) {
-			break
-		}
-	}
-	if _afc == nil {
-		return nil, _ab.Error(_daba, "\u0073\u0065\u0067\u006d\u0065\u006e\u0074\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
-	}
-	return _afc, nil
-}
-func (_gea *Page) lastSegmentNumber() (_dgfcg uint32, _gbeg error) {
-	const _dabe = "\u006c\u0061\u0073\u0074\u0053\u0065\u0067\u006d\u0065\u006e\u0074\u004eu\u006d\u0062\u0065\u0072"
-	if len(_gea.Segments) == 0 {
-		return _dgfcg, _ab.Errorf(_dabe, "\u006e\u006f\u0020se\u0067\u006d\u0065\u006e\u0074\u0073\u0020\u0066\u006fu\u006ed\u0020i\u006e \u0074\u0068\u0065\u0020\u0070\u0061\u0067\u0065\u0020\u0027\u0025\u0064\u0027", _gea.PageNumber)
-	}
-	return _gea.Segments[len(_gea.Segments)-1].SegmentNumber, nil
-}
-func (_gbc *Document) parseFileHeader() error {
-	const _cge = "\u0070a\u0072s\u0065\u0046\u0069\u006c\u0065\u0048\u0065\u0061\u0064\u0065\u0072"
-	_, _bae := _gbc.InputStream.Seek(8, _ea.SeekStart)
-	if _bae != nil {
-		return _ab.Wrap(_bae, _cge, "\u0069\u0064")
-	}
-	_, _bae = _gbc.InputStream.ReadBits(5)
-	if _bae != nil {
-		return _ab.Wrap(_bae, _cge, "\u0072\u0065\u0073\u0065\u0072\u0076\u0065\u0064\u0020\u0062\u0069\u0074\u0073")
-	}
-	_babe, _bae := _gbc.InputStream.ReadBit()
-	if _bae != nil {
-		return _ab.Wrap(_bae, _cge, "\u0065x\u0074e\u006e\u0064\u0065\u0064\u0020t\u0065\u006dp\u006c\u0061\u0074\u0065\u0073")
-	}
-	if _babe == 1 {
-		_gbc.GBUseExtTemplate = true
-	}
-	_babe, _bae = _gbc.InputStream.ReadBit()
-	if _bae != nil {
-		return _ab.Wrap(_bae, _cge, "\u0075\u006e\u006b\u006eow\u006e\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u0075\u006d\u0062\u0065\u0072")
-	}
-	if _babe != 1 {
-		_gbc.NumberOfPagesUnknown = false
-	}
-	_babe, _bae = _gbc.InputStream.ReadBit()
-	if _bae != nil {
-		return _ab.Wrap(_bae, _cge, "\u006f\u0072\u0067\u0061\u006e\u0069\u007a\u0061\u0074\u0069\u006f\u006e \u0074\u0079\u0070\u0065")
-	}
-	_gbc.OrganizationType = _ecd.OrganizationType(_babe)
-	if !_gbc.NumberOfPagesUnknown {
-		_gbc.NumberOfPages, _bae = _gbc.InputStream.ReadUint32()
-		if _bae != nil {
-			return _ab.Wrap(_bae, _cge, "\u006eu\u006db\u0065\u0072\u0020\u006f\u0066\u0020\u0070\u0061\u0067\u0065\u0073")
-		}
-		_gbc._gd = 13
+	if _dg.FullHeaders {
+		_abe.AddEndOfPageSegment()
 	}
 	return nil
 }
-func (_ggd *Page) fitsPage(_gafe *_ecd.PageInformationSegment, _gddg *_ee.Bitmap) bool {
-	return _ggd.countRegions() == 1 && _gafe.DefaultPixelValue == 0 && _gafe.PageBMWidth == _gddg.Width && _gafe.PageBMHeight == _gddg.Height
+func (_af *Document) GetPage(pageNumber int) (_ae.Pager, error) {
+	const _cfd = "\u0044\u006fc\u0075\u006d\u0065n\u0074\u002e\u0047\u0065\u0074\u0050\u0061\u0067\u0065"
+	if pageNumber < 0 {
+		_a.Log.Debug("\u004a\u0042\u0049\u00472\u0020\u0050\u0061\u0067\u0065\u0020\u002d\u0020\u0047e\u0074\u0050\u0061\u0067\u0065\u003a\u0020\u0025\u0064\u002e\u0020\u0050\u0061\u0067\u0065\u0020\u0063\u0061n\u006e\u006f\u0074\u0020\u0062e\u0020\u006c\u006f\u0077\u0065\u0072\u0020\u0074\u0068\u0061\u006e\u0020\u0030\u002e\u0020\u0025\u0073", pageNumber, _f.Stack())
+		return nil, _df.Errorf(_cfd, "\u0069\u006e\u0076\u0061l\u0069\u0064\u0020\u006a\u0062\u0069\u0067\u0032\u0020d\u006f\u0063\u0075\u006d\u0065\u006e\u0074\u0020\u002d\u0020\u0070\u0072\u006f\u0076\u0069\u0064\u0065\u0064 \u0069\u006e\u0076\u0061\u006ci\u0064\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u003a\u0020\u0025\u0064", pageNumber)
+	}
+	if pageNumber > len(_af.Pages) {
+		_a.Log.Debug("\u0050\u0061\u0067\u0065 n\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u003a\u0020\u0025\u0064\u002e\u0020%\u0073", pageNumber, _f.Stack())
+		return nil, _df.Error(_cfd, "\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u006a\u0062\u0069\u0067\u0032 \u0064\u006f\u0063\u0075\u006d\u0065n\u0074\u0020\u002d\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
+	}
+	_gfb, _caff := _af.Pages[pageNumber]
+	if !_caff {
+		_a.Log.Debug("\u0050\u0061\u0067\u0065 n\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u003a\u0020\u0025\u0064\u002e\u0020%\u0073", pageNumber, _f.Stack())
+		return nil, _df.Errorf(_cfd, "\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u006a\u0062\u0069\u0067\u0032 \u0064\u006f\u0063\u0075\u006d\u0065n\u0074\u0020\u002d\u0020\u0070\u0061\u0067\u0065\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
+	}
+	return _gfb, nil
 }
-func (_be *Document) addSymbolDictionary(_dcd int, _fb *_ee.Bitmaps, _fae []int, _fd map[int]int, _bd bool) (*_ecd.Header, error) {
-	const _egg = "\u0061\u0064\u0064\u0053ym\u0062\u006f\u006c\u0044\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079"
-	_eaf := &_ecd.SymbolDictionary{}
-	if _dgfc := _eaf.InitEncode(_fb, _fae, _fd, _bd); _dgfc != nil {
-		return nil, _dgfc
+func (_bfg *Document) encodeFileHeader(_efac _ac.BinaryWriter) (_dbb int, _ada error) {
+	const _aba = "\u0065\u006ec\u006f\u0064\u0065F\u0069\u006c\u0065\u0048\u0065\u0061\u0064\u0065\u0072"
+	_dbb, _ada = _efac.Write(_gg)
+	if _ada != nil {
+		return _dbb, _df.Wrap(_ada, _aba, "\u0069\u0064")
 	}
-	_adf := &_ecd.Header{Type: _ecd.TSymbolDictionary, PageAssociation: _dcd, SegmentData: _eaf}
-	if _dcd == 0 {
-		if _be.GlobalSegments == nil {
-			_be.GlobalSegments = &Globals{}
-		}
-		_be.GlobalSegments.AddSegment(_adf)
-		return _adf, nil
+	if _ada = _efac.WriteByte(0x01); _ada != nil {
+		return _dbb, _df.Wrap(_ada, _aba, "\u0066\u006c\u0061g\u0073")
 	}
-	_aa, _dbd := _be.Pages[_dcd]
-	if !_dbd {
-		return nil, _ab.Errorf(_egg, "p\u0061g\u0065\u003a\u0020\u0027\u0025\u0064\u0027\u0020n\u006f\u0074\u0020\u0066ou\u006e\u0064", _dcd)
+	_dbb++
+	_dgd := make([]byte, 4)
+	_d.BigEndian.PutUint32(_dgd, _bfg.NumberOfPages)
+	_ebbg, _ada := _efac.Write(_dgd)
+	if _ada != nil {
+		return _ebbg, _df.Wrap(_ada, _aba, "p\u0061\u0067\u0065\u0020\u006e\u0075\u006d\u0062\u0065\u0072")
 	}
-	var (
-		_dfg int
-		_ebf *_ecd.Header
-	)
-	for _dfg, _ebf = range _aa.Segments {
-		if _ebf.Type == _ecd.TPageInformation {
-			break
-		}
-	}
-	_dfg++
-	_aa.Segments = append(_aa.Segments, nil)
-	copy(_aa.Segments[_dfg+1:], _aa.Segments[_dfg:])
-	_aa.Segments[_dfg] = _adf
-	return _adf, nil
+	_dbb += _ebbg
+	return _dbb, nil
 }
-func (_fdf *Globals) GetSymbolDictionary() (*_ecd.Header, error) {
-	const _fge = "G\u006c\u006f\u0062\u0061\u006c\u0073.\u0047\u0065\u0074\u0053\u0079\u006d\u0062\u006f\u006cD\u0069\u0063\u0074i\u006fn\u0061\u0072\u0079"
-	if _fdf == nil {
-		return nil, _ab.Error(_fge, "\u0067\u006c\u006f\u0062al\u0073\u0020\u006e\u006f\u0074\u0020\u0064\u0065\u0066\u0069\u006e\u0065\u0064")
-	}
-	if len(_fdf.Segments) == 0 {
-		return nil, _ab.Error(_fge, "\u0067\u006c\u006f\u0062\u0061\u006c\u0073\u0020\u0061\u0072\u0065\u0020e\u006d\u0070\u0074\u0079")
-	}
-	for _, _cee := range _fdf.Segments {
-		if _cee.Type == _ecd.TSymbolDictionary {
-			return _cee, nil
+func (_bbf *Document) isFileHeaderPresent() (bool, error) {
+	_bbf.InputStream.Mark()
+	for _, _ebbgc := range _gg {
+		_bfdc, _eeg := _bbf.InputStream.ReadByte()
+		if _eeg != nil {
+			return false, _eeg
+		}
+		if _ebbgc != _bfdc {
+			_bbf.InputStream.Reset()
+			return false, nil
 		}
 	}
-	return nil, _ab.Error(_fge, "\u0067\u006c\u006fba\u006c\u0020\u0073\u0079\u006d\u0062\u006f\u006c\u0020d\u0069c\u0074i\u006fn\u0061\u0072\u0079\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
+	_bbf.InputStream.Reset()
+	return true, nil
+}
+func (_aaf *Page) clearSegmentData() {
+	for _ggcg := range _aaf.Segments {
+		_aaf.Segments[_ggcg].CleanSegmentData()
+	}
+}
+func _dc(_fde int) int {
+	_dac := 0
+	_de := (_fde & (_fde - 1)) == 0
+	_fde >>= 1
+	for ; _fde != 0; _fde >>= 1 {
+		_dac++
+	}
+	if _de {
+		return _dac
+	}
+	return _dac + 1
 }

@@ -1,176 +1,207 @@
 package bitwise
 
 import (
-	_g "encoding/binary"
-	_e "errors"
+	_dd "encoding/binary"
+	_g "errors"
+	_ff "fmt"
 	_f "io"
 
-	_a "bitbucket.org/shenghui0779/gopdf/common"
-	_ee "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_b "bitbucket.org/shenghui0779/gopdf/common"
+	_c "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
 )
 
-type Reader struct {
-	_adb []byte
-	_bab byte
-	_faa byte
-	_ce  int64
-	_ffd int
-	_gag int
-	_db  int64
-	_cdf byte
-	_ded byte
-	_bae int
-}
-
-func (_gbc *Reader) ReadBool() (bool, error) { return _gbc.readBool() }
-func BufferedMSB() *BufferedWriter           { return &BufferedWriter{_bb: true} }
-func (_ecfc *SubstreamReader) Mark()         { _ecfc._gbf = _ecfc._be; _ecfc._dec = _ecfc._aaf }
-
-var _ BinaryWriter = &BufferedWriter{}
-
-func (_ggd *BufferedWriter) byteCapacity() int {
-	_ea := len(_ggd._eed) - _ggd._bc
-	if _ggd._b != 0 {
-		_ea--
+func (_bfe *BufferedWriter) byteCapacity() int {
+	_dad := len(_bfe._fg) - _bfe._a
+	if _bfe._fc != 0 {
+		_dad--
 	}
-	return _ea
+	return _dad
 }
-func (_dca *SubstreamReader) ReadByte() (byte, error) {
-	if _dca._aaf == 0 {
-		return _dca.readBufferByte()
+func (_ec *BufferedWriter) Data() []byte { return _ec._fg }
+func (_fd *Writer) SkipBits(skip int) error {
+	const _bfb = "\u0057r\u0069t\u0065\u0072\u002e\u0053\u006b\u0069\u0070\u0042\u0069\u0074\u0073"
+	if skip == 0 {
+		return nil
 	}
-	return _dca.readUnalignedByte()
+	_fcf := int(_fd._gefd) + skip
+	if _fcf >= 0 && _fcf < 8 {
+		_fd._gefd = uint8(_fcf)
+		return nil
+	}
+	_fcf = int(_fd._gefd) + _fd._aba*8 + skip
+	if _fcf < 0 {
+		return _c.Errorf(_bfb, "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
+	}
+	_bae := _fcf / 8
+	_cefd := _fcf % 8
+	_b.Log.Trace("\u0053\u006b\u0069\u0070\u0042\u0069\u0074\u0073")
+	_b.Log.Trace("\u0042\u0069\u0074\u0049\u006e\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u0042\u0079\u0074\u0065\u0049n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u002c\u0020\u0046\u0075\u006c\u006c\u0042\u0069\u0074\u0073\u003a\u0020'\u0025\u0064\u0027\u002c\u0020\u004c\u0065\u006e\u003a\u0020\u0027\u0025\u0064\u0027,\u0020\u0043\u0061p\u003a\u0020\u0027\u0025\u0064\u0027", _fd._gefd, _fd._aba, int(_fd._gefd)+(_fd._aba)*8, len(_fd._bda), cap(_fd._bda))
+	_b.Log.Trace("S\u006b\u0069\u0070\u003a\u0020\u0027%\u0064\u0027\u002c\u0020\u0064\u003a \u0027\u0025\u0064\u0027\u002c\u0020\u0062i\u0074\u0049\u006e\u0064\u0065\u0078\u003a\u0020\u0027\u0025d\u0027", skip, _fcf, _cefd)
+	_fd._gefd = uint8(_cefd)
+	if _bdf := _bae - _fd._aba; _bdf > 0 && len(_fd._bda)-1 < _bae {
+		_b.Log.Trace("\u0042\u0079\u0074e\u0044\u0069\u0066\u0066\u003a\u0020\u0025\u0064", _bdf)
+		return _c.Errorf(_bfb, "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
+	}
+	_fd._aba = _bae
+	_b.Log.Trace("\u0042\u0069\u0074I\u006e\u0064\u0065\u0078:\u0020\u0027\u0025\u0064\u0027\u002c\u0020B\u0079\u0074\u0065\u0049\u006e\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027", _fd._gefd, _fd._aba)
+	return nil
 }
-func (_aca *BufferedWriter) WriteBits(bits uint64, number int) (_gga int, _ad error) {
-	const _faf = "\u0042u\u0066\u0066\u0065\u0072e\u0064\u0057\u0072\u0069\u0074e\u0072.\u0057r\u0069\u0074\u0065\u0072\u0042\u0069\u0074s"
-	if number < 0 || number > 64 {
-		return 0, _ee.Errorf(_faf, "\u0062i\u0074\u0073 \u006e\u0075\u006db\u0065\u0072\u0020\u006d\u0075\u0073\u0074 \u0062\u0065\u0020\u0069\u006e\u0020r\u0061\u006e\u0067\u0065\u0020\u003c\u0030\u002c\u0036\u0034\u003e,\u0020\u0069\u0073\u003a\u0020\u0027\u0025\u0064\u0027", number)
+func (_ca *Reader) ReadUint32() (uint32, error) {
+	_eea := make([]byte, 4)
+	_, _abd := _ca.Read(_eea)
+	if _abd != nil {
+		return 0, _abd
 	}
-	_fe := number / 8
-	if _fe > 0 {
-		_bf := number - _fe*8
-		for _fg := _fe - 1; _fg >= 0; _fg-- {
-			_eec := byte((bits >> uint(_fg*8+_bf)) & 0xff)
-			if _ad = _aca.WriteByte(_eec); _ad != nil {
-				return _gga, _ee.Wrapf(_ad, _faf, "\u0062\u0079\u0074\u0065\u003a\u0020\u0027\u0025\u0064\u0027", _fe-_fg+1)
-			}
-		}
-		number -= _fe * 8
-		if number == 0 {
-			return _fe, nil
-		}
-	}
-	var _bd int
-	for _bg := 0; _bg < number; _bg++ {
-		if _aca._bb {
-			_bd = int((bits >> uint(number-1-_bg)) & 0x1)
-		} else {
-			_bd = int(bits & 0x1)
-			bits >>= 1
-		}
-		if _ad = _aca.WriteBit(_bd); _ad != nil {
-			return _gga, _ee.Wrapf(_ad, _faf, "\u0062i\u0074\u003a\u0020\u0025\u0064", _bg)
-		}
-	}
-	return _fe, nil
+	return _dd.BigEndian.Uint32(_eea), nil
 }
-func (_eac *Reader) ReadBit() (_bbd int, _dfb error) {
-	_fef, _dfb := _eac.readBool()
-	if _dfb != nil {
-		return 0, _dfb
-	}
-	if _fef {
-		_bbd = 1
-	}
-	return _bbd, nil
-}
-
-var _ _f.Writer = &BufferedWriter{}
-
-func (_ccc *Reader) BitPosition() int  { return int(_ccc._faa) }
-func (_cf *Reader) Align() (_ced byte) { _ced = _cf._faa; _cf._faa = 0; return _ced }
-
-type BitWriter interface {
-	WriteBit(_ecg int) error
-	WriteBits(_ebf uint64, _ecf int) (_edg int, _aag error)
-	FinishByte()
-	SkipBits(_cc int) error
-}
-
-func (_fc *SubstreamReader) readUnalignedByte() (_fdge byte, _efd error) {
-	_dcda := _fc._aaf
-	_fdge = _fc._eae << (8 - _dcda)
-	_fc._eae, _efd = _fc.readBufferByte()
-	if _efd != nil {
-		return 0, _efd
-	}
-	_fdge |= _fc._eae >> _dcda
-	_fc._eae &= 1<<_dcda - 1
-	return _fdge, nil
-}
-func (_fee *SubstreamReader) Align() (_bga byte) {
-	_bga = _fee._aaf
-	_fee._aaf = 0
-	return _bga
-}
-func (_dce *Reader) ConsumeRemainingBits() (uint64, error) {
-	if _dce._faa != 0 {
-		return _dce.ReadBits(_dce._faa)
-	}
-	return 0, nil
-}
-func (_gfg *Reader) readBool() (_acb bool, _bda error) {
-	if _gfg._faa == 0 {
-		_gfg._bab, _bda = _gfg.readBufferByte()
-		if _bda != nil {
-			return false, _bda
-		}
-		_acb = (_gfg._bab & 0x80) != 0
-		_gfg._bab, _gfg._faa = _gfg._bab&0x7f, 7
-		return _acb, nil
-	}
-	_gfg._faa--
-	_acb = (_gfg._bab & (1 << _gfg._faa)) != 0
-	_gfg._bab &= 1<<_gfg._faa - 1
-	return _acb, nil
-}
-func (_ccf *SubstreamReader) readBufferByte() (byte, error) {
-	if _ccf._be >= _ccf._ace {
+func (_bdg *Reader) read(_dbf []byte) (int, error) {
+	if _bdg._add >= int64(_bdg._cef._bef) {
 		return 0, _f.EOF
 	}
-	if _ccf._be >= _ccf._dcf || _ccf._be < _ccf._cdff {
-		if _fed := _ccf.fillBuffer(); _fed != nil {
-			return 0, _fed
+	_bdg._cgb = -1
+	_caa := copy(_dbf, _bdg._cef._ee[(int64(_bdg._cef._af)+_bdg._add):(_bdg._cef._af+_bdg._cef._bef)])
+	_bdg._add += int64(_caa)
+	return _caa, nil
+}
+func (_aef *Reader) readUnalignedByte() (_aed byte, _cca error) {
+	_eec := _aef._ead
+	_aed = _aef._ffd << (8 - _eec)
+	_aef._ffd, _cca = _aef.readBufferByte()
+	if _cca != nil {
+		return 0, _cca
+	}
+	_aed |= _aef._ffd >> _eec
+	_aef._ffd &= 1<<_eec - 1
+	return _aed, nil
+}
+func (_bac *Writer) byteCapacity() int {
+	_bcg := len(_bac._bda) - _bac._aba
+	if _bac._gefd != 0 {
+		_bcg--
+	}
+	return _bcg
+}
+
+type Writer struct {
+	_bda  []byte
+	_gefd uint8
+	_aba  int
+	_dda  bool
+}
+
+func (_fab *Reader) readBool() (_cdc bool, _cfg error) {
+	if _fab._ead == 0 {
+		_fab._ffd, _cfg = _fab.readBufferByte()
+		if _cfg != nil {
+			return false, _cfg
+		}
+		_cdc = (_fab._ffd & 0x80) != 0
+		_fab._ffd, _fab._ead = _fab._ffd&0x7f, 7
+		return _cdc, nil
+	}
+	_fab._ead--
+	_cdc = (_fab._ffd & (1 << _fab._ead)) != 0
+	_fab._ffd &= 1<<_fab._ead - 1
+	return _cdc, nil
+}
+func (_bed *Writer) Write(p []byte) (int, error) {
+	if len(p) > _bed.byteCapacity() {
+		return 0, _f.EOF
+	}
+	for _, _abc := range p {
+		if _aedf := _bed.writeByte(_abc); _aedf != nil {
+			return 0, _aedf
 		}
 	}
-	_abb := _ccf._da[_ccf._be-_ccf._cdff]
-	_ccf._be++
-	return _abb, nil
+	return len(p), nil
 }
-
-var _ BinaryWriter = &Writer{}
-var (
-	_ _f.Reader     = &Reader{}
-	_ _f.ByteReader = &Reader{}
-	_ _f.Seeker     = &Reader{}
-	_ StreamReader  = &Reader{}
-)
-
-func (_bdbc *SubstreamReader) ReadBool() (bool, error) { return _bdbc.readBool() }
-func (_aa *BufferedWriter) ResetBitIndex()             { _aa._b = 0 }
-func (_cge *Writer) WriteBit(bit int) error {
+func (_faa *Writer) WriteBit(bit int) error {
 	switch bit {
 	case 0, 1:
-		return _cge.writeBit(uint8(bit))
+		return _faa.writeBit(uint8(bit))
 	}
-	return _ee.Error("\u0057\u0072\u0069\u0074\u0065\u0042\u0069\u0074", "\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0062\u0069\u0074\u0020v\u0061\u006c\u0075\u0065")
+	return _c.Error("\u0057\u0072\u0069\u0074\u0065\u0042\u0069\u0074", "\u0069\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0062\u0069\u0074\u0020v\u0061\u006c\u0075\u0065")
 }
-func (_gde *Writer) byteCapacity() int {
-	_bdbfd := len(_gde._cde) - _gde._bed
-	if _gde._dbe != 0 {
-		_bdbfd--
+func (_dcd *Reader) Read(p []byte) (_gcf int, _bd error) {
+	if _dcd._ead == 0 {
+		return _dcd.read(p)
 	}
-	return _bdbfd
+	for ; _gcf < len(p); _gcf++ {
+		if p[_gcf], _bd = _dcd.readUnalignedByte(); _bd != nil {
+			return 0, _bd
+		}
+	}
+	return _gcf, nil
+}
+func (_eg *Reader) readBufferByte() (byte, error) {
+	if _eg._add >= int64(_eg._cef._bef) {
+		return 0, _f.EOF
+	}
+	_eg._cgb = -1
+	_bde := _eg._cef._ee[int64(_eg._cef._af)+_eg._add]
+	_eg._add++
+	_eg._ecg = int(_bde)
+	return _bde, nil
+}
+func (_eb *BufferedWriter) writeByte(_fa byte) {
+	switch {
+	case _eb._fc == 0:
+		_eb._fg[_eb._a] = _fa
+		_eb._a++
+	case _eb._fb:
+		_eb._fg[_eb._a] |= _fa >> _eb._fc
+		_eb._a++
+		_eb._fg[_eb._a] = byte(uint16(_fa) << (8 - _eb._fc) & 0xff)
+	default:
+		_eb._fg[_eb._a] |= byte(uint16(_fa) << _eb._fc & 0xff)
+		_eb._a++
+		_eb._fg[_eb._a] = _fa >> (8 - _eb._fc)
+	}
+}
+func (_edb *BufferedWriter) tryGrowByReslice(_bfa int) bool {
+	if _gf := len(_edb._fg); _bfa <= cap(_edb._fg)-_gf {
+		_edb._fg = _edb._fg[:_gf+_bfa]
+		return true
+	}
+	return false
+}
+func (_ea *BufferedWriter) writeFullBytes(_fbf []byte) int {
+	_fgg := copy(_ea._fg[_ea.fullOffset():], _fbf)
+	_ea._a += _fgg
+	return _fgg
+}
+
+type BufferedWriter struct {
+	_fg []byte
+	_fc uint8
+	_a  int
+	_fb bool
+}
+
+func (_fe *BufferedWriter) SkipBits(skip int) error {
+	if skip == 0 {
+		return nil
+	}
+	_ce := int(_fe._fc) + skip
+	if _ce >= 0 && _ce < 8 {
+		_fe._fc = uint8(_ce)
+		return nil
+	}
+	_ce = int(_fe._fc) + _fe._a*8 + skip
+	if _ce < 0 {
+		return _c.Errorf("\u0057r\u0069t\u0065\u0072\u002e\u0053\u006b\u0069\u0070\u0042\u0069\u0074\u0073", "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
+	}
+	_da := _ce / 8
+	_ac := _ce % 8
+	_fe._fc = uint8(_ac)
+	if _gg := _da - _fe._a; _gg > 0 && len(_fe._fg)-1 < _da {
+		if _fe._fc != 0 {
+			_gg++
+		}
+		_fe.expandIfNeeded(_gg)
+	}
+	_fe._a = _da
+	return nil
 }
 
 type StreamReader interface {
@@ -182,582 +213,52 @@ type StreamReader interface {
 	Mark()
 	Length() uint64
 	ReadBit() (int, error)
-	ReadBits(_cad byte) (uint64, error)
+	ReadBits(_ffb byte) (uint64, error)
 	ReadBool() (bool, error)
 	ReadUint32() (uint32, error)
 	Reset()
-	StreamPosition() int64
-}
-type SubstreamReader struct {
-	_be   uint64
-	_ebgf StreamReader
-	_aff  uint64
-	_ace  uint64
-	_da   []byte
-	_cdff uint64
-	_dcf  uint64
-	_eae  byte
-	_aaf  byte
-	_gbf  uint64
-	_dec  byte
+	AbsolutePosition() int64
 }
 
-const (
-	_ff = 64
-	_ae = int(^uint(0) >> 1)
+func (_ba *BufferedWriter) writeShiftedBytes(_edf []byte) int {
+	for _, _ggc := range _edf {
+		_ba.writeByte(_ggc)
+	}
+	return len(_edf)
+}
+
+var (
+	_ _f.Reader     = &Reader{}
+	_ _f.ByteReader = &Reader{}
+	_ _f.Seeker     = &Reader{}
+	_ StreamReader  = &Reader{}
 )
 
-func (_edb *Reader) ReadBits(n byte) (_cag uint64, _bdb error) {
-	if n < _edb._faa {
-		_ade := _edb._faa - n
-		_cag = uint64(_edb._bab >> _ade)
-		_edb._bab &= 1<<_ade - 1
-		_edb._faa = _ade
-		return _cag, nil
+func (_gdd *Writer) UseMSB() bool { return _gdd._dda }
+func (_dc *Reader) NewPartialReader(offset, length int, relative bool) (*Reader, error) {
+	if offset < 0 {
+		return nil, _g.New("p\u0061\u0072\u0074\u0069\u0061\u006c\u0020\u0072\u0065\u0061\u0064\u0065\u0072\u0020\u006f\u0066\u0066\u0073e\u0074\u0020\u0063\u0061\u006e\u006e\u006f\u0074\u0020\u0062e \u006e\u0065\u0067a\u0074i\u0076\u0065")
 	}
-	if n > _edb._faa {
-		if _edb._faa > 0 {
-			_cag = uint64(_edb._bab)
-			n -= _edb._faa
+	if relative {
+		offset = _dc._cef._af + offset
+	}
+	if length > 0 {
+		_gga := len(_dc._cef._ee)
+		if relative {
+			_gga = _dc._cef._bef
 		}
-		for n >= 8 {
-			_ecb, _ef := _edb.readBufferByte()
-			if _ef != nil {
-				return 0, _ef
-			}
-			_cag = _cag<<8 + uint64(_ecb)
-			n -= 8
-		}
-		if n > 0 {
-			if _edb._bab, _bdb = _edb.readBufferByte(); _bdb != nil {
-				return 0, _bdb
-			}
-			_agf := 8 - n
-			_cag = _cag<<n + uint64(_edb._bab>>_agf)
-			_edb._bab &= 1<<_agf - 1
-			_edb._faa = _agf
-		} else {
-			_edb._faa = 0
-		}
-		return _cag, nil
-	}
-	_edb._faa = 0
-	return uint64(_edb._bab), nil
-}
-func (_eea *Writer) writeBit(_cgag uint8) error {
-	if len(_eea._cde)-1 < _eea._bed {
-		return _f.EOF
-	}
-	_cccf := _eea._dbe
-	if _eea._affb {
-		_cccf = 7 - _eea._dbe
-	}
-	_eea._cde[_eea._bed] |= byte(uint16(_cgag<<_cccf) & 0xff)
-	_eea._dbe++
-	if _eea._dbe == 8 {
-		_eea._bed++
-		_eea._dbe = 0
-	}
-	return nil
-}
-func (_cfa *Reader) StreamPosition() int64 { return _cfa._ce }
-func (_cga *SubstreamReader) Seek(offset int64, whence int) (int64, error) {
-	switch whence {
-	case _f.SeekStart:
-		_cga._be = uint64(offset)
-	case _f.SeekCurrent:
-		_cga._be += uint64(offset)
-	case _f.SeekEnd:
-		_cga._be = _cga._ace + uint64(offset)
-	default:
-		return 0, _e.New("\u0072\u0065\u0061d\u0065\u0072\u002e\u0053\u0075\u0062\u0073\u0074\u0072\u0065\u0061\u006d\u0052\u0065\u0061\u0064\u0065\u0072\u002e\u0053\u0065\u0065\u006b\u0020\u0069\u006e\u0076\u0061\u006ci\u0064\u0020\u0077\u0068\u0065\u006e\u0063\u0065")
-	}
-	_cga._aaf = 0
-	return int64(_cga._be), nil
-}
-func (_cca *Writer) WriteByte(c byte) error { return _cca.writeByte(c) }
-func (_cg *Reader) ReadByte() (byte, error) {
-	if _cg._faa == 0 {
-		return _cg.readBufferByte()
-	}
-	return _cg.readUnalignedByte()
-}
-func NewWriterMSB(data []byte) *Writer { return &Writer{_cde: data, _affb: true} }
-func (_eca *Reader) read(_ebe []byte) (int, error) {
-	if _eca._ce >= int64(len(_eca._adb)) {
-		return 0, _f.EOF
-	}
-	_eca._gag = -1
-	_fd := copy(_ebe, _eca._adb[_eca._ce:])
-	_eca._ce += int64(_fd)
-	return _fd, nil
-}
-func (_gc *Reader) readUnalignedByte() (_aagg byte, _gafb error) {
-	_dcd := _gc._faa
-	_aagg = _gc._bab << (8 - _dcd)
-	_gc._bab, _gafb = _gc.readBufferByte()
-	if _gafb != nil {
-		return 0, _gafb
-	}
-	_aagg |= _gc._bab >> _dcd
-	_gc._bab &= 1<<_dcd - 1
-	return _aagg, nil
-}
-func (_ca *BufferedWriter) writeShiftedBytes(_bdg []byte) int {
-	for _, _ab := range _bdg {
-		_ca.writeByte(_ab)
-	}
-	return len(_bdg)
-}
-func (_adg *Reader) ReadUint32() (uint32, error) {
-	_baec := make([]byte, 4)
-	_, _dfff := _adg.Read(_baec)
-	if _dfff != nil {
-		return 0, _dfff
-	}
-	return _g.BigEndian.Uint32(_baec), nil
-}
-func (_de *BufferedWriter) WriteBit(bit int) error {
-	if bit != 1 && bit != 0 {
-		return _ee.Errorf("\u0042\u0075\u0066fe\u0072\u0065\u0064\u0057\u0072\u0069\u0074\u0065\u0072\u002e\u0057\u0072\u0069\u0074\u0065\u0042\u0069\u0074", "\u0062\u0069\u0074\u0020\u0076\u0061\u006cu\u0065\u0020\u006du\u0073\u0074\u0020\u0062e\u0020\u0069\u006e\u0020\u0072\u0061\u006e\u0067\u0065\u0020\u007b\u0030\u002c\u0031\u007d\u0020\u0062\u0075\u0074\u0020\u0069\u0073\u003a\u0020\u0025\u0064", bit)
-	}
-	if len(_de._eed)-1 < _de._bc {
-		_de.expandIfNeeded(1)
-	}
-	_eg := _de._b
-	if _de._bb {
-		_eg = 7 - _de._b
-	}
-	_de._eed[_de._bc] |= byte(uint16(bit<<_eg) & 0xff)
-	_de._b++
-	if _de._b == 8 {
-		_de._bc++
-		_de._b = 0
-	}
-	return nil
-}
-
-var _ _f.ByteWriter = &BufferedWriter{}
-
-func (_gaf *Reader) readBufferByte() (byte, error) {
-	if _gaf._ce >= int64(len(_gaf._adb)) {
-		return 0, _f.EOF
-	}
-	_gaf._gag = -1
-	_bbc := _gaf._adb[_gaf._ce]
-	_gaf._ce++
-	_gaf._ffd = int(_bbc)
-	return _bbc, nil
-}
-func (_ag *BufferedWriter) Len() int { return _ag.byteCapacity() }
-func (_eeb *BufferedWriter) expandIfNeeded(_gf int) {
-	if !_eeb.tryGrowByReslice(_gf) {
-		_eeb.grow(_gf)
-	}
-}
-func (_def *SubstreamReader) readBool() (_eff bool, _efb error) {
-	if _def._aaf == 0 {
-		_def._eae, _efb = _def.readBufferByte()
-		if _efb != nil {
-			return false, _efb
-		}
-		_eff = (_def._eae & 0x80) != 0
-		_def._eae, _def._aaf = _def._eae&0x7f, 7
-		return _eff, nil
-	}
-	_def._aaf--
-	_eff = (_def._eae & (1 << _def._aaf)) != 0
-	_def._eae &= 1<<_def._aaf - 1
-	return _eff, nil
-}
-func (_bcg *BufferedWriter) Data() []byte { return _bcg._eed }
-
-type BufferedWriter struct {
-	_eed []byte
-	_b   uint8
-	_bc  int
-	_bb  bool
-}
-type Writer struct {
-	_cde  []byte
-	_dbe  uint8
-	_bed  int
-	_affb bool
-}
-
-func (_ffcg *SubstreamReader) Reset() { _ffcg._be = _ffcg._gbf; _ffcg._aaf = _ffcg._dec }
-func (_ge *SubstreamReader) Read(b []byte) (_dbf int, _gagc error) {
-	if _ge._be >= _ge._ace {
-		_a.Log.Trace("\u0053\u0074\u0072e\u0061\u006d\u0050\u006fs\u003a\u0020\u0027\u0025\u0064\u0027\u0020>\u003d\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u003a\u0020\u0027\u0025\u0064\u0027", _ge._be, _ge._ace)
-		return 0, _f.EOF
-	}
-	for ; _dbf < len(b); _dbf++ {
-		if b[_dbf], _gagc = _ge.readUnalignedByte(); _gagc != nil {
-			if _gagc == _f.EOF {
-				return _dbf, nil
-			}
-			return 0, _gagc
+		if offset+length > _gga {
+			return nil, _ff.Errorf("\u0070\u0061r\u0074\u0069\u0061l\u0020\u0072\u0065\u0061\u0064e\u0072\u0020\u006f\u0066\u0066se\u0074\u0028\u0025\u0064\u0029\u002b\u006c\u0065\u006e\u0067\u0074\u0068\u0028\u0025\u0064\u0029\u003d\u0025d\u0020i\u0073\u0020\u0067\u0072\u0065\u0061ter\u0020\u0074\u0068\u0061\u006e\u0020\u0074\u0068\u0065\u0020\u006f\u0072ig\u0069n\u0061\u006c\u0020\u0072e\u0061d\u0065r\u0020\u006ce\u006e\u0067th\u003a\u0020\u0025\u0064", offset, length, offset+length, _dc._cef._bef)
 		}
 	}
-	return _dbf, nil
-}
-func (_bggb *Writer) Data() []byte  { return _bggb._cde }
-func (_abd *Writer) UseMSB() bool   { return _abd._affb }
-func (_ddb *Reader) Length() uint64 { return uint64(len(_ddb._adb)) }
-func (_gdg *BufferedWriter) writeByte(_dc byte) {
-	switch {
-	case _gdg._b == 0:
-		_gdg._eed[_gdg._bc] = _dc
-		_gdg._bc++
-	case _gdg._bb:
-		_gdg._eed[_gdg._bc] |= _dc >> _gdg._b
-		_gdg._bc++
-		_gdg._eed[_gdg._bc] = byte(uint16(_dc) << (8 - _gdg._b) & 0xff)
-	default:
-		_gdg._eed[_gdg._bc] |= byte(uint16(_dc) << _gdg._b & 0xff)
-		_gdg._bc++
-		_gdg._eed[_gdg._bc] = _dc >> (8 - _gdg._b)
-	}
-}
-func (_gb *BufferedWriter) WriteByte(bt byte) error {
-	if _gb._bc > len(_gb._eed)-1 || (_gb._bc == len(_gb._eed)-1 && _gb._b != 0) {
-		_gb.expandIfNeeded(1)
-	}
-	_gb.writeByte(bt)
-	return nil
-}
-func (_fa *BufferedWriter) FinishByte() {
-	if _fa._b == 0 {
-		return
-	}
-	_fa._b = 0
-	_fa._bc++
-}
-func (_dfc *SubstreamReader) ReadBit() (_gac int, _edd error) {
-	_bfd, _edd := _dfc.readBool()
-	if _edd != nil {
-		return 0, _edd
-	}
-	if _bfd {
-		_gac = 1
-	}
-	return _gac, nil
-}
-func (_cb *SubstreamReader) Length() uint64 { return _cb._ace }
-func (_ecaa *Writer) WriteBits(bits uint64, number int) (_cfg int, _bdbf error) {
-	const _gfc = "\u0057\u0072\u0069\u0074\u0065\u0072\u002e\u0057\u0072\u0069\u0074\u0065r\u0042\u0069\u0074\u0073"
-	if number < 0 || number > 64 {
-		return 0, _ee.Errorf(_gfc, "\u0062i\u0074\u0073 \u006e\u0075\u006db\u0065\u0072\u0020\u006d\u0075\u0073\u0074 \u0062\u0065\u0020\u0069\u006e\u0020r\u0061\u006e\u0067\u0065\u0020\u003c\u0030\u002c\u0036\u0034\u003e,\u0020\u0069\u0073\u003a\u0020\u0027\u0025\u0064\u0027", number)
-	}
-	if number == 0 {
-		return 0, nil
-	}
-	_gad := number / 8
-	if _gad > 0 {
-		_caa := number - _gad*8
-		for _age := _gad - 1; _age >= 0; _age-- {
-			_fcf := byte((bits >> uint(_age*8+_caa)) & 0xff)
-			if _bdbf = _ecaa.WriteByte(_fcf); _bdbf != nil {
-				return _cfg, _ee.Wrapf(_bdbf, _gfc, "\u0062\u0079\u0074\u0065\u003a\u0020\u0027\u0025\u0064\u0027", _gad-_age+1)
-			}
+	if length < 0 {
+		_bfag := len(_dc._cef._ee)
+		if relative {
+			_bfag = _dc._cef._bef
 		}
-		number -= _gad * 8
-		if number == 0 {
-			return _gad, nil
-		}
+		length = _bfag - offset
 	}
-	var _cbf int
-	for _bec := 0; _bec < number; _bec++ {
-		if _ecaa._affb {
-			_cbf = int((bits >> uint(number-1-_bec)) & 0x1)
-		} else {
-			_cbf = int(bits & 0x1)
-			bits >>= 1
-		}
-		if _bdbf = _ecaa.WriteBit(_cbf); _bdbf != nil {
-			return _cfg, _ee.Wrapf(_bdbf, _gfc, "\u0062i\u0074\u003a\u0020\u0025\u0064", _bec)
-		}
-	}
-	return _gad, nil
-}
-func NewSubstreamReader(r StreamReader, offset, length uint64) (*SubstreamReader, error) {
-	if r == nil {
-		return nil, _e.New("\u0072o\u006ft\u0020\u0072\u0065\u0061\u0064e\u0072\u0020i\u0073\u0020\u006e\u0069\u006c")
-	}
-	const _gbg = 1000 * 1000
-	_dge := length
-	if _dge > _gbg {
-		_dge = _gbg
-	}
-	_a.Log.Trace("\u004e\u0065\u0077\u0053\u0075\u0062\u0073\u0074r\u0065\u0061\u006dRe\u0061\u0064\u0065\u0072\u0020\u0061t\u0020\u006f\u0066\u0066\u0073\u0065\u0074\u003a\u0020\u0025\u0064\u0020\u0077\u0069\u0074h\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u003a \u0025\u0064", offset, length)
-	return &SubstreamReader{_ebgf: r, _aff: offset, _ace: length, _da: make([]byte, _dge)}, nil
-}
-func (_eb *BufferedWriter) Reset() { _eb._eed = _eb._eed[:0]; _eb._bc = 0; _eb._b = 0 }
-func (_fgb *BufferedWriter) fullOffset() int {
-	_ba := _fgb._bc
-	if _fgb._b != 0 {
-		_ba++
-	}
-	return _ba
-}
-func (_fgg *Reader) Mark() {
-	_fgg._db = _fgg._ce
-	_fgg._cdf = _fgg._faa
-	_fgg._ded = _fgg._bab
-	_fgg._bae = _fgg._ffd
-}
-func (_cgd *Writer) SkipBits(skip int) error {
-	const _gage = "\u0057r\u0069t\u0065\u0072\u002e\u0053\u006b\u0069\u0070\u0042\u0069\u0074\u0073"
-	if skip == 0 {
-		return nil
-	}
-	_eba := int(_cgd._dbe) + skip
-	if _eba >= 0 && _eba < 8 {
-		_cgd._dbe = uint8(_eba)
-		return nil
-	}
-	_eba = int(_cgd._dbe) + _cgd._bed*8 + skip
-	if _eba < 0 {
-		return _ee.Errorf(_gage, "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
-	}
-	_bgc := _eba / 8
-	_dbg := _eba % 8
-	_a.Log.Trace("\u0053\u006b\u0069\u0070\u0042\u0069\u0074\u0073")
-	_a.Log.Trace("\u0042\u0069\u0074\u0049\u006e\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u0042\u0079\u0074\u0065\u0049n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u002c\u0020\u0046\u0075\u006c\u006c\u0042\u0069\u0074\u0073\u003a\u0020'\u0025\u0064\u0027\u002c\u0020\u004c\u0065\u006e\u003a\u0020\u0027\u0025\u0064\u0027,\u0020\u0043\u0061p\u003a\u0020\u0027\u0025\u0064\u0027", _cgd._dbe, _cgd._bed, int(_cgd._dbe)+(_cgd._bed)*8, len(_cgd._cde), cap(_cgd._cde))
-	_a.Log.Trace("S\u006b\u0069\u0070\u003a\u0020\u0027%\u0064\u0027\u002c\u0020\u0064\u003a \u0027\u0025\u0064\u0027\u002c\u0020\u0062i\u0074\u0049\u006e\u0064\u0065\u0078\u003a\u0020\u0027\u0025d\u0027", skip, _eba, _dbg)
-	_cgd._dbe = uint8(_dbg)
-	if _fede := _bgc - _cgd._bed; _fede > 0 && len(_cgd._cde)-1 < _bgc {
-		_a.Log.Trace("\u0042\u0079\u0074e\u0044\u0069\u0066\u0066\u003a\u0020\u0025\u0064", _fede)
-		return _ee.Errorf(_gage, "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
-	}
-	_cgd._bed = _bgc
-	_a.Log.Trace("\u0042\u0069\u0074I\u006e\u0064\u0065\u0078:\u0020\u0027\u0025\u0064\u0027\u002c\u0020B\u0079\u0074\u0065\u0049\u006e\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027", _cgd._dbe, _cgd._bed)
-	return nil
-}
-func NewReader(data []byte) *Reader            { return &Reader{_adb: data} }
-func (_bgg *SubstreamReader) BitPosition() int { return int(_bgg._aaf) }
-func (_ffg *Reader) Seek(offset int64, whence int) (int64, error) {
-	_ffg._gag = -1
-	var _fba int64
-	switch whence {
-	case _f.SeekStart:
-		_fba = offset
-	case _f.SeekCurrent:
-		_fba = _ffg._ce + offset
-	case _f.SeekEnd:
-		_fba = int64(len(_ffg._adb)) + offset
-	default:
-		return 0, _e.New("\u0072\u0065\u0061de\u0072\u002e\u0052\u0065\u0061\u0064\u0065\u0072\u002eS\u0065e\u006b:\u0020i\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0077\u0068\u0065\u006e\u0063\u0065")
-	}
-	if _fba < 0 {
-		return 0, _e.New("\u0072\u0065a\u0064\u0065\u0072\u002eR\u0065\u0061d\u0065\u0072\u002e\u0053\u0065\u0065\u006b\u003a \u006e\u0065\u0067\u0061\u0074\u0069\u0076\u0065\u0020\u0070\u006f\u0073i\u0074\u0069\u006f\u006e")
-	}
-	_ffg._ce = _fba
-	_ffg._faa = 0
-	return _fba, nil
-}
-func (_baa *Reader) Read(p []byte) (_aae int, _dba error) {
-	if _baa._faa == 0 {
-		return _baa.read(p)
-	}
-	for ; _aae < len(p); _aae++ {
-		if p[_aae], _dba = _baa.readUnalignedByte(); _dba != nil {
-			return 0, _dba
-		}
-	}
-	return _aae, nil
-}
-func (_bfg *Writer) writeByte(_gcg byte) error {
-	if _bfg._bed > len(_bfg._cde)-1 {
-		return _f.EOF
-	}
-	if _bfg._bed == len(_bfg._cde)-1 && _bfg._dbe != 0 {
-		return _f.EOF
-	}
-	if _bfg._dbe == 0 {
-		_bfg._cde[_bfg._bed] = _gcg
-		_bfg._bed++
-		return nil
-	}
-	if _bfg._affb {
-		_bfg._cde[_bfg._bed] |= _gcg >> _bfg._dbe
-		_bfg._bed++
-		_bfg._cde[_bfg._bed] = byte(uint16(_gcg) << (8 - _bfg._dbe) & 0xff)
-	} else {
-		_bfg._cde[_bfg._bed] |= byte(uint16(_gcg) << _bfg._dbe & 0xff)
-		_bfg._bed++
-		_bfg._cde[_bfg._bed] = _gcg >> (8 - _bfg._dbe)
-	}
-	return nil
-}
-func _gbgc(_bgad, _cef uint64) uint64 {
-	if _bgad < _cef {
-		return _bgad
-	}
-	return _cef
-}
-func (_bdf *Writer) ResetBit() { _bdf._dbe = 0 }
-func (_ffc *BufferedWriter) SkipBits(skip int) error {
-	if skip == 0 {
-		return nil
-	}
-	_c := int(_ffc._b) + skip
-	if _c >= 0 && _c < 8 {
-		_ffc._b = uint8(_c)
-		return nil
-	}
-	_c = int(_ffc._b) + _ffc._bc*8 + skip
-	if _c < 0 {
-		return _ee.Errorf("\u0057r\u0069t\u0065\u0072\u002e\u0053\u006b\u0069\u0070\u0042\u0069\u0074\u0073", "\u0069n\u0064e\u0078\u0020\u006f\u0075\u0074 \u006f\u0066 \u0072\u0061\u006e\u0067\u0065")
-	}
-	_fag := _c / 8
-	_gg := _c % 8
-	_ffc._b = uint8(_gg)
-	if _ec := _fag - _ffc._bc; _ec > 0 && len(_ffc._eed)-1 < _fag {
-		if _ffc._b != 0 {
-			_ec++
-		}
-		_ffc.expandIfNeeded(_ec)
-	}
-	_ffc._bc = _fag
-	return nil
-}
-func (_ed *BufferedWriter) grow(_eef int) {
-	if _ed._eed == nil && _eef < _ff {
-		_ed._eed = make([]byte, _eef, _ff)
-		return
-	}
-	_gge := len(_ed._eed)
-	if _ed._b != 0 {
-		_gge++
-	}
-	_gd := cap(_ed._eed)
-	switch {
-	case _eef <= _gd/2-_gge:
-		_a.Log.Trace("\u005b\u0042\u0075\u0066\u0066\u0065r\u0065\u0064\u0057\u0072\u0069t\u0065\u0072\u005d\u0020\u0067\u0072o\u0077\u0020\u002d\u0020\u0072e\u0073\u006c\u0069\u0063\u0065\u0020\u006f\u006e\u006c\u0079\u002e\u0020L\u0065\u006e\u003a\u0020\u0027\u0025\u0064\u0027\u002c\u0020\u0043\u0061\u0070\u003a\u0020'\u0025\u0064\u0027\u002c\u0020\u006e\u003a\u0020'\u0025\u0064\u0027", len(_ed._eed), cap(_ed._eed), _eef)
-		_a.Log.Trace("\u0020\u006e\u0020\u003c\u003d\u0020\u0063\u0020\u002f\u0020\u0032\u0020\u002d\u006d\u002e \u0043:\u0020\u0027\u0025\u0064\u0027\u002c\u0020\u006d\u003a\u0020\u0027\u0025\u0064\u0027", _gd, _gge)
-		copy(_ed._eed, _ed._eed[_ed.fullOffset():])
-	case _gd > _ae-_gd-_eef:
-		_a.Log.Error("\u0042\u0055F\u0046\u0045\u0052 \u0074\u006f\u006f\u0020\u006c\u0061\u0072\u0067\u0065")
-		return
-	default:
-		_ggc := make([]byte, 2*_gd+_eef)
-		copy(_ggc, _ed._eed)
-		_ed._eed = _ggc
-	}
-	_ed._eed = _ed._eed[:_gge+_eef]
-}
-func (_agd *BufferedWriter) tryGrowByReslice(_dff int) bool {
-	if _ebg := len(_agd._eed); _dff <= cap(_agd._eed)-_ebg {
-		_agd._eed = _agd._eed[:_ebg+_dff]
-		return true
-	}
-	return false
-}
-func (_egf *Reader) Reset() {
-	_egf._ce = _egf._db
-	_egf._faa = _egf._cdf
-	_egf._bab = _egf._ded
-	_egf._ffd = _egf._bae
-}
-func (_bff *Writer) Write(p []byte) (int, error) {
-	if len(p) > _bff.byteCapacity() {
-		return 0, _f.EOF
-	}
-	for _, _aga := range p {
-		if _geb := _bff.writeByte(_aga); _geb != nil {
-			return 0, _geb
-		}
-	}
-	return len(p), nil
-}
-func (_cd *BufferedWriter) writeFullBytes(_ga []byte) int {
-	_bfb := copy(_cd._eed[_cd.fullOffset():], _ga)
-	_cd._bc += _bfb
-	return _bfb
-}
-func (_baed *SubstreamReader) fillBuffer() error {
-	if uint64(_baed._ebgf.StreamPosition()) != _baed._be+_baed._aff {
-		_, _fea := _baed._ebgf.Seek(int64(_baed._be+_baed._aff), _f.SeekStart)
-		if _fea != nil {
-			return _fea
-		}
-	}
-	_baed._cdff = _baed._be
-	_ecbg := _gbgc(uint64(len(_baed._da)), _baed._ace-_baed._be)
-	_egg := make([]byte, _ecbg)
-	_bfa, _edge := _baed._ebgf.Read(_egg)
-	if _edge != nil {
-		return _edge
-	}
-	for _bfdc := uint64(0); _bfdc < _ecbg; _bfdc++ {
-		_baed._da[_bfdc] = _egg[_bfdc]
-	}
-	_baed._dcf = _baed._cdff + uint64(_bfa)
-	return nil
-}
-func (_fbg *SubstreamReader) Offset() uint64        { return _fbg._aff }
-func (_ceb *SubstreamReader) StreamPosition() int64 { return int64(_ceb._be) }
-func (_dgc *Writer) FinishByte() {
-	if _dgc._dbe == 0 {
-		return
-	}
-	_dgc._dbe = 0
-	_dgc._bed++
-}
-func NewWriter(data []byte) *Writer { return &Writer{_cde: data} }
-func (_fdg *SubstreamReader) ReadUint32() (uint32, error) {
-	_abc := make([]byte, 4)
-	_, _gcd := _fdg.Read(_abc)
-	if _gcd != nil {
-		return 0, _gcd
-	}
-	return _g.BigEndian.Uint32(_abc), nil
-}
-func (_bad *SubstreamReader) ReadBits(n byte) (_acd uint64, _gdgg error) {
-	if n < _bad._aaf {
-		_bea := _bad._aaf - n
-		_acd = uint64(_bad._eae >> _bea)
-		_bad._eae &= 1<<_bea - 1
-		_bad._aaf = _bea
-		return _acd, nil
-	}
-	if n > _bad._aaf {
-		if _bad._aaf > 0 {
-			_acd = uint64(_bad._eae)
-			n -= _bad._aaf
-		}
-		var _dfe byte
-		for n >= 8 {
-			_dfe, _gdgg = _bad.readBufferByte()
-			if _gdgg != nil {
-				return 0, _gdgg
-			}
-			_acd = _acd<<8 + uint64(_dfe)
-			n -= 8
-		}
-		if n > 0 {
-			if _bad._eae, _gdgg = _bad.readBufferByte(); _gdgg != nil {
-				return 0, _gdgg
-			}
-			_gdd := 8 - n
-			_acd = _acd<<n + uint64(_bad._eae>>_gdd)
-			_bad._eae &= 1<<_gdd - 1
-			_bad._aaf = _gdd
-		} else {
-			_bad._aaf = 0
-		}
-		return _acd, nil
-	}
-	_bad._aaf = 0
-	return uint64(_bad._eae), nil
-}
-func (_ac *BufferedWriter) Write(d []byte) (int, error) {
-	_ac.expandIfNeeded(len(d))
-	if _ac._b == 0 {
-		return _ac.writeFullBytes(d), nil
-	}
-	return _ac.writeShiftedBytes(d), nil
+	return &Reader{_cef: readerSource{_ee: _dc._cef._ee, _bef: length, _af: offset}}, nil
 }
 
 type BinaryWriter interface {
@@ -765,4 +266,355 @@ type BinaryWriter interface {
 	_f.Writer
 	_f.ByteWriter
 	Data() []byte
+}
+
+func (_be *BufferedWriter) ResetBitIndex() { _be._fc = 0 }
+func (_fbfa *Reader) ConsumeRemainingBits() (uint64, error) {
+	if _fbfa._ead != 0 {
+		return _fbfa.ReadBits(_fbfa._ead)
+	}
+	return 0, nil
+}
+
+var _ BinaryWriter = &BufferedWriter{}
+
+func (_fce *BufferedWriter) Reset() { _fce._fg = _fce._fg[:0]; _fce._a = 0; _fce._fc = 0 }
+
+type readerSource struct {
+	_ee  []byte
+	_af  int
+	_bef int
+}
+
+func (_gba *Writer) WriteByte(c byte) error { return _gba.writeByte(c) }
+func (_ceg *Reader) BitPosition() int       { return int(_ceg._ead) }
+func (_geb *Writer) ResetBit()              { _geb._gefd = 0 }
+func (_fgb *BufferedWriter) Write(d []byte) (int, error) {
+	_fgb.expandIfNeeded(len(d))
+	if _fgb._fc == 0 {
+		return _fgb.writeFullBytes(d), nil
+	}
+	return _fgb.writeShiftedBytes(d), nil
+}
+func (_ed *BufferedWriter) Len() int { return _ed.byteCapacity() }
+func NewReader(data []byte) *Reader {
+	return &Reader{_cef: readerSource{_ee: data, _bef: len(data), _af: 0}}
+}
+
+type Reader struct {
+	_cef readerSource
+	_ffd byte
+	_ead byte
+	_add int64
+	_ecg int
+	_cgb int
+	_aa  int64
+	_abf byte
+	_ddd byte
+	_ef  int
+}
+
+func (_eab *Reader) Seek(offset int64, whence int) (int64, error) {
+	_eab._cgb = -1
+	_eab._ead = 0
+	_eab._ffd = 0
+	_eab._ecg = 0
+	var _aee int64
+	switch whence {
+	case _f.SeekStart:
+		_aee = offset
+	case _f.SeekCurrent:
+		_aee = _eab._add + offset
+	case _f.SeekEnd:
+		_aee = int64(_eab._cef._bef) + offset
+	default:
+		return 0, _g.New("\u0072\u0065\u0061de\u0072\u002e\u0052\u0065\u0061\u0064\u0065\u0072\u002eS\u0065e\u006b:\u0020i\u006e\u0076\u0061\u006c\u0069\u0064\u0020\u0077\u0068\u0065\u006e\u0063\u0065")
+	}
+	if _aee < 0 {
+		return 0, _g.New("\u0072\u0065a\u0064\u0065\u0072\u002eR\u0065\u0061d\u0065\u0072\u002e\u0053\u0065\u0065\u006b\u003a \u006e\u0065\u0067\u0061\u0074\u0069\u0076\u0065\u0020\u0070\u006f\u0073i\u0074\u0069\u006f\u006e")
+	}
+	_eab._add = _aee
+	_eab._ead = 0
+	return _aee, nil
+}
+func (_fcb *Reader) Align() (_gbd byte) { _gbd = _fcb._ead; _fcb._ead = 0; return _gbd }
+func (_fgbg *BufferedWriter) fullOffset() int {
+	_cd := _fgbg._a
+	if _fgbg._fc != 0 {
+		_cd++
+	}
+	return _cd
+}
+func (_gb *BufferedWriter) WriteBit(bit int) error {
+	if bit != 1 && bit != 0 {
+		return _c.Errorf("\u0042\u0075\u0066fe\u0072\u0065\u0064\u0057\u0072\u0069\u0074\u0065\u0072\u002e\u0057\u0072\u0069\u0074\u0065\u0042\u0069\u0074", "\u0062\u0069\u0074\u0020\u0076\u0061\u006cu\u0065\u0020\u006du\u0073\u0074\u0020\u0062e\u0020\u0069\u006e\u0020\u0072\u0061\u006e\u0067\u0065\u0020\u007b\u0030\u002c\u0031\u007d\u0020\u0062\u0075\u0074\u0020\u0069\u0073\u003a\u0020\u0025\u0064", bit)
+	}
+	if len(_gb._fg)-1 < _gb._a {
+		_gb.expandIfNeeded(1)
+	}
+	_bf := _gb._fc
+	if _gb._fb {
+		_bf = 7 - _gb._fc
+	}
+	_gb._fg[_gb._a] |= byte(uint16(bit<<_bf) & 0xff)
+	_gb._fc++
+	if _gb._fc == 8 {
+		_gb._a++
+		_gb._fc = 0
+	}
+	return nil
+}
+func (_ecf *Writer) WriteBits(bits uint64, number int) (_fggc int, _beg error) {
+	const _ecgd = "\u0057\u0072\u0069\u0074\u0065\u0072\u002e\u0057\u0072\u0069\u0074\u0065r\u0042\u0069\u0074\u0073"
+	if number < 0 || number > 64 {
+		return 0, _c.Errorf(_ecgd, "\u0062i\u0074\u0073 \u006e\u0075\u006db\u0065\u0072\u0020\u006d\u0075\u0073\u0074 \u0062\u0065\u0020\u0069\u006e\u0020r\u0061\u006e\u0067\u0065\u0020\u003c\u0030\u002c\u0036\u0034\u003e,\u0020\u0069\u0073\u003a\u0020\u0027\u0025\u0064\u0027", number)
+	}
+	if number == 0 {
+		return 0, nil
+	}
+	_edd := number / 8
+	if _edd > 0 {
+		_febf := number - _edd*8
+		for _gfg := _edd - 1; _gfg >= 0; _gfg-- {
+			_eba := byte((bits >> uint(_gfg*8+_febf)) & 0xff)
+			if _beg = _ecf.WriteByte(_eba); _beg != nil {
+				return _fggc, _c.Wrapf(_beg, _ecgd, "\u0062\u0079\u0074\u0065\u003a\u0020\u0027\u0025\u0064\u0027", _edd-_gfg+1)
+			}
+		}
+		number -= _edd * 8
+		if number == 0 {
+			return _edd, nil
+		}
+	}
+	var _bgc int
+	for _cb := 0; _cb < number; _cb++ {
+		if _ecf._dda {
+			_bgc = int((bits >> uint(number-1-_cb)) & 0x1)
+		} else {
+			_bgc = int(bits & 0x1)
+			bits >>= 1
+		}
+		if _beg = _ecf.WriteBit(_bgc); _beg != nil {
+			return _fggc, _c.Wrapf(_beg, _ecgd, "\u0062i\u0074\u003a\u0020\u0025\u0064", _cb)
+		}
+	}
+	return _edd, nil
+}
+
+var _ _f.ByteWriter = &BufferedWriter{}
+var _ _f.Writer = &BufferedWriter{}
+
+func (_cf *BufferedWriter) WriteBits(bits uint64, number int) (_dgb int, _bg error) {
+	const _bba = "\u0042u\u0066\u0066\u0065\u0072e\u0064\u0057\u0072\u0069\u0074e\u0072.\u0057r\u0069\u0074\u0065\u0072\u0042\u0069\u0074s"
+	if number < 0 || number > 64 {
+		return 0, _c.Errorf(_bba, "\u0062i\u0074\u0073 \u006e\u0075\u006db\u0065\u0072\u0020\u006d\u0075\u0073\u0074 \u0062\u0065\u0020\u0069\u006e\u0020r\u0061\u006e\u0067\u0065\u0020\u003c\u0030\u002c\u0036\u0034\u003e,\u0020\u0069\u0073\u003a\u0020\u0027\u0025\u0064\u0027", number)
+	}
+	_ga := number / 8
+	if _ga > 0 {
+		_fbg := number - _ga*8
+		for _cc := _ga - 1; _cc >= 0; _cc-- {
+			_ab := byte((bits >> uint(_cc*8+_fbg)) & 0xff)
+			if _bg = _cf.WriteByte(_ab); _bg != nil {
+				return _dgb, _c.Wrapf(_bg, _bba, "\u0062\u0079\u0074\u0065\u003a\u0020\u0027\u0025\u0064\u0027", _ga-_cc+1)
+			}
+		}
+		number -= _ga * 8
+		if number == 0 {
+			return _ga, nil
+		}
+	}
+	var _ad int
+	for _ge := 0; _ge < number; _ge++ {
+		if _cf._fb {
+			_ad = int((bits >> uint(number-1-_ge)) & 0x1)
+		} else {
+			_ad = int(bits & 0x1)
+			bits >>= 1
+		}
+		if _bg = _cf.WriteBit(_ad); _bg != nil {
+			return _dgb, _c.Wrapf(_bg, _bba, "\u0062i\u0074\u003a\u0020\u0025\u0064", _ge)
+		}
+	}
+	return _ga, nil
+}
+func (_cegc *Writer) writeBit(_gac uint8) error {
+	if len(_cegc._bda)-1 < _cegc._aba {
+		return _f.EOF
+	}
+	_gde := _cegc._gefd
+	if _cegc._dda {
+		_gde = 7 - _cegc._gefd
+	}
+	_cegc._bda[_cegc._aba] |= byte(uint16(_gac<<_gde) & 0xff)
+	_cegc._gefd++
+	if _cegc._gefd == 8 {
+		_cegc._aba++
+		_cegc._gefd = 0
+	}
+	return nil
+}
+func (_gd *Reader) Mark() {
+	_gd._aa = _gd._add
+	_gd._abf = _gd._ead
+	_gd._ddd = _gd._ffd
+	_gd._ef = _gd._ecg
+}
+func (_bbe *Reader) Reset() {
+	_bbe._add = _bbe._aa
+	_bbe._ead = _bbe._abf
+	_bbe._ffd = _bbe._ddd
+	_bbe._ecg = _bbe._ef
+}
+func (_fgc *Reader) ReadBool() (bool, error)  { return _fgc.readBool() }
+func (_bafa *Reader) AbsolutePosition() int64 { return _bafa._add + int64(_bafa._cef._af) }
+func (_feg *Writer) FinishByte() {
+	if _feg._gefd == 0 {
+		return
+	}
+	_feg._gefd = 0
+	_feg._aba++
+}
+func NewWriter(data []byte) *Writer          { return &Writer{_bda: data} }
+func (_efd *Reader) RelativePosition() int64 { return _efd._add }
+func (_ag *BufferedWriter) FinishByte() {
+	if _ag._fc == 0 {
+		return
+	}
+	_ag._fc = 0
+	_ag._a++
+}
+
+const (
+	_gc = 64
+	_dg = int(^uint(0) >> 1)
+)
+
+func (_fba *Writer) Data() []byte      { return _fba._bda }
+func NewWriterMSB(data []byte) *Writer { return &Writer{_bda: data, _dda: true} }
+func (_afg *Reader) ReadBits(n byte) (_edgb uint64, _edc error) {
+	if n < _afg._ead {
+		_cdb := _afg._ead - n
+		_edgb = uint64(_afg._ffd >> _cdb)
+		_afg._ffd &= 1<<_cdb - 1
+		_afg._ead = _cdb
+		return _edgb, nil
+	}
+	if n > _afg._ead {
+		if _afg._ead > 0 {
+			_edgb = uint64(_afg._ffd)
+			n -= _afg._ead
+		}
+		for n >= 8 {
+			_baf, _ccd := _afg.readBufferByte()
+			if _ccd != nil {
+				return 0, _ccd
+			}
+			_edgb = _edgb<<8 + uint64(_baf)
+			n -= 8
+		}
+		if n > 0 {
+			if _afg._ffd, _edc = _afg.readBufferByte(); _edc != nil {
+				return 0, _edc
+			}
+			_gec := 8 - n
+			_edgb = _edgb<<n + uint64(_afg._ffd>>_gec)
+			_afg._ffd &= 1<<_gec - 1
+			_afg._ead = _gec
+		} else {
+			_afg._ead = 0
+		}
+		return _edgb, nil
+	}
+	_afg._ead = 0
+	return uint64(_afg._ffd), nil
+}
+
+type BitWriter interface {
+	WriteBit(_de int) error
+	WriteBits(_fac uint64, _ggb int) (_bgb int, _bfd error)
+	FinishByte()
+	SkipBits(_fgbcc int) error
+}
+
+func (_gef *Reader) AbsoluteLength() uint64 { return uint64(len(_gef._cef._ee)) }
+func (_feb *BufferedWriter) grow(_acg int) {
+	if _feb._fg == nil && _acg < _gc {
+		_feb._fg = make([]byte, _acg, _gc)
+		return
+	}
+	_bea := len(_feb._fg)
+	if _feb._fc != 0 {
+		_bea++
+	}
+	_fgbc := cap(_feb._fg)
+	switch {
+	case _acg <= _fgbc/2-_bea:
+		_b.Log.Trace("\u005b\u0042\u0075\u0066\u0066\u0065r\u0065\u0064\u0057\u0072\u0069t\u0065\u0072\u005d\u0020\u0067\u0072o\u0077\u0020\u002d\u0020\u0072e\u0073\u006c\u0069\u0063\u0065\u0020\u006f\u006e\u006c\u0079\u002e\u0020L\u0065\u006e\u003a\u0020\u0027\u0025\u0064\u0027\u002c\u0020\u0043\u0061\u0070\u003a\u0020'\u0025\u0064\u0027\u002c\u0020\u006e\u003a\u0020'\u0025\u0064\u0027", len(_feb._fg), cap(_feb._fg), _acg)
+		_b.Log.Trace("\u0020\u006e\u0020\u003c\u003d\u0020\u0063\u0020\u002f\u0020\u0032\u0020\u002d\u006d\u002e \u0043:\u0020\u0027\u0025\u0064\u0027\u002c\u0020\u006d\u003a\u0020\u0027\u0025\u0064\u0027", _fgbc, _bea)
+		copy(_feb._fg, _feb._fg[_feb.fullOffset():])
+	case _fgbc > _dg-_fgbc-_acg:
+		_b.Log.Error("\u0042\u0055F\u0046\u0045\u0052 \u0074\u006f\u006f\u0020\u006c\u0061\u0072\u0067\u0065")
+		return
+	default:
+		_db := make([]byte, 2*_fgbc+_acg)
+		copy(_db, _feb._fg)
+		_feb._fg = _db
+	}
+	_feb._fg = _feb._fg[:_bea+_acg]
+}
+func BufferedMSB() *BufferedWriter { return &BufferedWriter{_fb: true} }
+func (_bgd *Reader) ReadByte() (byte, error) {
+	if _bgd._ead == 0 {
+		return _bgd.readBufferByte()
+	}
+	return _bgd.readUnalignedByte()
+}
+func (_fec *BufferedWriter) expandIfNeeded(_cg int) {
+	if !_fec.tryGrowByReslice(_cg) {
+		_fec.grow(_cg)
+	}
+}
+func (_cge *Reader) Length() uint64 { return uint64(_cge._cef._bef) }
+func (_bbg *BufferedWriter) WriteByte(bt byte) error {
+	if _bbg._a > len(_bbg._fg)-1 || (_bbg._a == len(_bbg._fg)-1 && _bbg._fc != 0) {
+		_bbg.expandIfNeeded(1)
+	}
+	_bbg.writeByte(bt)
+	return nil
+}
+
+var _ BinaryWriter = &Writer{}
+
+func (_cfb *Reader) ReadBit() (_bbb int, _bfc error) {
+	_aag, _bfc := _cfb.readBool()
+	if _bfc != nil {
+		return 0, _bfc
+	}
+	if _aag {
+		_bbb = 1
+	}
+	return _bbb, nil
+}
+func (_aaa *Writer) writeByte(_fcbb byte) error {
+	if _aaa._aba > len(_aaa._bda)-1 {
+		return _f.EOF
+	}
+	if _aaa._aba == len(_aaa._bda)-1 && _aaa._gefd != 0 {
+		return _f.EOF
+	}
+	if _aaa._gefd == 0 {
+		_aaa._bda[_aaa._aba] = _fcbb
+		_aaa._aba++
+		return nil
+	}
+	if _aaa._dda {
+		_aaa._bda[_aaa._aba] |= _fcbb >> _aaa._gefd
+		_aaa._aba++
+		_aaa._bda[_aaa._aba] = byte(uint16(_fcbb) << (8 - _aaa._gefd) & 0xff)
+	} else {
+		_aaa._bda[_aaa._aba] |= byte(uint16(_fcbb) << _aaa._gefd & 0xff)
+		_aaa._aba++
+		_aaa._bda[_aaa._aba] = _fcbb >> (8 - _aaa._gefd)
+	}
+	return nil
 }

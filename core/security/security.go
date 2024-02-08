@@ -1,262 +1,661 @@
 package security
 
 import (
-	_g "bytes"
-	_b "crypto/aes"
-	_f "crypto/cipher"
-	_fe "crypto/md5"
-	_ee "crypto/rand"
-	_c "crypto/rc4"
-	_dg "crypto/sha256"
-	_a "crypto/sha512"
-	_bc "encoding/binary"
-	_fg "errors"
-	_aa "fmt"
-	_eg "hash"
-	_e "io"
-	_gf "math"
+	_cg "bytes"
+	_fc "crypto/aes"
+	_ga "crypto/cipher"
+	_ea "crypto/md5"
+	_e "crypto/rand"
+	_ge "crypto/rc4"
+	_bg "crypto/sha256"
+	_gc "crypto/sha512"
+	_c "encoding/binary"
+	_d "errors"
+	_a "fmt"
+	_b "hash"
+	_f "io"
+	_gcd "math"
 
-	_aab "bitbucket.org/shenghui0779/gopdf/common"
+	_ed "bitbucket.org/shenghui0779/gopdf/common"
 )
-
-func _fa(_ea, _efd string, _ff int, _af []byte) error {
-	if len(_af) < _ff {
-		return errInvalidField{Func: _ea, Field: _efd, Exp: _ff, Got: len(_af)}
-	}
-	return nil
-}
-
-type ecbEncrypter ecb
-
-func (_be *ecbEncrypter) BlockSize() int { return _be._bg }
-func (_bfa stdHandlerR6) alg10(_gea *StdEncryptDict, _ebfea []byte) error {
-	if _cdge := _fa("\u0061\u006c\u00671\u0030", "\u004b\u0065\u0079", 32, _ebfea); _cdge != nil {
-		return _cdge
-	}
-	_edg := uint64(uint32(_gea.P)) | (_gf.MaxUint32 << 32)
-	Perms := make([]byte, 16)
-	_bc.LittleEndian.PutUint64(Perms[:8], _edg)
-	if _gea.EncryptMetadata {
-		Perms[8] = 'T'
-	} else {
-		Perms[8] = 'F'
-	}
-	copy(Perms[9:12], "\u0061\u0064\u0062")
-	if _, _acaa := _e.ReadFull(_ee.Reader, Perms[12:16]); _acaa != nil {
-		return _acaa
-	}
-	_cad, _eee := _egd(_ebfea[:32])
-	if _eee != nil {
-		return _eee
-	}
-	_ab := _ef(_cad)
-	_ab.CryptBlocks(Perms, Perms)
-	_gea.Perms = Perms[:16]
-	return nil
-}
-func (stdHandlerR4) paddedPass(_eca []byte) []byte {
-	_gc := make([]byte, 32)
-	_ece := copy(_gc, _eca)
-	for ; _ece < 32; _ece++ {
-		_gc[_ece] = _fc[_ece-len(_eca)]
-	}
-	return _gc
-}
-
-type ecb struct {
-	_gd _f.Block
-	_bg int
-}
-
-// NewHandlerR6 creates a new standard security handler for R=5 and R=6.
-func NewHandlerR6() StdHandler { return stdHandlerR6{} }
-
-// Permissions is a bitmask of access permissions for a PDF file.
-type Permissions uint32
-
-func (_agb stdHandlerR4) alg5(_ceg []byte, _gff []byte) ([]byte, error) {
-	_cdg := _fe.New()
-	_cdg.Write([]byte(_fc))
-	_cdg.Write([]byte(_agb.ID0))
-	_bcb := _cdg.Sum(nil)
-	_aab.Log.Trace("\u0061\u006c\u0067\u0035")
-	_aab.Log.Trace("\u0065k\u0065\u0079\u003a\u0020\u0025\u0020x", _ceg)
-	_aab.Log.Trace("\u0049D\u003a\u0020\u0025\u0020\u0078", _agb.ID0)
-	if len(_bcb) != 16 {
-		return nil, _fg.New("\u0068a\u0073\u0068\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u0020\u006eo\u0074\u0020\u0031\u0036\u0020\u0062\u0079\u0074\u0065\u0073")
-	}
-	_cc, _cef := _c.NewCipher(_ceg)
-	if _cef != nil {
-		return nil, _fg.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
-	}
-	_ffa := make([]byte, 16)
-	_cc.XORKeyStream(_ffa, _bcb)
-	_df := make([]byte, len(_ceg))
-	for _eeg := 0; _eeg < 19; _eeg++ {
-		for _fdf := 0; _fdf < len(_ceg); _fdf++ {
-			_df[_fdf] = _ceg[_fdf] ^ byte(_eeg+1)
-		}
-		_cc, _cef = _c.NewCipher(_df)
-		if _cef != nil {
-			return nil, _fg.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
-		}
-		_cc.XORKeyStream(_ffa, _ffa)
-		_aab.Log.Trace("\u0069\u0020\u003d\u0020\u0025\u0064\u002c\u0020\u0065\u006b\u0065\u0079:\u0020\u0025\u0020\u0078", _eeg, _df)
-		_aab.Log.Trace("\u0069\u0020\u003d\u0020\u0025\u0064\u0020\u002d\u003e\u0020\u0025\u0020\u0078", _eeg, _ffa)
-	}
-	_dgf := make([]byte, 32)
-	for _bee := 0; _bee < 16; _bee++ {
-		_dgf[_bee] = _ffa[_bee]
-	}
-	_, _cef = _ee.Read(_dgf[16:32])
-	if _cef != nil {
-		return nil, _fg.New("\u0066a\u0069\u006c\u0065\u0064 \u0074\u006f\u0020\u0067\u0065n\u0020r\u0061n\u0064\u0020\u006e\u0075\u006d\u0062\u0065r")
-	}
-	return _dgf, nil
-}
-func _egd(_fcb []byte) (_f.Block, error) {
-	_fce, _bcbe := _b.NewCipher(_fcb)
-	if _bcbe != nil {
-		_aab.Log.Error("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0063\u006f\u0075\u006c\u0064\u0020\u006e\u006f\u0074\u0020\u0063\u0072\u0065\u0061\u0074\u0065\u0020A\u0045\u0053\u0020\u0063\u0069p\u0068\u0065r\u003a\u0020\u0025\u0076", _bcbe)
-		return nil, _bcbe
-	}
-	return _fce, nil
-}
-
-// GenerateParams is the algorithm opposite to alg2a (R>=5).
-// It generates U,O,UE,OE,Perms fields using AESv3 encryption.
-// There is no algorithm number assigned to this function in the spec.
-// It expects R, P and EncryptMetadata fields to be set.
-func (_ede stdHandlerR6) GenerateParams(d *StdEncryptDict, opass, upass []byte) ([]byte, error) {
-	_dfa := make([]byte, 32)
-	if _, _dgfb := _e.ReadFull(_ee.Reader, _dfa); _dgfb != nil {
-		return nil, _dgfb
-	}
-	d.U = nil
-	d.O = nil
-	d.UE = nil
-	d.OE = nil
-	d.Perms = nil
-	if len(upass) > 127 {
-		upass = upass[:127]
-	}
-	if len(opass) > 127 {
-		opass = opass[:127]
-	}
-	if _caa := _ede.alg8(d, _dfa, upass); _caa != nil {
-		return nil, _caa
-	}
-	if _bb := _ede.alg9(d, _dfa, opass); _bb != nil {
-		return nil, _bb
-	}
-	if d.R == 5 {
-		return _dfa, nil
-	}
-	if _gage := _ede.alg10(d, _dfa); _gage != nil {
-		return nil, _gage
-	}
-	return _dfa, nil
-}
-func (_bceb stdHandlerR4) alg6(_fgf *StdEncryptDict, _edb []byte) ([]byte, error) {
-	var (
-		_bd []byte
-		_db error
-	)
-	_bac := _bceb.alg2(_fgf, _edb)
-	if _fgf.R == 2 {
-		_bd, _db = _bceb.alg4(_bac, _edb)
-	} else if _fgf.R >= 3 {
-		_bd, _db = _bceb.alg5(_bac, _edb)
-	} else {
-		return nil, _fg.New("\u0069n\u0076\u0061\u006c\u0069\u0064\u0020R")
-	}
-	if _db != nil {
-		return nil, _db
-	}
-	_aab.Log.Trace("\u0063\u0068\u0065\u0063k:\u0020\u0025\u0020\u0078\u0020\u003d\u003d\u0020\u0025\u0020\u0078\u0020\u003f", string(_bd), string(_fgf.U))
-	_gge := _bd
-	_aed := _fgf.U
-	if _fgf.R >= 3 {
-		if len(_gge) > 16 {
-			_gge = _gge[0:16]
-		}
-		if len(_aed) > 16 {
-			_aed = _aed[0:16]
-		}
-	}
-	if !_g.Equal(_gge, _aed) {
-		return nil, nil
-	}
-	return _bac, nil
-}
 
 var _ StdHandler = stdHandlerR6{}
 
-func _dde(_bgd, _ddb, _afe []byte) ([]byte, error) {
+func (_aff errInvalidField) Error() string {
+	return _a.Sprintf("\u0025s\u003a\u0020e\u0078\u0070\u0065\u0063t\u0065\u0064\u0020%\u0073\u0020\u0066\u0069\u0065\u006c\u0064\u0020\u0074o \u0062\u0065\u0020%\u0064\u0020b\u0079\u0074\u0065\u0073\u002c\u0020g\u006f\u0074 \u0025\u0064", _aff.Func, _aff.Field, _aff.Exp, _aff.Got)
+}
+func (_egg stdHandlerR6) alg2b(R int, _eab, _cda, _bed []byte) ([]byte, error) {
+	if R == 5 {
+		return _ffc(_eab)
+	}
+	return _cac(_eab, _cda, _bed)
+}
+
+type stdHandlerR6 struct{}
+
+// GenerateParams generates and sets O and U parameters for the encryption dictionary.
+// It expects R, P and EncryptMetadata fields to be set.
+func (_cab stdHandlerR4) GenerateParams(d *StdEncryptDict, opass, upass []byte) ([]byte, error) {
+	O, _aec := _cab.alg3(d.R, upass, opass)
+	if _aec != nil {
+		_ed.Log.Debug("\u0045R\u0052\u004fR\u003a\u0020\u0045r\u0072\u006f\u0072\u0020\u0067\u0065\u006ee\u0072\u0061\u0074\u0069\u006e\u0067 \u004f\u0020\u0066\u006f\u0072\u0020\u0065\u006e\u0063\u0072\u0079p\u0074\u0069\u006f\u006e\u0020\u0028\u0025\u0073\u0029", _aec)
+		return nil, _aec
+	}
+	d.O = O
+	_ed.Log.Trace("\u0067\u0065\u006e\u0020\u004f\u003a\u0020\u0025\u0020\u0078", O)
+	_dab := _cab.alg2(d, upass)
+	U, _aec := _cab.alg5(_dab, upass)
+	if _aec != nil {
+		_ed.Log.Debug("\u0045R\u0052\u004fR\u003a\u0020\u0045r\u0072\u006f\u0072\u0020\u0067\u0065\u006ee\u0072\u0061\u0074\u0069\u006e\u0067 \u004f\u0020\u0066\u006f\u0072\u0020\u0065\u006e\u0063\u0072\u0079p\u0074\u0069\u006f\u006e\u0020\u0028\u0025\u0073\u0029", _aec)
+		return nil, _aec
+	}
+	d.U = U
+	_ed.Log.Trace("\u0067\u0065\u006e\u0020\u0055\u003a\u0020\u0025\u0020\u0078", U)
+	return _dab, nil
+}
+
+// Authenticate implements StdHandler interface.
+func (_fgb stdHandlerR4) Authenticate(d *StdEncryptDict, pass []byte) ([]byte, Permissions, error) {
+	_ed.Log.Trace("\u0044\u0065b\u0075\u0067\u0067\u0069n\u0067\u0020a\u0075\u0074\u0068\u0065\u006e\u0074\u0069\u0063a\u0074\u0069\u006f\u006e\u0020\u002d\u0020\u006f\u0077\u006e\u0065\u0072 \u0070\u0061\u0073\u0073")
+	_afe, _gda := _fgb.alg7(d, pass)
+	if _gda != nil {
+		return nil, 0, _gda
+	}
+	if _afe != nil {
+		_ed.Log.Trace("\u0074h\u0069\u0073\u002e\u0061u\u0074\u0068\u0065\u006e\u0074i\u0063a\u0074e\u0064\u0020\u003d\u0020\u0054\u0072\u0075e")
+		return _afe, PermOwner, nil
+	}
+	_ed.Log.Trace("\u0044\u0065bu\u0067\u0067\u0069n\u0067\u0020\u0061\u0075the\u006eti\u0063\u0061\u0074\u0069\u006f\u006e\u0020- \u0075\u0073\u0065\u0072\u0020\u0070\u0061s\u0073")
+	_afe, _gda = _fgb.alg6(d, pass)
+	if _gda != nil {
+		return nil, 0, _gda
+	}
+	if _afe != nil {
+		_ed.Log.Trace("\u0074h\u0069\u0073\u002e\u0061u\u0074\u0068\u0065\u006e\u0074i\u0063a\u0074e\u0064\u0020\u003d\u0020\u0054\u0072\u0075e")
+		return _afe, d.P, nil
+	}
+	return nil, 0, nil
+}
+func (_fe stdHandlerR4) alg7(_cbf *StdEncryptDict, _aa []byte) ([]byte, error) {
+	_daa := _fe.alg3Key(_cbf.R, _aa)
+	_ecce := make([]byte, len(_cbf.O))
+	if _cbf.R == 2 {
+		_gfec, _acf := _ge.NewCipher(_daa)
+		if _acf != nil {
+			return nil, _d.New("\u0066\u0061\u0069\u006c\u0065\u0064\u0020\u0063\u0069\u0070\u0068\u0065\u0072")
+		}
+		_gfec.XORKeyStream(_ecce, _cbf.O)
+	} else if _cbf.R >= 3 {
+		_bff := append([]byte{}, _cbf.O...)
+		for _ceg := 0; _ceg < 20; _ceg++ {
+			_dfb := append([]byte{}, _daa...)
+			for _cee := 0; _cee < len(_daa); _cee++ {
+				_dfb[_cee] ^= byte(19 - _ceg)
+			}
+			_dc, _aea := _ge.NewCipher(_dfb)
+			if _aea != nil {
+				return nil, _d.New("\u0066\u0061\u0069\u006c\u0065\u0064\u0020\u0063\u0069\u0070\u0068\u0065\u0072")
+			}
+			_dc.XORKeyStream(_ecce, _bff)
+			_bff = append([]byte{}, _ecce...)
+		}
+	} else {
+		return nil, _d.New("\u0069n\u0076\u0061\u006c\u0069\u0064\u0020R")
+	}
+	_fcff, _fef := _fe.alg6(_cbf, _ecce)
+	if _fef != nil {
+		return nil, nil
+	}
+	return _fcff, nil
+}
+
+// NewHandlerR4 creates a new standard security handler for R<=4.
+func NewHandlerR4(id0 string, length int) StdHandler { return stdHandlerR4{ID0: id0, Length: length} }
+func (_abe *ecbEncrypter) CryptBlocks(dst, src []byte) {
+	if len(src)%_abe._ab != 0 {
+		_ed.Log.Error("\u0045\u0052\u0052\u004f\u0052:\u0020\u0045\u0043\u0042\u0020\u0065\u006e\u0063\u0072\u0079\u0070\u0074\u003a \u0069\u006e\u0070\u0075\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u0075\u006c\u006c\u0020\u0062\u006c\u006f\u0063\u006b\u0073")
+		return
+	}
+	if len(dst) < len(src) {
+		_ed.Log.Error("\u0045R\u0052\u004fR\u003a\u0020\u0045C\u0042\u0020\u0065\u006e\u0063\u0072\u0079p\u0074\u003a\u0020\u006f\u0075\u0074p\u0075\u0074\u0020\u0073\u006d\u0061\u006c\u006c\u0065\u0072\u0020t\u0068\u0061\u006e\u0020\u0069\u006e\u0070\u0075\u0074")
+		return
+	}
+	for len(src) > 0 {
+		_abe._gg.Encrypt(dst, src[:_abe._ab])
+		src = src[_abe._ab:]
+		dst = dst[_abe._ab:]
+	}
+}
+func _cac(_fdd, _cga, _ecea []byte) ([]byte, error) {
 	var (
-		_ggd, _gcf, _ffd _eg.Hash
+		_efg, _eag, _acg _b.Hash
 	)
-	_ggd = _dg.New()
-	_cg := make([]byte, 64)
-	_agg := _ggd
-	_agg.Write(_bgd)
-	K := _agg.Sum(_cg[:0])
-	_cca := make([]byte, 64*(127+64+48))
-	_age := func(_gbg int) ([]byte, error) {
-		_ebfe := len(_ddb) + len(K) + len(_afe)
-		_beb := _cca[:_ebfe]
-		_cag := copy(_beb, _ddb)
-		_cag += copy(_beb[_cag:], K[:])
-		_cag += copy(_beb[_cag:], _afe)
-		if _cag != _ebfe {
-			_aab.Log.Error("E\u0052\u0052\u004f\u0052\u003a\u0020u\u006e\u0065\u0078\u0070\u0065\u0063t\u0065\u0064\u0020\u0072\u006f\u0075\u006ed\u0020\u0069\u006e\u0070\u0075\u0074\u0020\u0073\u0069\u007ae\u002e")
-			return nil, _fg.New("\u0077\u0072\u006f\u006e\u0067\u0020\u0073\u0069\u007a\u0065")
+	_efg = _bg.New()
+	_eee := make([]byte, 64)
+	_bgb := _efg
+	_bgb.Write(_fdd)
+	K := _bgb.Sum(_eee[:0])
+	_bba := make([]byte, 64*(127+64+48))
+	_fce := func(_dabe int) ([]byte, error) {
+		_aba := len(_cga) + len(K) + len(_ecea)
+		_bfe := _bba[:_aba]
+		_bec := copy(_bfe, _cga)
+		_bec += copy(_bfe[_bec:], K[:])
+		_bec += copy(_bfe[_bec:], _ecea)
+		if _bec != _aba {
+			_ed.Log.Error("E\u0052\u0052\u004f\u0052\u003a\u0020u\u006e\u0065\u0078\u0070\u0065\u0063t\u0065\u0064\u0020\u0072\u006f\u0075\u006ed\u0020\u0069\u006e\u0070\u0075\u0074\u0020\u0073\u0069\u007ae\u002e")
+			return nil, _d.New("\u0077\u0072\u006f\u006e\u0067\u0020\u0073\u0069\u007a\u0065")
 		}
-		K1 := _cca[:_ebfe*64]
-		_bcca(K1, _ebfe)
-		_fbf, _ddd := _egd(K[0:16])
-		if _ddd != nil {
-			return nil, _ddd
+		K1 := _bba[:_aba*64]
+		_dcg(K1, _aba)
+		_fcfa, _gfd := _ebe(K[0:16])
+		if _gfd != nil {
+			return nil, _gfd
 		}
-		_ggcf := _f.NewCBCEncrypter(_fbf, K[16:32])
-		_ggcf.CryptBlocks(K1, K1)
+		_dega := _ga.NewCBCEncrypter(_fcfa, K[16:32])
+		_dega.CryptBlocks(K1, K1)
 		E := K1
-		_dea := 0
-		for _bad := 0; _bad < 16; _bad++ {
-			_dea += int(E[_bad] % 3)
+		_abg := 0
+		for _ffd := 0; _ffd < 16; _ffd++ {
+			_abg += int(E[_ffd] % 3)
 		}
-		var _eaa _eg.Hash
-		switch _dea % 3 {
+		var _gaee _b.Hash
+		switch _abg % 3 {
 		case 0:
-			_eaa = _ggd
+			_gaee = _efg
 		case 1:
-			if _gcf == nil {
-				_gcf = _a.New384()
+			if _eag == nil {
+				_eag = _gc.New384()
 			}
-			_eaa = _gcf
+			_gaee = _eag
 		case 2:
-			if _ffd == nil {
-				_ffd = _a.New()
+			if _acg == nil {
+				_acg = _gc.New()
 			}
-			_eaa = _ffd
+			_gaee = _acg
 		}
-		_eaa.Reset()
-		_eaa.Write(E)
-		K = _eaa.Sum(_cg[:0])
+		_gaee.Reset()
+		_gaee.Write(E)
+		K = _gaee.Sum(_eee[:0])
 		return E, nil
 	}
-	for _gaa := 0; ; {
-		E, _dda := _age(_gaa)
-		if _dda != nil {
-			return nil, _dda
+	for _agf := 0; ; {
+		E, _daf := _fce(_agf)
+		if _daf != nil {
+			return nil, _daf
 		}
-		_bdbg := E[len(E)-1]
-		_gaa++
-		if _gaa >= 64 && _bdbg <= uint8(_gaa-32) {
+		_bccb := E[len(E)-1]
+		_agf++
+		if _agf >= 64 && _bccb <= uint8(_agf-32) {
 			break
 		}
 	}
 	return K[:32], nil
+}
+
+type ecbDecrypter ecb
+
+func (_bd stdHandlerR4) alg4(_deg []byte, _fae []byte) ([]byte, error) {
+	_cbg, _aed := _ge.NewCipher(_deg)
+	if _aed != nil {
+		return nil, _d.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
+	}
+	_gdc := []byte(_cb)
+	_gde := make([]byte, len(_gdc))
+	_cbg.XORKeyStream(_gde, _gdc)
+	return _gde, nil
+}
+
+// AuthEvent is an event type that triggers authentication.
+type AuthEvent string
+
+func (_fada stdHandlerR6) alg13(_gedc *StdEncryptDict, _dgbc []byte) error {
+	if _abgb := _ac("\u0061\u006c\u00671\u0033", "\u004b\u0065\u0079", 32, _dgbc); _abgb != nil {
+		return _abgb
+	}
+	if _bbg := _ac("\u0061\u006c\u00671\u0033", "\u0050\u0065\u0072m\u0073", 16, _gedc.Perms); _bbg != nil {
+		return _bbg
+	}
+	_geg := make([]byte, 16)
+	copy(_geg, _gedc.Perms[:16])
+	_cbe, _egge := _fc.NewCipher(_dgbc[:32])
+	if _egge != nil {
+		return _egge
+	}
+	_eec := _fb(_cbe)
+	_eec.CryptBlocks(_geg, _geg)
+	if !_cg.Equal(_geg[9:12], []byte("\u0061\u0064\u0062")) {
+		return _d.New("\u0064\u0065\u0063o\u0064\u0065\u0064\u0020p\u0065\u0072\u006d\u0069\u0073\u0073\u0069o\u006e\u0073\u0020\u0061\u0072\u0065\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064")
+	}
+	_abee := Permissions(_c.LittleEndian.Uint32(_geg[0:4]))
+	if _abee != _gedc.P {
+		return _d.New("\u0070\u0065r\u006d\u0069\u0073\u0073\u0069\u006f\u006e\u0073\u0020\u0076\u0061\u006c\u0069\u0064\u0061\u0074\u0069\u006f\u006e\u0020\u0066\u0061il\u0065\u0064")
+	}
+	var _gfg bool
+	if _geg[8] == 'T' {
+		_gfg = true
+	} else if _geg[8] == 'F' {
+		_gfg = false
+	} else {
+		return _d.New("\u0064\u0065\u0063\u006f\u0064\u0065\u0064 \u006d\u0065\u0074a\u0064\u0061\u0074\u0061 \u0065\u006e\u0063\u0072\u0079\u0070\u0074\u0069\u006f\u006e\u0020\u0066\u006c\u0061\u0067\u0020\u0069\u0073\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064")
+	}
+	if _gfg != _gedc.EncryptMetadata {
+		return _d.New("\u006d\u0065t\u0061\u0064\u0061\u0074a\u0020\u0065n\u0063\u0072\u0079\u0070\u0074\u0069\u006f\u006e \u0076\u0061\u006c\u0069\u0064\u0061\u0074\u0069\u006f\u006e\u0020\u0066a\u0069\u006c\u0065\u0064")
+	}
+	return nil
+}
+func (_afeg stdHandlerR6) alg12(_dgg *StdEncryptDict, _agg []byte) ([]byte, error) {
+	if _gdec := _ac("\u0061\u006c\u00671\u0032", "\u0055", 48, _dgg.U); _gdec != nil {
+		return nil, _gdec
+	}
+	if _cdeg := _ac("\u0061\u006c\u00671\u0032", "\u004f", 48, _dgg.O); _cdeg != nil {
+		return nil, _cdeg
+	}
+	_fad := make([]byte, len(_agg)+8+48)
+	_egc := copy(_fad, _agg)
+	_egc += copy(_fad[_egc:], _dgg.O[32:40])
+	_egc += copy(_fad[_egc:], _dgg.U[0:48])
+	_egcf, _bfeb := _afeg.alg2b(_dgg.R, _fad, _agg, _dgg.U[0:48])
+	if _bfeb != nil {
+		return nil, _bfeb
+	}
+	_egcf = _egcf[:32]
+	if !_cg.Equal(_egcf, _dgg.O[:32]) {
+		return nil, nil
+	}
+	return _egcf, nil
+}
+
+var _ StdHandler = stdHandlerR4{}
+
+func (_bc stdHandlerR4) alg3(R int, _bef, _cf []byte) ([]byte, error) {
+	var _ba []byte
+	if len(_cf) > 0 {
+		_ba = _bc.alg3Key(R, _cf)
+	} else {
+		_ba = _bc.alg3Key(R, _bef)
+	}
+	_bbd, _ecc := _ge.NewCipher(_ba)
+	if _ecc != nil {
+		return nil, _d.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
+	}
+	_cgf := _bc.paddedPass(_bef)
+	_gfb := make([]byte, len(_cgf))
+	_bbd.XORKeyStream(_gfb, _cgf)
+	if R >= 3 {
+		_fbd := make([]byte, len(_ba))
+		for _gd := 0; _gd < 19; _gd++ {
+			for _cd := 0; _cd < len(_ba); _cd++ {
+				_fbd[_cd] = _ba[_cd] ^ byte(_gd+1)
+			}
+			_fcf, _gdf := _ge.NewCipher(_fbd)
+			if _gdf != nil {
+				return nil, _d.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
+			}
+			_fcf.XORKeyStream(_gfb, _gfb)
+		}
+	}
+	return _gfb, nil
+}
+func (_ff stdHandlerR4) alg3Key(R int, _afff []byte) []byte {
+	_afffb := _ea.New()
+	_gfe := _ff.paddedPass(_afff)
+	_afffb.Write(_gfe)
+	if R >= 3 {
+		for _edg := 0; _edg < 50; _edg++ {
+			_ag := _afffb.Sum(nil)
+			_afffb = _ea.New()
+			_afffb.Write(_ag)
+		}
+	}
+	_bb := _afffb.Sum(nil)
+	if R == 2 {
+		_bb = _bb[0:5]
+	} else {
+		_bb = _bb[0 : _ff.Length/8]
+	}
+	return _bb
+}
+func (_aeg stdHandlerR4) alg6(_eg *StdEncryptDict, _bdd []byte) ([]byte, error) {
+	var (
+		_abea []byte
+		_gaeb error
+	)
+	_fde := _aeg.alg2(_eg, _bdd)
+	if _eg.R == 2 {
+		_abea, _gaeb = _aeg.alg4(_fde, _bdd)
+	} else if _eg.R >= 3 {
+		_abea, _gaeb = _aeg.alg5(_fde, _bdd)
+	} else {
+		return nil, _d.New("\u0069n\u0076\u0061\u006c\u0069\u0064\u0020R")
+	}
+	if _gaeb != nil {
+		return nil, _gaeb
+	}
+	_ed.Log.Trace("\u0063\u0068\u0065\u0063k:\u0020\u0025\u0020\u0078\u0020\u003d\u003d\u0020\u0025\u0020\u0078\u0020\u003f", string(_abea), string(_eg.U))
+	_gag := _abea
+	_dfe := _eg.U
+	if _eg.R >= 3 {
+		if len(_gag) > 16 {
+			_gag = _gag[0:16]
+		}
+		if len(_dfe) > 16 {
+			_dfe = _dfe[0:16]
+		}
+	}
+	if !_cg.Equal(_gag, _dfe) {
+		return nil, nil
+	}
+	return _fde, nil
+}
+
+type stdHandlerR4 struct {
+	Length int
+	ID0    string
+}
+
+const _cb = "\x28\277\116\136\x4e\x75\x8a\x41\x64\000\x4e\x56\377" + "\xfa\001\010\056\x2e\x00\xb6\xd0\x68\076\x80\x2f\014" + "\251\xfe\x64\x53\x69\172"
+
+type ecb struct {
+	_gg _ga.Block
+	_ab int
+}
+
+func (_eage stdHandlerR6) alg11(_feb *StdEncryptDict, _dga []byte) ([]byte, error) {
+	if _gbd := _ac("\u0061\u006c\u00671\u0031", "\u0055", 48, _feb.U); _gbd != nil {
+		return nil, _gbd
+	}
+	_edfg := make([]byte, len(_dga)+8)
+	_gadf := copy(_edfg, _dga)
+	_gadf += copy(_edfg[_gadf:], _feb.U[32:40])
+	_accd, _cgg := _eage.alg2b(_feb.R, _edfg, _dga, nil)
+	if _cgg != nil {
+		return nil, _cgg
+	}
+	_accd = _accd[:32]
+	if !_cg.Equal(_accd, _feb.U[:32]) {
+		return nil, nil
+	}
+	return _accd, nil
+}
+func (stdHandlerR4) paddedPass(_caf []byte) []byte {
+	_dd := make([]byte, 32)
+	_ae := copy(_dd, _caf)
+	for ; _ae < 32; _ae++ {
+		_dd[_ae] = _cb[_ae-len(_caf)]
+	}
+	return _dd
+}
+
+// NewHandlerR6 creates a new standard security handler for R=5 and R=6.
+func NewHandlerR6() StdHandler { return stdHandlerR6{} }
+func _dcg(_gfa []byte, _ccce int) {
+	_acc := _ccce
+	for _acc < len(_gfa) {
+		copy(_gfa[_acc:], _gfa[:_acc])
+		_acc *= 2
+	}
+}
+func _eb(_fa _ga.Block) *ecb { return &ecb{_gg: _fa, _ab: _fa.BlockSize()} }
+
+const (
+	PermOwner             = Permissions(_gcd.MaxUint32)
+	PermPrinting          = Permissions(1 << 2)
+	PermModify            = Permissions(1 << 3)
+	PermExtractGraphics   = Permissions(1 << 4)
+	PermAnnotate          = Permissions(1 << 5)
+	PermFillForms         = Permissions(1 << 8)
+	PermDisabilityExtract = Permissions(1 << 9)
+	PermRotateInsert      = Permissions(1 << 10)
+	PermFullPrintQuality  = Permissions(1 << 11)
+)
+
+// Permissions is a bitmask of access permissions for a PDF file.
+type Permissions uint32
+
+func (_da stdHandlerR4) alg2(_ced *StdEncryptDict, _be []byte) []byte {
+	_ed.Log.Trace("\u0061\u006c\u0067\u0032")
+	_gga := _da.paddedPass(_be)
+	_de := _ea.New()
+	_de.Write(_gga)
+	_de.Write(_ced.O)
+	var _eff [4]byte
+	_c.LittleEndian.PutUint32(_eff[:], uint32(_ced.P))
+	_de.Write(_eff[:])
+	_ed.Log.Trace("\u0067o\u0020\u0050\u003a\u0020\u0025\u0020x", _eff)
+	_de.Write([]byte(_da.ID0))
+	_ed.Log.Trace("\u0074\u0068\u0069\u0073\u002e\u0052\u0020\u003d\u0020\u0025d\u0020\u0065\u006e\u0063\u0072\u0079\u0070t\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061\u0020\u0025\u0076", _ced.R, _ced.EncryptMetadata)
+	if (_ced.R >= 4) && !_ced.EncryptMetadata {
+		_de.Write([]byte{0xff, 0xff, 0xff, 0xff})
+	}
+	_db := _de.Sum(nil)
+	if _ced.R >= 3 {
+		_de = _ea.New()
+		for _ggc := 0; _ggc < 50; _ggc++ {
+			_de.Reset()
+			_de.Write(_db[0 : _da.Length/8])
+			_db = _de.Sum(nil)
+		}
+	}
+	if _ced.R >= 3 {
+		return _db[0 : _da.Length/8]
+	}
+	return _db[0:5]
+}
+
+// StdHandler is an interface for standard security handlers.
+type StdHandler interface {
+
+	// GenerateParams uses owner and user passwords to set encryption parameters and generate an encryption key.
+	// It assumes that R, P and EncryptMetadata are already set.
+	GenerateParams(_ef *StdEncryptDict, _gf, _gb []byte) ([]byte, error)
+
+	// Authenticate uses encryption dictionary parameters and the password to calculate
+	// the document encryption key. It also returns permissions that should be granted to a user.
+	// In case of failed authentication, it returns empty key and zero permissions with no error.
+	Authenticate(_gaa *StdEncryptDict, _ca []byte) ([]byte, Permissions, error)
+}
+
+func (_ebd stdHandlerR6) alg8(_fed *StdEncryptDict, _dda []byte, _gec []byte) error {
+	if _bde := _ac("\u0061\u006c\u0067\u0038", "\u004b\u0065\u0079", 32, _dda); _bde != nil {
+		return _bde
+	}
+	var _fee [16]byte
+	if _, _dbc := _f.ReadFull(_e.Reader, _fee[:]); _dbc != nil {
+		return _dbc
+	}
+	_eabf := _fee[0:8]
+	_ebde := _fee[8:16]
+	_dgf := make([]byte, len(_gec)+len(_eabf))
+	_afb := copy(_dgf, _gec)
+	copy(_dgf[_afb:], _eabf)
+	_fbc, _cgfb := _ebd.alg2b(_fed.R, _dgf, _gec, nil)
+	if _cgfb != nil {
+		return _cgfb
+	}
+	U := make([]byte, len(_fbc)+len(_eabf)+len(_ebde))
+	_afb = copy(U, _fbc[:32])
+	_afb += copy(U[_afb:], _eabf)
+	copy(U[_afb:], _ebde)
+	_fed.U = U
+	_afb = len(_gec)
+	copy(_dgf[_afb:], _ebde)
+	_fbc, _cgfb = _ebd.alg2b(_fed.R, _dgf, _gec, nil)
+	if _cgfb != nil {
+		return _cgfb
+	}
+	_cgag, _cgfb := _ebe(_fbc[:32])
+	if _cgfb != nil {
+		return _cgfb
+	}
+	_ffa := make([]byte, _fc.BlockSize)
+	_cgfd := _ga.NewCBCEncrypter(_cgag, _ffa)
+	UE := make([]byte, 32)
+	_cgfd.CryptBlocks(UE, _dda[:32])
+	_fed.UE = UE
+	return nil
+}
+func _ffc(_ege []byte) ([]byte, error) {
+	_dbb := _bg.New()
+	_dbb.Write(_ege)
+	return _dbb.Sum(nil), nil
+}
+func _ac(_fd, _df string, _ggg int, _dfg []byte) error {
+	if len(_dfg) < _ggg {
+		return errInvalidField{Func: _fd, Field: _df, Exp: _ggg, Got: len(_dfg)}
+	}
+	return nil
+}
+func (_gae *ecbEncrypter) BlockSize() int { return _gae._ab }
+
+type ecbEncrypter ecb
+
+func (_eabc stdHandlerR6) alg9(_ccd *StdEncryptDict, _ebdc []byte, _cca []byte) error {
+	if _cffb := _ac("\u0061\u006c\u0067\u0039", "\u004b\u0065\u0079", 32, _ebdc); _cffb != nil {
+		return _cffb
+	}
+	if _dgb := _ac("\u0061\u006c\u0067\u0039", "\u0055", 48, _ccd.U); _dgb != nil {
+		return _dgb
+	}
+	var _eeef [16]byte
+	if _, _afd := _f.ReadFull(_e.Reader, _eeef[:]); _afd != nil {
+		return _afd
+	}
+	_age := _eeef[0:8]
+	_fea := _eeef[8:16]
+	_dfgg := _ccd.U[:48]
+	_aac := make([]byte, len(_cca)+len(_age)+len(_dfgg))
+	_bece := copy(_aac, _cca)
+	_bece += copy(_aac[_bece:], _age)
+	_bece += copy(_aac[_bece:], _dfgg)
+	_bab, _bbc := _eabc.alg2b(_ccd.R, _aac, _cca, _dfgg)
+	if _bbc != nil {
+		return _bbc
+	}
+	O := make([]byte, len(_bab)+len(_age)+len(_fea))
+	_bece = copy(O, _bab[:32])
+	_bece += copy(O[_bece:], _age)
+	_bece += copy(O[_bece:], _fea)
+	_ccd.O = O
+	_bece = len(_cca)
+	_bece += copy(_aac[_bece:], _fea)
+	_bab, _bbc = _eabc.alg2b(_ccd.R, _aac, _cca, _dfgg)
+	if _bbc != nil {
+		return _bbc
+	}
+	_becd, _bbc := _ebe(_bab[:32])
+	if _bbc != nil {
+		return _bbc
+	}
+	_edf := make([]byte, _fc.BlockSize)
+	_aaee := _ga.NewCBCEncrypter(_becd, _edf)
+	OE := make([]byte, 32)
+	_aaee.CryptBlocks(OE, _ebdc[:32])
+	_ccd.OE = OE
+	return nil
+}
+
+// Allowed checks if a set of permissions can be granted.
+func (_ad Permissions) Allowed(p2 Permissions) bool { return _ad&p2 == p2 }
+func (_gef stdHandlerR6) alg2a(_bac *StdEncryptDict, _dg []byte) ([]byte, Permissions, error) {
+	if _bgg := _ac("\u0061\u006c\u00672\u0061", "\u004f", 48, _bac.O); _bgg != nil {
+		return nil, 0, _bgg
+	}
+	if _bcc := _ac("\u0061\u006c\u00672\u0061", "\u0055", 48, _bac.U); _bcc != nil {
+		return nil, 0, _bcc
+	}
+	if len(_dg) > 127 {
+		_dg = _dg[:127]
+	}
+	_abf, _egb := _gef.alg12(_bac, _dg)
+	if _egb != nil {
+		return nil, 0, _egb
+	}
+	var (
+		_gff  []byte
+		_bbdb []byte
+		_ged  []byte
+	)
+	var _aae Permissions
+	if len(_abf) != 0 {
+		_aae = PermOwner
+		_gcf := make([]byte, len(_dg)+8+48)
+		_ccg := copy(_gcf, _dg)
+		_ccg += copy(_gcf[_ccg:], _bac.O[40:48])
+		copy(_gcf[_ccg:], _bac.U[0:48])
+		_gff = _gcf
+		_bbdb = _bac.OE
+		_ged = _bac.U[0:48]
+	} else {
+		_abf, _egb = _gef.alg11(_bac, _dg)
+		if _egb == nil && len(_abf) == 0 {
+			_abf, _egb = _gef.alg11(_bac, []byte(""))
+		}
+		if _egb != nil {
+			return nil, 0, _egb
+		} else if len(_abf) == 0 {
+			return nil, 0, nil
+		}
+		_aae = _bac.P
+		_dfeb := make([]byte, len(_dg)+8)
+		_dad := copy(_dfeb, _dg)
+		copy(_dfeb[_dad:], _bac.U[40:48])
+		_gff = _dfeb
+		_bbdb = _bac.UE
+		_ged = nil
+	}
+	if _aee := _ac("\u0061\u006c\u00672\u0061", "\u004b\u0065\u0079", 32, _bbdb); _aee != nil {
+		return nil, 0, _aee
+	}
+	_bbdb = _bbdb[:32]
+	_afa, _egb := _gef.alg2b(_bac.R, _gff, _dg, _ged)
+	if _egb != nil {
+		return nil, 0, _egb
+	}
+	_cbgg, _egb := _fc.NewCipher(_afa[:32])
+	if _egb != nil {
+		return nil, 0, _egb
+	}
+	_fgd := make([]byte, _fc.BlockSize)
+	_gaga := _ga.NewCBCDecrypter(_cbgg, _fgd)
+	_ece := make([]byte, 32)
+	_gaga.CryptBlocks(_ece, _bbdb)
+	if _bac.R == 5 {
+		return _ece, _aae, nil
+	}
+	_egb = _gef.alg13(_bac, _ece)
+	if _egb != nil {
+		return nil, 0, _egb
+	}
+	return _ece, _aae, nil
+}
+func (_cc *ecbDecrypter) CryptBlocks(dst, src []byte) {
+	if len(src)%_cc._ab != 0 {
+		_ed.Log.Error("\u0045\u0052\u0052\u004f\u0052:\u0020\u0045\u0043\u0042\u0020\u0064\u0065\u0063\u0072\u0079\u0070\u0074\u003a \u0069\u006e\u0070\u0075\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u0075\u006c\u006c\u0020\u0062\u006c\u006f\u0063\u006b\u0073")
+		return
+	}
+	if len(dst) < len(src) {
+		_ed.Log.Error("\u0045R\u0052\u004fR\u003a\u0020\u0045C\u0042\u0020\u0064\u0065\u0063\u0072\u0079p\u0074\u003a\u0020\u006f\u0075\u0074p\u0075\u0074\u0020\u0073\u006d\u0061\u006c\u006c\u0065\u0072\u0020t\u0068\u0061\u006e\u0020\u0069\u006e\u0070\u0075\u0074")
+		return
+	}
+	for len(src) > 0 {
+		_cc._gg.Decrypt(dst, src[:_cc._ab])
+		src = src[_cc._ab:]
+		dst = dst[_cc._ab:]
+	}
+}
+
+// Authenticate implements StdHandler interface.
+func (_gce stdHandlerR6) Authenticate(d *StdEncryptDict, pass []byte) ([]byte, Permissions, error) {
+	return _gce.alg2a(d, pass)
+}
+func _ebe(_cbc []byte) (_ga.Block, error) {
+	_gbg, _ee := _fc.NewCipher(_cbc)
+	if _ee != nil {
+		_ed.Log.Error("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0063\u006f\u0075\u006c\u0064\u0020\u006e\u006f\u0074\u0020\u0063\u0072\u0065\u0061\u0074\u0065\u0020A\u0045\u0053\u0020\u0063\u0069p\u0068\u0065r\u003a\u0020\u0025\u0076", _ee)
+		return nil, _ee
+	}
+	return _gbg, nil
 }
 
 // StdEncryptDict is a set of additional fields used in standard encryption dictionary.
@@ -269,307 +668,10 @@ type StdEncryptDict struct {
 	Perms           []byte
 }
 
-// Allowed checks if a set of permissions can be granted.
-func (_ba Permissions) Allowed(p2 Permissions) bool { return _ba&p2 == p2 }
-func (_cb *ecbDecrypter) CryptBlocks(dst, src []byte) {
-	if len(src)%_cb._bg != 0 {
-		_aab.Log.Error("\u0045\u0052\u0052\u004f\u0052:\u0020\u0045\u0043\u0042\u0020\u0064\u0065\u0063\u0072\u0079\u0070\u0074\u003a \u0069\u006e\u0070\u0075\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u0075\u006c\u006c\u0020\u0062\u006c\u006f\u0063\u006b\u0073")
-		return
-	}
-	if len(dst) < len(src) {
-		_aab.Log.Error("\u0045R\u0052\u004fR\u003a\u0020\u0045C\u0042\u0020\u0064\u0065\u0063\u0072\u0079p\u0074\u003a\u0020\u006f\u0075\u0074p\u0075\u0074\u0020\u0073\u006d\u0061\u006c\u006c\u0065\u0072\u0020t\u0068\u0061\u006e\u0020\u0069\u006e\u0070\u0075\u0074")
-		return
-	}
-	for len(src) > 0 {
-		_cb._gd.Decrypt(dst, src[:_cb._bg])
-		src = src[_cb._bg:]
-		dst = dst[_cb._bg:]
-	}
-}
-func (_ae errInvalidField) Error() string {
-	return _aa.Sprintf("\u0025s\u003a\u0020e\u0078\u0070\u0065\u0063t\u0065\u0064\u0020%\u0073\u0020\u0066\u0069\u0065\u006c\u0064\u0020\u0074o \u0062\u0065\u0020%\u0064\u0020b\u0079\u0074\u0065\u0073\u002c\u0020g\u006f\u0074 \u0025\u0064", _ae.Func, _ae.Field, _ae.Exp, _ae.Got)
-}
-func (_fbb stdHandlerR6) alg2b(R int, _bae, _fae, _fbbg []byte) ([]byte, error) {
-	if R == 5 {
-		return _fdg(_bae)
-	}
-	return _dde(_bae, _fae, _fbbg)
-}
-func (_baf stdHandlerR6) alg11(_deae *StdEncryptDict, _bcde []byte) ([]byte, error) {
-	if _fgfb := _fa("\u0061\u006c\u00671\u0031", "\u0055", 48, _deae.U); _fgfb != nil {
-		return nil, _fgfb
-	}
-	_abb := make([]byte, len(_bcde)+8)
-	_bfg := copy(_abb, _bcde)
-	_bfg += copy(_abb[_bfg:], _deae.U[32:40])
-	_gbfb, _afee := _baf.alg2b(_deae.R, _abb, _bcde, nil)
-	if _afee != nil {
-		return nil, _afee
-	}
-	_gbfb = _gbfb[:32]
-	if !_g.Equal(_gbfb, _deae.U[:32]) {
-		return nil, nil
-	}
-	return _gbfb, nil
-}
-func (_bf *ecbDecrypter) BlockSize() int { return _bf._bg }
-func (_fea stdHandlerR6) alg2a(_ebf *StdEncryptDict, _dcb []byte) ([]byte, Permissions, error) {
-	if _ffg := _fa("\u0061\u006c\u00672\u0061", "\u004f", 48, _ebf.O); _ffg != nil {
-		return nil, 0, _ffg
-	}
-	if _bdf := _fa("\u0061\u006c\u00672\u0061", "\u0055", 48, _ebf.U); _bdf != nil {
-		return nil, 0, _bdf
-	}
-	if len(_dcb) > 127 {
-		_dcb = _dcb[:127]
-	}
-	_aaa, _dgc := _fea.alg12(_ebf, _dcb)
-	if _dgc != nil {
-		return nil, 0, _dgc
-	}
-	var (
-		_afgf []byte
-		_bdb  []byte
-		_dacc []byte
-	)
-	var _ccb Permissions
-	if len(_aaa) != 0 {
-		_ccb = PermOwner
-		_cfa := make([]byte, len(_dcb)+8+48)
-		_fed := copy(_cfa, _dcb)
-		_fed += copy(_cfa[_fed:], _ebf.O[40:48])
-		copy(_cfa[_fed:], _ebf.U[0:48])
-		_afgf = _cfa
-		_bdb = _ebf.OE
-		_dacc = _ebf.U[0:48]
-	} else {
-		_aaa, _dgc = _fea.alg11(_ebf, _dcb)
-		if _dgc == nil && len(_aaa) == 0 {
-			_aaa, _dgc = _fea.alg11(_ebf, []byte(""))
-		}
-		if _dgc != nil {
-			return nil, 0, _dgc
-		} else if len(_aaa) == 0 {
-			return nil, 0, nil
-		}
-		_ccb = _ebf.P
-		_aaba := make([]byte, len(_dcb)+8)
-		_ggc := copy(_aaba, _dcb)
-		copy(_aaba[_ggc:], _ebf.U[40:48])
-		_afgf = _aaba
-		_bdb = _ebf.UE
-		_dacc = nil
-	}
-	if _fb := _fa("\u0061\u006c\u00672\u0061", "\u004b\u0065\u0079", 32, _bdb); _fb != nil {
-		return nil, 0, _fb
-	}
-	_bdb = _bdb[:32]
-	_baa, _dgc := _fea.alg2b(_ebf.R, _afgf, _dcb, _dacc)
-	if _dgc != nil {
-		return nil, 0, _dgc
-	}
-	_bga, _dgc := _b.NewCipher(_baa[:32])
-	if _dgc != nil {
-		return nil, 0, _dgc
-	}
-	_cfb := make([]byte, _b.BlockSize)
-	_aeaf := _f.NewCBCDecrypter(_bga, _cfb)
-	_dgd := make([]byte, 32)
-	_aeaf.CryptBlocks(_dgd, _bdb)
-	if _ebf.R == 5 {
-		return _dgd, _ccb, nil
-	}
-	_dgc = _fea.alg13(_ebf, _dgd)
-	if _dgc != nil {
-		return nil, 0, _dgc
-	}
-	return _dgd, _ccb, nil
-}
-func (_bed stdHandlerR4) alg7(_ccf *StdEncryptDict, _ffb []byte) ([]byte, error) {
-	_acae := _bed.alg3Key(_ccf.R, _ffb)
-	_efg := make([]byte, len(_ccf.O))
-	if _ccf.R == 2 {
-		_ffc, _fee := _c.NewCipher(_acae)
-		if _fee != nil {
-			return nil, _fg.New("\u0066\u0061\u0069\u006c\u0065\u0064\u0020\u0063\u0069\u0070\u0068\u0065\u0072")
-		}
-		_ffc.XORKeyStream(_efg, _ccf.O)
-	} else if _ccf.R >= 3 {
-		_gbdc := append([]byte{}, _ccf.O...)
-		for _aeb := 0; _aeb < 20; _aeb++ {
-			_eba := append([]byte{}, _acae...)
-			for _ged := 0; _ged < len(_acae); _ged++ {
-				_eba[_ged] ^= byte(19 - _aeb)
-			}
-			_ga, _afg := _c.NewCipher(_eba)
-			if _afg != nil {
-				return nil, _fg.New("\u0066\u0061\u0069\u006c\u0065\u0064\u0020\u0063\u0069\u0070\u0068\u0065\u0072")
-			}
-			_ga.XORKeyStream(_efg, _gbdc)
-			_gbdc = append([]byte{}, _efg...)
-		}
-	} else {
-		return nil, _fg.New("\u0069n\u0076\u0061\u006c\u0069\u0064\u0020R")
-	}
-	_ace, _dggd := _bed.alg6(_ccf, _efg)
-	if _dggd != nil {
-		return nil, nil
-	}
-	return _ace, nil
-}
-func (_ega stdHandlerR4) alg2(_gda *StdEncryptDict, _cd []byte) []byte {
-	_aab.Log.Trace("\u0061\u006c\u0067\u0032")
-	_aag := _ega.paddedPass(_cd)
-	_bcc := _fe.New()
-	_bcc.Write(_aag)
-	_bcc.Write(_gda.O)
-	var _aea [4]byte
-	_bc.LittleEndian.PutUint32(_aea[:], uint32(_gda.P))
-	_bcc.Write(_aea[:])
-	_aab.Log.Trace("\u0067o\u0020\u0050\u003a\u0020\u0025\u0020x", _aea)
-	_bcc.Write([]byte(_ega.ID0))
-	_aab.Log.Trace("\u0074\u0068\u0069\u0073\u002e\u0052\u0020\u003d\u0020\u0025d\u0020\u0065\u006e\u0063\u0072\u0079\u0070t\u004d\u0065\u0074\u0061\u0064\u0061\u0074\u0061\u0020\u0025\u0076", _gda.R, _gda.EncryptMetadata)
-	if (_gda.R >= 4) && !_gda.EncryptMetadata {
-		_bcc.Write([]byte{0xff, 0xff, 0xff, 0xff})
-	}
-	_fgg := _bcc.Sum(nil)
-	if _gda.R >= 3 {
-		_bcc = _fe.New()
-		for _ad := 0; _ad < 50; _ad++ {
-			_bcc.Reset()
-			_bcc.Write(_fgg[0 : _ega.Length/8])
-			_fgg = _bcc.Sum(nil)
-		}
-	}
-	if _gda.R >= 3 {
-		return _fgg[0 : _ega.Length/8]
-	}
-	return _fgg[0:5]
-}
-
-// AuthEvent is an event type that triggers authentication.
-type AuthEvent string
-type ecbDecrypter ecb
-
-var _ StdHandler = stdHandlerR4{}
-
-// StdHandler is an interface for standard security handlers.
-type StdHandler interface {
-
-	// GenerateParams uses owner and user passwords to set encryption parameters and generate an encryption key.
-	// It assumes that R, P and EncryptMetadata are already set.
-	GenerateParams(_gb *StdEncryptDict, _dc, _eb []byte) ([]byte, error)
-
-	// Authenticate uses encryption dictionary parameters and the password to calculate
-	// the document encryption key. It also returns permissions that should be granted to a user.
-	// In case of failed authentication, it returns empty key and zero permissions with no error.
-	Authenticate(_dgg *StdEncryptDict, _bce []byte) ([]byte, Permissions, error)
-}
-
-func (_gdd *ecbEncrypter) CryptBlocks(dst, src []byte) {
-	if len(src)%_gdd._bg != 0 {
-		_aab.Log.Error("\u0045\u0052\u0052\u004f\u0052:\u0020\u0045\u0043\u0042\u0020\u0065\u006e\u0063\u0072\u0079\u0070\u0074\u003a \u0069\u006e\u0070\u0075\u0074\u0020\u006e\u006f\u0074\u0020\u0066\u0075\u006c\u006c\u0020\u0062\u006c\u006f\u0063\u006b\u0073")
-		return
-	}
-	if len(dst) < len(src) {
-		_aab.Log.Error("\u0045R\u0052\u004fR\u003a\u0020\u0045C\u0042\u0020\u0065\u006e\u0063\u0072\u0079p\u0074\u003a\u0020\u006f\u0075\u0074p\u0075\u0074\u0020\u0073\u006d\u0061\u006c\u006c\u0065\u0072\u0020t\u0068\u0061\u006e\u0020\u0069\u006e\u0070\u0075\u0074")
-		return
-	}
-	for len(src) > 0 {
-		_gdd._gd.Encrypt(dst, src[:_gdd._bg])
-		src = src[_gdd._bg:]
-		dst = dst[_gdd._bg:]
-	}
-}
-
-const _fc = "\x28\277\116\136\x4e\x75\x8a\x41\x64\000\x4e\x56\377" + "\xfa\001\010\056\x2e\x00\xb6\xd0\x68\076\x80\x2f\014" + "\251\xfe\x64\x53\x69\172"
-
-// GenerateParams generates and sets O and U parameters for the encryption dictionary.
-// It expects R, P and EncryptMetadata fields to be set.
-func (_gffe stdHandlerR4) GenerateParams(d *StdEncryptDict, opass, upass []byte) ([]byte, error) {
-	O, _daf := _gffe.alg3(d.R, upass, opass)
-	if _daf != nil {
-		_aab.Log.Debug("\u0045R\u0052\u004fR\u003a\u0020\u0045r\u0072\u006f\u0072\u0020\u0067\u0065\u006ee\u0072\u0061\u0074\u0069\u006e\u0067 \u004f\u0020\u0066\u006f\u0072\u0020\u0065\u006e\u0063\u0072\u0079p\u0074\u0069\u006f\u006e\u0020\u0028\u0025\u0073\u0029", _daf)
-		return nil, _daf
-	}
-	d.O = O
-	_aab.Log.Trace("\u0067\u0065\u006e\u0020\u004f\u003a\u0020\u0025\u0020\u0078", O)
-	_gde := _gffe.alg2(d, upass)
-	U, _daf := _gffe.alg5(_gde, upass)
-	if _daf != nil {
-		_aab.Log.Debug("\u0045R\u0052\u004fR\u003a\u0020\u0045r\u0072\u006f\u0072\u0020\u0067\u0065\u006ee\u0072\u0061\u0074\u0069\u006e\u0067 \u004f\u0020\u0066\u006f\u0072\u0020\u0065\u006e\u0063\u0072\u0079p\u0074\u0069\u006f\u006e\u0020\u0028\u0025\u0073\u0029", _daf)
-		return nil, _daf
-	}
-	d.U = U
-	_aab.Log.Trace("\u0067\u0065\u006e\u0020\u0055\u003a\u0020\u0025\u0020\u0078", U)
-	return _gde, nil
-}
-func (_fgfe stdHandlerR6) alg12(_cabb *StdEncryptDict, _bfc []byte) ([]byte, error) {
-	if _fgfg := _fa("\u0061\u006c\u00671\u0032", "\u0055", 48, _cabb.U); _fgfg != nil {
-		return nil, _fgfg
-	}
-	if _caec := _fa("\u0061\u006c\u00671\u0032", "\u004f", 48, _cabb.O); _caec != nil {
-		return nil, _caec
-	}
-	_dce := make([]byte, len(_bfc)+8+48)
-	_edcc := copy(_dce, _bfc)
-	_edcc += copy(_dce[_edcc:], _cabb.O[32:40])
-	_edcc += copy(_dce[_edcc:], _cabb.U[0:48])
-	_cfbg, _dcc := _fgfe.alg2b(_cabb.R, _dce, _bfc, _cabb.U[0:48])
-	if _dcc != nil {
-		return nil, _dcc
-	}
-	_cfbg = _cfbg[:32]
-	if !_g.Equal(_cfbg, _cabb.O[:32]) {
-		return nil, nil
-	}
-	return _cfbg, nil
-}
-
-type stdHandlerR4 struct {
-	Length int
-	ID0    string
-}
-
-func _bcca(_edc []byte, _ffcb int) {
-	_bdg := _ffcb
-	for _bdg < len(_edc) {
-		copy(_edc[_bdg:], _edc[:_bdg])
-		_bdg *= 2
-	}
-}
-
-type stdHandlerR6 struct{}
-
-func (_gdaa stdHandlerR4) alg3Key(R int, _eda []byte) []byte {
-	_aca := _fe.New()
-	_gbd := _gdaa.paddedPass(_eda)
-	_aca.Write(_gbd)
-	if R >= 3 {
-		for _ge := 0; _ge < 50; _ge++ {
-			_ggg := _aca.Sum(nil)
-			_aca = _fe.New()
-			_aca.Write(_ggg)
-		}
-	}
-	_ag := _aca.Sum(nil)
-	if R == 2 {
-		_ag = _ag[0:5]
-	} else {
-		_ag = _ag[0 : _gdaa.Length/8]
-	}
-	return _ag
-}
-func (_dac stdHandlerR4) alg4(_egb []byte, _cae []byte) ([]byte, error) {
-	_cbf, _fd := _c.NewCipher(_egb)
-	if _fd != nil {
-		return nil, _fg.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
-	}
-	_de := []byte(_fc)
-	_dae := make([]byte, len(_de))
-	_cbf.XORKeyStream(_dae, _de)
-	return _dae, nil
-}
+const (
+	EventDocOpen = AuthEvent("\u0044o\u0063\u004f\u0070\u0065\u006e")
+	EventEFOpen  = AuthEvent("\u0045\u0046\u004f\u0070\u0065\u006e")
+)
 
 type errInvalidField struct {
 	Func  string
@@ -578,207 +680,106 @@ type errInvalidField struct {
 	Got   int
 }
 
-const (
-	PermOwner             = Permissions(_gf.MaxUint32)
-	PermPrinting          = Permissions(1 << 2)
-	PermModify            = Permissions(1 << 3)
-	PermExtractGraphics   = Permissions(1 << 4)
-	PermAnnotate          = Permissions(1 << 5)
-	PermFillForms         = Permissions(1 << 8)
-	PermDisabilityExtract = Permissions(1 << 9)
-	PermRotateInsert      = Permissions(1 << 10)
-	PermFullPrintQuality  = Permissions(1 << 11)
-)
-
-func _ac(_ed _f.Block) _f.BlockMode { return (*ecbDecrypter)(_ca(_ed)) }
-
-// NewHandlerR4 creates a new standard security handler for R<=4.
-func NewHandlerR4(id0 string, length int) StdHandler { return stdHandlerR4{ID0: id0, Length: length} }
-func _fdg(_ecb []byte) ([]byte, error) {
-	_cfc := _dg.New()
-	_cfc.Write(_ecb)
-	return _cfc.Sum(nil), nil
-}
-
-const (
-	EventDocOpen = AuthEvent("\u0044o\u0063\u004f\u0070\u0065\u006e")
-	EventEFOpen  = AuthEvent("\u0045\u0046\u004f\u0070\u0065\u006e")
-)
-
-func (_agc stdHandlerR6) alg8(_bec *StdEncryptDict, _gfc []byte, _fdb []byte) error {
-	if _fgef := _fa("\u0061\u006c\u0067\u0038", "\u004b\u0065\u0079", 32, _gfc); _fgef != nil {
-		return _fgef
+func (_cae stdHandlerR4) alg5(_ccc []byte, _cff []byte) ([]byte, error) {
+	_eba := _ea.New()
+	_eba.Write([]byte(_cb))
+	_eba.Write([]byte(_cae.ID0))
+	_cde := _eba.Sum(nil)
+	_ed.Log.Trace("\u0061\u006c\u0067\u0035")
+	_ed.Log.Trace("\u0065k\u0065\u0079\u003a\u0020\u0025\u0020x", _ccc)
+	_ed.Log.Trace("\u0049D\u003a\u0020\u0025\u0020\u0078", _cae.ID0)
+	if len(_cde) != 16 {
+		return nil, _d.New("\u0068a\u0073\u0068\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u0020\u006eo\u0074\u0020\u0031\u0036\u0020\u0062\u0079\u0074\u0065\u0073")
 	}
-	var _ecg [16]byte
-	if _, _egc := _e.ReadFull(_ee.Reader, _ecg[:]); _egc != nil {
-		return _egc
+	_aca, _fcg := _ge.NewCipher(_ccc)
+	if _fcg != nil {
+		return nil, _d.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
 	}
-	_ccc := _ecg[0:8]
-	_fcef := _ecg[8:16]
-	_ggf := make([]byte, len(_fdb)+len(_ccc))
-	_eceg := copy(_ggf, _fdb)
-	copy(_ggf[_eceg:], _ccc)
-	_ffcg, _aee := _agc.alg2b(_bec.R, _ggf, _fdb, nil)
-	if _aee != nil {
-		return _aee
-	}
-	U := make([]byte, len(_ffcg)+len(_ccc)+len(_fcef))
-	_eceg = copy(U, _ffcg[:32])
-	_eceg += copy(U[_eceg:], _ccc)
-	copy(U[_eceg:], _fcef)
-	_bec.U = U
-	_eceg = len(_fdb)
-	copy(_ggf[_eceg:], _fcef)
-	_ffcg, _aee = _agc.alg2b(_bec.R, _ggf, _fdb, nil)
-	if _aee != nil {
-		return _aee
-	}
-	_gag, _aee := _egd(_ffcg[:32])
-	if _aee != nil {
-		return _aee
-	}
-	_gffeb := make([]byte, _b.BlockSize)
-	_ggfd := _f.NewCBCEncrypter(_gag, _gffeb)
-	UE := make([]byte, 32)
-	_ggfd.CryptBlocks(UE, _gfc[:32])
-	_bec.UE = UE
-	return nil
-}
-func (_egad stdHandlerR6) alg9(_fdd *StdEncryptDict, _fbbga []byte, _cegg []byte) error {
-	if _gded := _fa("\u0061\u006c\u0067\u0039", "\u004b\u0065\u0079", 32, _fbbga); _gded != nil {
-		return _gded
-	}
-	if _cdf := _fa("\u0061\u006c\u0067\u0039", "\u0055", 48, _fdd.U); _cdf != nil {
-		return _cdf
-	}
-	var _gdeg [16]byte
-	if _, _dgb := _e.ReadFull(_ee.Reader, _gdeg[:]); _dgb != nil {
-		return _dgb
-	}
-	_dgbc := _gdeg[0:8]
-	_caea := _gdeg[8:16]
-	_dbf := _fdd.U[:48]
-	_fcd := make([]byte, len(_cegg)+len(_dgbc)+len(_dbf))
-	_aedf := copy(_fcd, _cegg)
-	_aedf += copy(_fcd[_aedf:], _dgbc)
-	_aedf += copy(_fcd[_aedf:], _dbf)
-	_cgf, _dff := _egad.alg2b(_fdd.R, _fcd, _cegg, _dbf)
-	if _dff != nil {
-		return _dff
-	}
-	O := make([]byte, len(_cgf)+len(_dgbc)+len(_caea))
-	_aedf = copy(O, _cgf[:32])
-	_aedf += copy(O[_aedf:], _dgbc)
-	_aedf += copy(O[_aedf:], _caea)
-	_fdd.O = O
-	_aedf = len(_cegg)
-	_aedf += copy(_fcd[_aedf:], _caea)
-	_cgf, _dff = _egad.alg2b(_fdd.R, _fcd, _cegg, _dbf)
-	if _dff != nil {
-		return _dff
-	}
-	_aeg, _dff := _egd(_cgf[:32])
-	if _dff != nil {
-		return _dff
-	}
-	_gfa := make([]byte, _b.BlockSize)
-	_gbf := _f.NewCBCEncrypter(_aeg, _gfa)
-	OE := make([]byte, 32)
-	_gbf.CryptBlocks(OE, _fbbga[:32])
-	_fdd.OE = OE
-	return nil
-}
-
-// Authenticate implements StdHandler interface.
-func (_aaf stdHandlerR4) Authenticate(d *StdEncryptDict, pass []byte) ([]byte, Permissions, error) {
-	_aab.Log.Trace("\u0044\u0065b\u0075\u0067\u0067\u0069n\u0067\u0020a\u0075\u0074\u0068\u0065\u006e\u0074\u0069\u0063a\u0074\u0069\u006f\u006e\u0020\u002d\u0020\u006f\u0077\u006e\u0065\u0072 \u0070\u0061\u0073\u0073")
-	_cbb, _edba := _aaf.alg7(d, pass)
-	if _edba != nil {
-		return nil, 0, _edba
-	}
-	if _cbb != nil {
-		_aab.Log.Trace("\u0074h\u0069\u0073\u002e\u0061u\u0074\u0068\u0065\u006e\u0074i\u0063a\u0074e\u0064\u0020\u003d\u0020\u0054\u0072\u0075e")
-		return _cbb, PermOwner, nil
-	}
-	_aab.Log.Trace("\u0044\u0065bu\u0067\u0067\u0069n\u0067\u0020\u0061\u0075the\u006eti\u0063\u0061\u0074\u0069\u006f\u006e\u0020- \u0075\u0073\u0065\u0072\u0020\u0070\u0061s\u0073")
-	_cbb, _edba = _aaf.alg6(d, pass)
-	if _edba != nil {
-		return nil, 0, _edba
-	}
-	if _cbb != nil {
-		_aab.Log.Trace("\u0074h\u0069\u0073\u002e\u0061u\u0074\u0068\u0065\u006e\u0074i\u0063a\u0074e\u0064\u0020\u003d\u0020\u0054\u0072\u0075e")
-		return _cbb, d.P, nil
-	}
-	return nil, 0, nil
-}
-func (_ffcd stdHandlerR6) alg13(_gbda *StdEncryptDict, _bebc []byte) error {
-	if _ead := _fa("\u0061\u006c\u00671\u0033", "\u004b\u0065\u0079", 32, _bebc); _ead != nil {
-		return _ead
-	}
-	if _cdgg := _fa("\u0061\u006c\u00671\u0033", "\u0050\u0065\u0072m\u0073", 16, _gbda.Perms); _cdgg != nil {
-		return _cdgg
-	}
-	_ecae := make([]byte, 16)
-	copy(_ecae, _gbda.Perms[:16])
-	_cegb, _faa := _b.NewCipher(_bebc[:32])
-	if _faa != nil {
-		return _faa
-	}
-	_bdgb := _ac(_cegb)
-	_bdgb.CryptBlocks(_ecae, _ecae)
-	if !_g.Equal(_ecae[9:12], []byte("\u0061\u0064\u0062")) {
-		return _fg.New("\u0064\u0065\u0063o\u0064\u0065\u0064\u0020p\u0065\u0072\u006d\u0069\u0073\u0073\u0069o\u006e\u0073\u0020\u0061\u0072\u0065\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064")
-	}
-	_agf := Permissions(_bc.LittleEndian.Uint32(_ecae[0:4]))
-	if _agf != _gbda.P {
-		return _fg.New("\u0070\u0065r\u006d\u0069\u0073\u0073\u0069\u006f\u006e\u0073\u0020\u0076\u0061\u006c\u0069\u0064\u0061\u0074\u0069\u006f\u006e\u0020\u0066\u0061il\u0065\u0064")
-	}
-	var _ecac bool
-	if _ecae[8] == 'T' {
-		_ecac = true
-	} else if _ecae[8] == 'F' {
-		_ecac = false
-	} else {
-		return _fg.New("\u0064\u0065\u0063\u006f\u0064\u0065\u0064 \u006d\u0065\u0074a\u0064\u0061\u0074\u0061 \u0065\u006e\u0063\u0072\u0079\u0070\u0074\u0069\u006f\u006e\u0020\u0066\u006c\u0061\u0067\u0020\u0069\u0073\u0020\u0069\u006e\u0076\u0061\u006c\u0069\u0064")
-	}
-	if _ecac != _gbda.EncryptMetadata {
-		return _fg.New("\u006d\u0065t\u0061\u0064\u0061\u0074a\u0020\u0065n\u0063\u0072\u0079\u0070\u0074\u0069\u006f\u006e \u0076\u0061\u006c\u0069\u0064\u0061\u0074\u0069\u006f\u006e\u0020\u0066a\u0069\u006c\u0065\u0064")
-	}
-	return nil
-}
-func (_cdd stdHandlerR4) alg3(R int, _cab, _aac []byte) ([]byte, error) {
-	var _dd []byte
-	if len(_aac) > 0 {
-		_dd = _cdd.alg3Key(R, _aac)
-	} else {
-		_dd = _cdd.alg3Key(R, _cab)
-	}
-	_fge, _efe := _c.NewCipher(_dd)
-	if _efe != nil {
-		return nil, _fg.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
-	}
-	_dca := _cdd.paddedPass(_cab)
-	_cf := make([]byte, len(_dca))
-	_fge.XORKeyStream(_cf, _dca)
-	if R >= 3 {
-		_fad := make([]byte, len(_dd))
-		for _fgd := 0; _fgd < 19; _fgd++ {
-			for _bcd := 0; _bcd < len(_dd); _bcd++ {
-				_fad[_bcd] = _dd[_bcd] ^ byte(_fgd+1)
-			}
-			_ce, _fcc := _c.NewCipher(_fad)
-			if _fcc != nil {
-				return nil, _fg.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
-			}
-			_ce.XORKeyStream(_cf, _cf)
+	_fba := make([]byte, 16)
+	_aca.XORKeyStream(_fba, _cde)
+	_bda := make([]byte, len(_ccc))
+	for _geb := 0; _geb < 19; _geb++ {
+		for _dbg := 0; _dbg < len(_ccc); _dbg++ {
+			_bda[_dbg] = _ccc[_dbg] ^ byte(_geb+1)
 		}
+		_aca, _fcg = _ge.NewCipher(_bda)
+		if _fcg != nil {
+			return nil, _d.New("\u0066a\u0069l\u0065\u0064\u0020\u0072\u0063\u0034\u0020\u0063\u0069\u0070\u0068")
+		}
+		_aca.XORKeyStream(_fba, _fba)
+		_ed.Log.Trace("\u0069\u0020\u003d\u0020\u0025\u0064\u002c\u0020\u0065\u006b\u0065\u0079:\u0020\u0025\u0020\u0078", _geb, _bda)
+		_ed.Log.Trace("\u0069\u0020\u003d\u0020\u0025\u0064\u0020\u002d\u003e\u0020\u0025\u0020\u0078", _geb, _fba)
 	}
-	return _cf, nil
+	_dae := make([]byte, 32)
+	for _adb := 0; _adb < 16; _adb++ {
+		_dae[_adb] = _fba[_adb]
+	}
+	_, _fcg = _e.Read(_dae[16:32])
+	if _fcg != nil {
+		return nil, _d.New("\u0066a\u0069\u006c\u0065\u0064 \u0074\u006f\u0020\u0067\u0065n\u0020r\u0061n\u0064\u0020\u006e\u0075\u006d\u0062\u0065r")
+	}
+	return _dae, nil
 }
-func _ca(_da _f.Block) *ecb         { return &ecb{_gd: _da, _bg: _da.BlockSize()} }
-func _ef(_gg _f.Block) _f.BlockMode { return (*ecbEncrypter)(_ca(_gg)) }
+func _fg(_bf _ga.Block) _ga.BlockMode { return (*ecbEncrypter)(_eb(_bf)) }
 
-// Authenticate implements StdHandler interface.
-func (_dfg stdHandlerR6) Authenticate(d *StdEncryptDict, pass []byte) ([]byte, Permissions, error) {
-	return _dfg.alg2a(d, pass)
+// GenerateParams is the algorithm opposite to alg2a (R>=5).
+// It generates U,O,UE,OE,Perms fields using AESv3 encryption.
+// There is no algorithm number assigned to this function in the spec.
+// It expects R, P and EncryptMetadata fields to be set.
+func (_cdab stdHandlerR6) GenerateParams(d *StdEncryptDict, opass, upass []byte) ([]byte, error) {
+	_cedb := make([]byte, 32)
+	if _, _aecg := _f.ReadFull(_e.Reader, _cedb); _aecg != nil {
+		return nil, _aecg
+	}
+	d.U = nil
+	d.O = nil
+	d.UE = nil
+	d.OE = nil
+	d.Perms = nil
+	if len(upass) > 127 {
+		upass = upass[:127]
+	}
+	if len(opass) > 127 {
+		opass = opass[:127]
+	}
+	if _ebdd := _cdab.alg8(d, _cedb, upass); _ebdd != nil {
+		return nil, _ebdd
+	}
+	if _afc := _cdab.alg9(d, _cedb, opass); _afc != nil {
+		return nil, _afc
+	}
+	if d.R == 5 {
+		return _cedb, nil
+	}
+	if _edgb := _cdab.alg10(d, _cedb); _edgb != nil {
+		return nil, _edgb
+	}
+	return _cedb, nil
 }
+func (_aga stdHandlerR6) alg10(_fge *StdEncryptDict, _bffa []byte) error {
+	if _cede := _ac("\u0061\u006c\u00671\u0030", "\u004b\u0065\u0079", 32, _bffa); _cede != nil {
+		return _cede
+	}
+	_cabd := uint64(uint32(_fge.P)) | (_gcd.MaxUint32 << 32)
+	Perms := make([]byte, 16)
+	_c.LittleEndian.PutUint64(Perms[:8], _cabd)
+	if _fge.EncryptMetadata {
+		Perms[8] = 'T'
+	} else {
+		Perms[8] = 'F'
+	}
+	copy(Perms[9:12], "\u0061\u0064\u0062")
+	if _, _affa := _f.ReadFull(_e.Reader, Perms[12:16]); _affa != nil {
+		return _affa
+	}
+	_ebc, _ccb := _ebe(_bffa[:32])
+	if _ccb != nil {
+		return _ccb
+	}
+	_efge := _fg(_ebc)
+	_efge.CryptBlocks(Perms, Perms)
+	_fge.Perms = Perms[:16]
+	return nil
+}
+func (_af *ecbDecrypter) BlockSize() int { return _af._ab }
+func _fb(_ce _ga.Block) _ga.BlockMode    { return (*ecbDecrypter)(_eb(_ce)) }

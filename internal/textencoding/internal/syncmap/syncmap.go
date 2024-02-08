@@ -1,255 +1,246 @@
 package syncmap
 
-import _a "sync"
+import _ee "sync"
 
-func (_ge *RuneStringMap) Read(r rune) (string, bool) {
-	_ge._dg.RLock()
-	defer _ge._dg.RUnlock()
-	_edg, _ee := _ge._cda[r]
-	return _edg, _ee
-}
-func NewByteRuneMap(m map[byte]rune) *ByteRuneMap { return &ByteRuneMap{_ae: m} }
-func (_da *ByteRuneMap) Length() int              { _da._g.RLock(); defer _da._g.RUnlock(); return len(_da._ae) }
-func MakeByteRuneMap(length int) *ByteRuneMap     { return &ByteRuneMap{_ae: make(map[byte]rune, length)} }
-
-type RuneByteMap struct {
-	_eac map[rune]byte
-	_abd _a.RWMutex
-}
-
-func MakeRuneSet(length int) *RuneSet { return &RuneSet{_cg: make(map[rune]struct{}, length)} }
-func (_acg *RuneStringMap) Write(r rune, s string) {
-	_acg._dg.Lock()
-	defer _acg._dg.Unlock()
-	_acg._cda[r] = s
-}
-func (_f *ByteRuneMap) Read(b byte) (rune, bool) {
-	_f._g.RLock()
-	defer _f._g.RUnlock()
-	_b, _c := _f._ae[b]
-	return _b, _c
-}
-func (_gf *RuneSet) Length() int                        { _gf._bgc.RLock(); defer _gf._bgc.RUnlock(); return len(_gf._cg) }
-func NewStringRuneMap(m map[string]rune) *StringRuneMap { return &StringRuneMap{_fgc: m} }
-
-type RuneStringMap struct {
-	_cda map[rune]string
-	_dg  _a.RWMutex
-}
-
-func (_gg *RuneUint16Map) Length() int {
-	_gg._abgd.RLock()
-	defer _gg._abgd.RUnlock()
-	return len(_gg._gd)
-}
-func (_efb *RuneStringMap) Range(f func(_cff rune, _bc string) (_cde bool)) {
-	_efb._dg.RLock()
-	defer _efb._dg.RUnlock()
-	for _de, _gfd := range _efb._cda {
-		if f(_de, _gfd) {
-			break
-		}
+func NewRuneStringMap(m map[rune]string) *RuneStringMap { return &RuneStringMap{_ff: m} }
+func (_fd *RuneByteMap) Length() int                    { _fd._fg.RLock(); defer _fd._fg.RUnlock(); return len(_fd._fcf) }
+func (_ggd *StringsMap) Copy() *StringsMap {
+	_ggd._gfa.RLock()
+	defer _ggd._gfa.RUnlock()
+	_gfg := map[string]string{}
+	for _cddd, _cac := range _ggd._fdd {
+		_gfg[_cddd] = _cac
 	}
-}
-func MakeRuneByteMap(length int) *RuneByteMap {
-	_ea := make(map[rune]byte, length)
-	return &RuneByteMap{_eac: _ea}
-}
-func (_ga *RuneSet) Write(r rune) {
-	_ga._bgc.Lock()
-	defer _ga._bgc.Unlock()
-	_ga._cg[r] = struct{}{}
-}
-func NewStringsMap(tuples []StringsTuple) *StringsMap {
-	_gadf := map[string]string{}
-	for _, _baa := range tuples {
-		_gadf[_baa.Key] = _baa.Value
-	}
-	return &StringsMap{_gfe: _gadf}
-}
-func (_cf *RuneSet) Range(f func(_gc rune) (_fga bool)) {
-	_cf._bgc.RLock()
-	defer _cf._bgc.RUnlock()
-	for _bgf := range _cf._cg {
-		if f(_bgf) {
-			break
-		}
-	}
-}
-func NewRuneStringMap(m map[rune]string) *RuneStringMap { return &RuneStringMap{_cda: m} }
-func (_gbdd *StringsMap) Copy() *StringsMap {
-	_gbdd._edge.RLock()
-	defer _gbdd._edge.RUnlock()
-	_fgd := map[string]string{}
-	for _cb, _bdf := range _gbdd._gfe {
-		_fgd[_cb] = _bdf
-	}
-	return &StringsMap{_gfe: _fgd}
-}
-func MakeRuneUint16Map(length int) *RuneUint16Map {
-	return &RuneUint16Map{_gd: make(map[rune]uint16, length)}
-}
-
-type StringsMap struct {
-	_gfe  map[string]string
-	_edge _a.RWMutex
-}
-type RuneUint16Map struct {
-	_gd   map[rune]uint16
-	_abgd _a.RWMutex
-}
-type StringRuneMap struct {
-	_fgc map[string]rune
-	_dd  _a.RWMutex
-}
-
-func (_cd *RuneSet) Exists(r rune) bool {
-	_cd._bgc.RLock()
-	defer _cd._bgc.RUnlock()
-	_, _bb := _cd._cg[r]
-	return _bb
-}
-func (_ff *RuneByteMap) Read(r rune) (byte, bool) {
-	_ff._abd.RLock()
-	defer _ff._abd.RUnlock()
-	_edf, _ba := _ff._eac[r]
-	return _edf, _ba
+	return &StringsMap{_fdd: _gfg}
 }
 
 type RuneSet struct {
-	_cg  map[rune]struct{}
-	_bgc _a.RWMutex
+	_faf map[rune]struct{}
+	_gbd _ee.RWMutex
 }
 
-func (_ag *ByteRuneMap) Write(b byte, r rune) {
-	_ag._g.Lock()
-	defer _ag._g.Unlock()
-	_ag._ae[b] = r
+func (_fbdc *RuneSet) Length() int {
+	_fbdc._gbd.RLock()
+	defer _fbdc._gbd.RUnlock()
+	return len(_fbdc._faf)
 }
-func (_cdb *StringRuneMap) Read(g string) (rune, bool) {
-	_cdb._dd.RLock()
-	defer _cdb._dd.RUnlock()
-	_cfgd, _bd := _cdb._fgc[g]
-	return _cfgd, _bd
+func NewStringsMap(tuples []StringsTuple) *StringsMap {
+	_ffc := map[string]string{}
+	for _, _bbb := range tuples {
+		_ffc[_bbb.Key] = _bbb.Value
+	}
+	return &StringsMap{_fdd: _ffc}
 }
-func (_cfg *RuneUint16Map) RangeDelete(f func(_efg rune, _bbg uint16) (_af bool, _gcfg bool)) {
-	_cfg._abgd.Lock()
-	defer _cfg._abgd.Unlock()
-	for _dc, _gef := range _cfg._gd {
-		_gad, _cag := f(_dc, _gef)
-		if _gad {
-			delete(_cfg._gd, _dc)
-		}
-		if _cag {
+func (_b *ByteRuneMap) Range(f func(_fc byte, _g rune) (_c bool)) {
+	_b._d.RLock()
+	defer _b._d.RUnlock()
+	for _de, _dd := range _b._a {
+		if f(_de, _dd) {
 			break
 		}
 	}
 }
-func (_afa *RuneUint16Map) Delete(r rune) {
-	_afa._abgd.Lock()
-	defer _afa._abgd.Unlock()
-	delete(_afa._gd, r)
+func (_ca *RuneByteMap) Read(r rune) (byte, bool) {
+	_ca._fg.RLock()
+	defer _ca._fg.RUnlock()
+	_ed, _ag := _ca._fcf[r]
+	return _ed, _ag
 }
-func (_bcd *StringsMap) Range(f func(_gba, _fe string) (_bf bool)) {
-	_bcd._edge.RLock()
-	defer _bcd._edge.RUnlock()
-	for _ad, _faa := range _bcd._gfe {
-		if f(_ad, _faa) {
+func (_decf *RuneUint16Map) Range(f func(_fag rune, _ecb uint16) (_gba bool)) {
+	_decf._ba.RLock()
+	defer _decf._ba.RUnlock()
+	for _ffe, _eag := range _decf._gc {
+		if f(_ffe, _eag) {
 			break
 		}
 	}
 }
-func (_fd *StringsMap) Write(g1, g2 string) {
-	_fd._edge.Lock()
-	defer _fd._edge.Unlock()
-	_fd._gfe[g1] = g2
+
+type RuneStringMap struct {
+	_ff map[rune]string
+	_ea _ee.RWMutex
 }
-func (_fca *RuneStringMap) Length() int {
-	_fca._dg.RLock()
-	defer _fca._dg.RUnlock()
-	return len(_fca._cda)
+
+func NewByteRuneMap(m map[byte]rune) *ByteRuneMap { return &ByteRuneMap{_a: m} }
+func (_fce *StringsMap) Write(g1, g2 string) {
+	_fce._gfa.Lock()
+	defer _fce._gfa.Unlock()
+	_fce._fdd[g1] = g2
+}
+func (_eg *ByteRuneMap) Write(b byte, r rune) { _eg._d.Lock(); defer _eg._d.Unlock(); _eg._a[b] = r }
+func (_eed *RuneStringMap) Length() int {
+	_eed._ea.RLock()
+	defer _eed._ea.RUnlock()
+	return len(_eed._ff)
+}
+func (_dfa *StringsMap) Read(g string) (string, bool) {
+	_dfa._gfa.RLock()
+	defer _dfa._gfa.RUnlock()
+	_efb, _ae := _dfa._fdd[g]
+	return _efb, _ae
+}
+func (_abg *StringRuneMap) Range(f func(_gcbe string, _dgb rune) (_bbg bool)) {
+	_abg._fgf.RLock()
+	defer _abg._fgf.RUnlock()
+	for _ggc, _ede := range _abg._egb {
+		if f(_ggc, _ede) {
+			break
+		}
+	}
+}
+func (_cg *RuneUint16Map) Read(r rune) (uint16, bool) {
+	_cg._ba.RLock()
+	defer _cg._ba.RUnlock()
+	_adb, _cdd := _cg._gc[r]
+	return _adb, _cdd
 }
 
 type ByteRuneMap struct {
-	_ae map[byte]rune
-	_g  _a.RWMutex
+	_a map[byte]rune
+	_d _ee.RWMutex
 }
 
-func (_ddd *StringRuneMap) Length() int {
-	_ddd._dd.RLock()
-	defer _ddd._dd.RUnlock()
-	return len(_ddd._fgc)
+func (_f *ByteRuneMap) Read(b byte) (rune, bool) {
+	_f._d.RLock()
+	defer _f._d.RUnlock()
+	_ef, _aa := _f._a[b]
+	return _ef, _aa
 }
-func (_aa *RuneUint16Map) Range(f func(_be rune, _ffd uint16) (_df bool)) {
-	_aa._abgd.RLock()
-	defer _aa._abgd.RUnlock()
-	for _gb, _gccd := range _aa._gd {
-		if f(_gb, _gccd) {
+func (_gfd *StringRuneMap) Length() int {
+	_gfd._fgf.RLock()
+	defer _gfd._fgf.RUnlock()
+	return len(_gfd._egb)
+}
+func (_gcb *StringRuneMap) Read(g string) (rune, bool) {
+	_gcb._fgf.RLock()
+	defer _gcb._fgf.RUnlock()
+	_fbg, _bcf := _gcb._egb[g]
+	return _fbg, _bcf
+}
+func (_bbba *StringsMap) Range(f func(_cee, _fea string) (_ecd bool)) {
+	_bbba._gfa.RLock()
+	defer _bbba._gfa.RUnlock()
+	for _aab, _efda := range _bbba._fdd {
+		if f(_aab, _efda) {
 			break
 		}
 	}
 }
-func (_bg *ByteRuneMap) Range(f func(_fa byte, _fg rune) (_d bool)) {
-	_bg._g.RLock()
-	defer _bg._g.RUnlock()
-	for _ab, _ed := range _bg._ae {
-		if f(_ab, _ed) {
+func (_ab *RuneUint16Map) RangeDelete(f func(_dg rune, _bc uint16) (_aga bool, _fbc bool)) {
+	_ab._ba.Lock()
+	defer _ab._ba.Unlock()
+	for _cfe, _fge := range _ab._gc {
+		_dgd, _cfbe := f(_cfe, _fge)
+		if _dgd {
+			delete(_ab._gc, _cfe)
+		}
+		if _cfbe {
 			break
 		}
 	}
 }
-func (_caa *RuneUint16Map) Read(r rune) (uint16, bool) {
-	_caa._abgd.RLock()
-	defer _caa._abgd.RUnlock()
-	_gcc, _fgac := _caa._gd[r]
-	return _gcc, _fgac
+func NewStringRuneMap(m map[string]rune) *StringRuneMap { return &StringRuneMap{_egb: m} }
+func (_fe *RuneUint16Map) Delete(r rune)                { _fe._ba.Lock(); defer _fe._ba.Unlock(); delete(_fe._gc, r) }
+func (_ge *RuneUint16Map) Write(r rune, g uint16) {
+	_ge._ba.Lock()
+	defer _ge._ba.Unlock()
+	_ge._gc[r] = g
 }
+func (_ac *RuneSet) Write(r rune) { _ac._gbd.Lock(); defer _ac._gbd.Unlock(); _ac._faf[r] = struct{}{} }
 
 type StringsTuple struct {
 	Key, Value string
 }
 
-func (_abg *RuneByteMap) Range(f func(_dad rune, _ca byte) (_fge bool)) {
-	_abg._abd.RLock()
-	defer _abg._abd.RUnlock()
-	for _ef, _ac := range _abg._eac {
-		if f(_ef, _ac) {
+func MakeRuneByteMap(length int) *RuneByteMap {
+	_ddf := make(map[rune]byte, length)
+	return &RuneByteMap{_fcf: _ddf}
+}
+func MakeByteRuneMap(length int) *ByteRuneMap { return &ByteRuneMap{_a: make(map[byte]rune, length)} }
+func (_fa *ByteRuneMap) Length() int {
+	_fa._d.RLock()
+	defer _fa._d.RUnlock()
+	return len(_fa._a)
+}
+func (_da *RuneUint16Map) Length() int { _da._ba.RLock(); defer _da._ba.RUnlock(); return len(_da._gc) }
+func (_dec *RuneStringMap) Range(f func(_dc rune, _eeb string) (_gbe bool)) {
+	_dec._ea.RLock()
+	defer _dec._ea.RUnlock()
+	for _ec, _cfb := range _dec._ff {
+		if f(_ec, _cfb) {
 			break
 		}
 	}
 }
-func (_bcb *StringsMap) Read(g string) (string, bool) {
-	_bcb._edge.RLock()
-	defer _bcb._edge.RUnlock()
-	_fae, _dee := _bcb._gfe[g]
-	return _fae, _dee
+
+type RuneUint16Map struct {
+	_gc map[rune]uint16
+	_ba _ee.RWMutex
 }
-func (_gcf *RuneUint16Map) Write(r rune, g uint16) {
-	_gcf._abgd.Lock()
-	defer _gcf._abgd.Unlock()
-	_gcf._gd[r] = g
+
+func (_af *RuneStringMap) Read(r rune) (string, bool) {
+	_af._ea.RLock()
+	defer _af._ea.RUnlock()
+	_cf, _bb := _af._ff[r]
+	return _cf, _bb
 }
-func (_eb *RuneByteMap) Write(r rune, b byte) {
-	_eb._abd.Lock()
-	defer _eb._abd.Unlock()
-	_eb._eac[r] = b
+func (_fcfe *RuneStringMap) Write(r rune, s string) {
+	_fcfe._ea.Lock()
+	defer _fcfe._ea.Unlock()
+	_fcfe._ff[r] = s
 }
-func (_gadc *StringRuneMap) Range(f func(_gdg string, _gcg rune) (_ce bool)) {
-	_gadc._dd.RLock()
-	defer _gadc._dd.RUnlock()
-	for _dec, _gbd := range _gadc._fgc {
-		if f(_dec, _gbd) {
+func MakeRuneSet(length int) *RuneSet { return &RuneSet{_faf: make(map[rune]struct{}, length)} }
+func (_fb *RuneSet) Exists(r rune) bool {
+	_fb._gbd.RLock()
+	defer _fb._gbd.RUnlock()
+	_, _fbd := _fb._faf[r]
+	return _fbd
+}
+func (_df *RuneByteMap) Write(r rune, b byte) {
+	_df._fg.Lock()
+	defer _df._fg.Unlock()
+	_df._fcf[r] = b
+}
+
+type StringRuneMap struct {
+	_egb map[string]rune
+	_fgf _ee.RWMutex
+}
+
+func (_ddfa *RuneByteMap) Range(f func(_eea rune, _gb byte) (_gf bool)) {
+	_ddfa._fg.RLock()
+	defer _ddfa._fg.RUnlock()
+	for _ad, _efd := range _ddfa._fcf {
+		if f(_ad, _efd) {
 			break
 		}
 	}
 }
-func (_fff *RuneByteMap) Length() int {
-	_fff._abd.RLock()
-	defer _fff._abd.RUnlock()
-	return len(_fff._eac)
+func (_fbe *StringRuneMap) Write(g string, r rune) {
+	_fbe._fgf.Lock()
+	defer _fbe._fgf.Unlock()
+	_fbe._egb[g] = r
 }
-func (_bbc *StringRuneMap) Write(g string, r rune) {
-	_bbc._dd.Lock()
-	defer _bbc._dd.Unlock()
-	_bbc._fgc[g] = r
+func (_ce *RuneSet) Range(f func(_cd rune) (_gg bool)) {
+	_ce._gbd.RLock()
+	defer _ce._gbd.RUnlock()
+	for _agf := range _ce._faf {
+		if f(_agf) {
+			break
+		}
+	}
+}
+
+type StringsMap struct {
+	_fdd map[string]string
+	_gfa _ee.RWMutex
+}
+
+func MakeRuneUint16Map(length int) *RuneUint16Map {
+	return &RuneUint16Map{_gc: make(map[rune]uint16, length)}
+}
+
+type RuneByteMap struct {
+	_fcf map[rune]byte
+	_fg  _ee.RWMutex
 }

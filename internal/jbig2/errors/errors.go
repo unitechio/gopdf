@@ -1,56 +1,57 @@
 package errors
 
 import (
-	_a "fmt"
+	_c "fmt"
 
-	_b "golang.org/x/xerrors"
+	_fd "golang.org/x/xerrors"
 )
 
-func (_e *processError) Error() string {
-	var _bd string
-	if _e._dc != "" {
-		_bd = _e._dc
-	}
-	_bd += "\u0050r\u006f\u0063\u0065\u0073\u0073\u003a " + _e._g
-	if _e._ga != "" {
-		_bd += "\u0020\u004d\u0065\u0073\u0073\u0061\u0067\u0065\u003a\u0020" + _e._ga
-	}
-	if _e._ac != nil {
-		_bd += "\u002e\u0020" + _e._ac.Error()
-	}
-	return _bd
+func _db(_ed, _be string) *processError {
+	return &processError{_b: "\u005b\u0055\u006e\u0069\u0050\u0044\u0046\u005d", _eg: _ed, _ee: _be}
 }
+func Error(processName, message string) error { return _db(message, processName) }
 func Wrap(err error, processName, message string) error {
-	if _gb, _c := err.(*processError); _c {
-		_gb._dc = ""
+	if _fa, _a := err.(*processError); _a {
+		_fa._b = ""
 	}
-	_ba := _dcf(message, processName)
-	_ba._ac = err
-	return _ba
+	_da := _db(message, processName)
+	_da._d = err
+	return _da
 }
-func Wrapf(err error, processName, message string, arguments ...interface{}) error {
-	if _ec, _dcfc := err.(*processError); _dcfc {
-		_ec._dc = ""
+func (_cc *processError) Error() string {
+	var _g string
+	if _cc._b != "" {
+		_g = _cc._b
 	}
-	_ff := _dcf(_a.Sprintf(message, arguments...), processName)
-	_ff._ac = err
-	return _ff
+	_g += "\u0050r\u006f\u0063\u0065\u0073\u0073\u003a " + _cc._ee
+	if _cc._eg != "" {
+		_g += "\u0020\u004d\u0065\u0073\u0073\u0061\u0067\u0065\u003a\u0020" + _cc._eg
+	}
+	if _cc._d != nil {
+		_g += "\u002e\u0020" + _cc._d.Error()
+	}
+	return _g
 }
+
+var _ _fd.Wrapper = (*processError)(nil)
+
 func Errorf(processName, message string, arguments ...interface{}) error {
-	return _dcf(_a.Sprintf(message, arguments...), processName)
+	return _db(_c.Sprintf(message, arguments...), processName)
 }
-func Error(processName, message string) error { return _dcf(message, processName) }
-func (_db *processError) Unwrap() error       { return _db._ac }
 
 type processError struct {
-	_dc string
-	_g  string
-	_ga string
-	_ac error
+	_b  string
+	_ee string
+	_eg string
+	_d  error
 }
 
-func _dcf(_de, _bf string) *processError {
-	return &processError{_dc: "\u005b\u0055\u006e\u0069\u0050\u0044\u0046\u005d", _ga: _de, _g: _bf}
+func Wrapf(err error, processName, message string, arguments ...interface{}) error {
+	if _ae, _de := err.(*processError); _de {
+		_ae._b = ""
+	}
+	_ec := _db(_c.Sprintf(message, arguments...), processName)
+	_ec._d = err
+	return _ec
 }
-
-var _ _b.Wrapper = (*processError)(nil)
+func (_dc *processError) Unwrap() error { return _dc._d }

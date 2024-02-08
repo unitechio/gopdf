@@ -1,858 +1,854 @@
 package fdf
 
 import (
-	_e "bufio"
-	_ae "bytes"
-	_a "encoding/hex"
-	_d "errors"
-	_de "fmt"
-	_db "io"
-	_af "os"
-	_f "regexp"
-	_fe "sort"
-	_g "strconv"
-	_dg "strings"
+	_ca "bufio"
+	_aa "bytes"
+	_f "encoding/hex"
+	_c "errors"
+	_be "fmt"
+	_e "io"
+	_ba "os"
+	_b "regexp"
+	_d "sort"
+	_ag "strconv"
+	_a "strings"
 
-	_c "bitbucket.org/shenghui0779/gopdf/common"
-	_ff "bitbucket.org/shenghui0779/gopdf/core"
+	_cd "bitbucket.org/shenghui0779/gopdf/common"
+	_age "bitbucket.org/shenghui0779/gopdf/core"
 )
 
-func (_aef *fdfParser) setFileOffset(_aec int64) {
-	_aef._bfb.Seek(_aec, _db.SeekStart)
-	_aef._gec = _e.NewReader(_aef._bfb)
-}
-
-var _fgcd = _f.MustCompile("\u0025F\u0044F\u002d\u0028\u005c\u0064\u0029\u005c\u002e\u0028\u005c\u0064\u0029")
-
-func (_ccf *fdfParser) skipSpaces() (int, error) {
-	_ceb := 0
-	for {
-		_gd, _feb := _ccf._gec.ReadByte()
-		if _feb != nil {
-			return 0, _feb
-		}
-		if _ff.IsWhiteSpace(_gd) {
-			_ceb++
-		} else {
-			_ccf._gec.UnreadByte()
-			break
-		}
-	}
-	return _ceb, nil
-}
-func (_gdf *fdfParser) parseFdfVersion() (int, int, error) {
-	_gdf._bfb.Seek(0, _db.SeekStart)
-	_cgc := 20
-	_fdb := make([]byte, _cgc)
-	_gdf._bfb.Read(_fdb)
-	_aaa := _fgcd.FindStringSubmatch(string(_fdb))
-	if len(_aaa) < 3 {
-		_cgg, _caag, _fceb := _gdf.seekFdfVersionTopDown()
-		if _fceb != nil {
-			_c.Log.Debug("F\u0061\u0069\u006c\u0065\u0064\u0020\u0072\u0065\u0063\u006f\u0076\u0065\u0072\u0079\u0020\u002d\u0020\u0075n\u0061\u0062\u006c\u0065\u0020\u0074\u006f\u0020\u0066\u0069nd\u0020\u0076\u0065r\u0073i\u006f\u006e")
-			return 0, 0, _fceb
-		}
-		return _cgg, _caag, nil
-	}
-	_eef, _fag := _g.Atoi(_aaa[1])
-	if _fag != nil {
-		return 0, 0, _fag
-	}
-	_fefb, _fag := _g.Atoi(_aaa[2])
-	if _fag != nil {
-		return 0, 0, _fag
-	}
-	_c.Log.Debug("\u0046\u0064\u0066\u0020\u0076\u0065\u0072\u0073\u0069\u006f\u006e\u0020%\u0064\u002e\u0025\u0064", _eef, _fefb)
-	return _eef, _fefb, nil
-}
-func (_ecg *fdfParser) readComment() (string, error) {
-	var _ee _ae.Buffer
-	_, _be := _ecg.skipSpaces()
-	if _be != nil {
-		return _ee.String(), _be
-	}
-	_gfc := true
-	for {
-		_efd, _ade := _ecg._gec.Peek(1)
-		if _ade != nil {
-			_c.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0025\u0073", _ade.Error())
-			return _ee.String(), _ade
-		}
-		if _gfc && _efd[0] != '%' {
-			return _ee.String(), _d.New("c\u006f\u006d\u006d\u0065\u006e\u0074 \u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0073\u0074a\u0072\u0074\u0020w\u0069t\u0068\u0020\u0025")
-		}
-		_gfc = false
-		if (_efd[0] != '\r') && (_efd[0] != '\n') {
-			_bd, _ := _ecg._gec.ReadByte()
-			_ee.WriteByte(_bd)
-		} else {
-			break
-		}
-	}
-	return _ee.String(), nil
-}
-
-type fdfParser struct {
-	_fbb int
-	_abd int
-	_cg  map[int64]_ff.PdfObject
-	_bfb _db.ReadSeeker
-	_gec *_e.Reader
-	_fc  int64
-	_ac  *_ff.PdfObjectDictionary
-}
-
-var _bf = _f.MustCompile("\u0028\u005c\u0064\u002b)\\\u0073\u002b\u0028\u005c\u0064\u002b\u0029\u005c\u0073\u002b\u006f\u0062\u006a")
-
-func (_fbc *fdfParser) parseObject() (_ff.PdfObject, error) {
-	_c.Log.Trace("\u0052e\u0061d\u0020\u0064\u0069\u0072\u0065c\u0074\u0020o\u0062\u006a\u0065\u0063\u0074")
-	_fbc.skipSpaces()
-	for {
-		_ebe, _fda := _fbc._gec.Peek(2)
-		if _fda != nil {
-			return nil, _fda
-		}
-		_c.Log.Trace("\u0050e\u0065k\u0020\u0073\u0074\u0072\u0069\u006e\u0067\u003a\u0020\u0025\u0073", string(_ebe))
-		if _ebe[0] == '/' {
-			_bdd, _fcb := _fbc.parseName()
-			_c.Log.Trace("\u002d\u003e\u004ea\u006d\u0065\u003a\u0020\u0027\u0025\u0073\u0027", _bdd)
-			return &_bdd, _fcb
-		} else if _ebe[0] == '(' {
-			_c.Log.Trace("\u002d>\u0053\u0074\u0072\u0069\u006e\u0067!")
-			return _fbc.parseString()
-		} else if _ebe[0] == '[' {
-			_c.Log.Trace("\u002d\u003e\u0041\u0072\u0072\u0061\u0079\u0021")
-			return _fbc.parseArray()
-		} else if (_ebe[0] == '<') && (_ebe[1] == '<') {
-			_c.Log.Trace("\u002d>\u0044\u0069\u0063\u0074\u0021")
-			return _fbc.parseDict()
-		} else if _ebe[0] == '<' {
-			_c.Log.Trace("\u002d\u003e\u0048\u0065\u0078\u0020\u0073\u0074\u0072\u0069\u006e\u0067\u0021")
-			return _fbc.parseHexString()
-		} else if _ebe[0] == '%' {
-			_fbc.readComment()
-			_fbc.skipSpaces()
-		} else {
-			_c.Log.Trace("\u002d\u003eN\u0075\u006d\u0062e\u0072\u0020\u006f\u0072\u0020\u0072\u0065\u0066\u003f")
-			_ebe, _ = _fbc._gec.Peek(15)
-			_gbd := string(_ebe)
-			_c.Log.Trace("\u0050\u0065\u0065k\u0020\u0073\u0074\u0072\u003a\u0020\u0025\u0073", _gbd)
-			if (len(_gbd) > 3) && (_gbd[:4] == "\u006e\u0075\u006c\u006c") {
-				_dfe, _ecgbe := _fbc.parseNull()
-				return &_dfe, _ecgbe
-			} else if (len(_gbd) > 4) && (_gbd[:5] == "\u0066\u0061\u006cs\u0065") {
-				_eeg, _bbf := _fbc.parseBool()
-				return &_eeg, _bbf
-			} else if (len(_gbd) > 3) && (_gbd[:4] == "\u0074\u0072\u0075\u0065") {
-				_ccc, _dga := _fbc.parseBool()
-				return &_ccc, _dga
-			}
-			_aag := _fb.FindStringSubmatch(_gbd)
-			if len(_aag) > 1 {
-				_ebe, _ = _fbc._gec.ReadBytes('R')
-				_c.Log.Trace("\u002d\u003e\u0020\u0021\u0052\u0065\u0066\u003a\u0020\u0027\u0025\u0073\u0027", string(_ebe[:]))
-				_ged, _egg := _aab(string(_ebe))
-				return &_ged, _egg
-			}
-			_eee := _eaf.FindStringSubmatch(_gbd)
-			if len(_eee) > 1 {
-				_c.Log.Trace("\u002d\u003e\u0020\u004e\u0075\u006d\u0062\u0065\u0072\u0021")
-				return _fbc.parseNumber()
-			}
-			_eee = _fab.FindStringSubmatch(_gbd)
-			if len(_eee) > 1 {
-				_c.Log.Trace("\u002d\u003e\u0020\u0045xp\u006f\u006e\u0065\u006e\u0074\u0069\u0061\u006c\u0020\u004e\u0075\u006d\u0062\u0065r\u0021")
-				_c.Log.Trace("\u0025\u0020\u0073", _eee)
-				return _fbc.parseNumber()
-			}
-			_c.Log.Debug("\u0045R\u0052\u004f\u0052\u0020U\u006e\u006b\u006e\u006f\u0077n\u0020(\u0070e\u0065\u006b\u0020\u0022\u0025\u0073\u0022)", _gbd)
-			return nil, _d.New("\u006f\u0062\u006a\u0065\u0063t\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0065\u0072\u0072\u006fr\u0020\u002d\u0020\u0075\u006e\u0065\u0078\u0070\u0065\u0063\u0074\u0065\u0064\u0020\u0070\u0061\u0074\u0074\u0065\u0072\u006e")
-		}
-	}
-}
-func (_ecd *fdfParser) readTextLine() (string, error) {
-	var _ffa _ae.Buffer
-	for {
-		_eg, _ege := _ecd._gec.Peek(1)
-		if _ege != nil {
-			_c.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0025\u0073", _ege.Error())
-			return _ffa.String(), _ege
-		}
-		if (_eg[0] != '\r') && (_eg[0] != '\n') {
-			_ffd, _ := _ecd._gec.ReadByte()
-			_ffa.WriteByte(_ffd)
-		} else {
-			break
-		}
-	}
-	return _ffa.String(), nil
-}
-func _daeb(_edbg _db.ReadSeeker) (*fdfParser, error) {
-	_gab := &fdfParser{}
-	_gab._bfb = _edbg
-	_gab._cg = map[int64]_ff.PdfObject{}
-	_bcf, _aff, _dgf := _gab.parseFdfVersion()
-	if _dgf != nil {
-		_c.Log.Error("U\u006e\u0061\u0062\u006c\u0065\u0020t\u006f\u0020\u0070\u0061\u0072\u0073\u0065\u0020\u0076e\u0072\u0073\u0069o\u006e:\u0020\u0025\u0076", _dgf)
-		return nil, _dgf
-	}
-	_gab._fbb = _bcf
-	_gab._abd = _aff
-	_dgf = _gab.parse()
-	return _gab, _dgf
-}
+var _bc = _b.MustCompile("\u0025\u0025\u0045O\u0046")
 
 // LoadFromPath loads FDF form data from file path `fdfPath`.
 func LoadFromPath(fdfPath string) (*Data, error) {
-	_fg, _gc := _af.Open(fdfPath)
-	if _gc != nil {
-		return nil, _gc
+	_eg, _ac := _ba.Open(fdfPath)
+	if _ac != nil {
+		return nil, _ac
 	}
-	defer _fg.Close()
-	return Load(_fg)
+	defer _eg.Close()
+	return Load(_eg)
 }
-func (_gdc *fdfParser) seekFdfVersionTopDown() (int, int, error) {
-	_gdc._bfb.Seek(0, _db.SeekStart)
-	_gdc._gec = _e.NewReader(_gdc._bfb)
-	_efa := 20
-	_add := make([]byte, _efa)
+func (_cbaf *fdfParser) seekFdfVersionTopDown() (int, int, error) {
+	_cbaf._gaf.Seek(0, _e.SeekStart)
+	_cbaf._dge = _ca.NewReader(_cbaf._gaf)
+	_ddc := 20
+	_ecg := make([]byte, _ddc)
 	for {
-		_bce, _fae := _gdc._gec.ReadByte()
-		if _fae != nil {
-			if _fae == _db.EOF {
+		_gce, _gee := _cbaf._dge.ReadByte()
+		if _gee != nil {
+			if _gee == _e.EOF {
 				break
 			} else {
-				return 0, 0, _fae
+				return 0, 0, _gee
 			}
 		}
-		if _ff.IsDecimalDigit(_bce) && _add[_efa-1] == '.' && _ff.IsDecimalDigit(_add[_efa-2]) && _add[_efa-3] == '-' && _add[_efa-4] == 'F' && _add[_efa-5] == 'D' && _add[_efa-6] == 'P' {
-			_bgd := int(_add[_efa-2] - '0')
-			_dff := int(_bce - '0')
-			return _bgd, _dff, nil
+		if _age.IsDecimalDigit(_gce) && _ecg[_ddc-1] == '.' && _age.IsDecimalDigit(_ecg[_ddc-2]) && _ecg[_ddc-3] == '-' && _ecg[_ddc-4] == 'F' && _ecg[_ddc-5] == 'D' && _ecg[_ddc-6] == 'P' {
+			_gedb := int(_ecg[_ddc-2] - '0')
+			_dff := int(_gce - '0')
+			return _gedb, _dff, nil
 		}
-		_add = append(_add[1:_efa], _bce)
+		_ecg = append(_ecg[1:_ddc], _gce)
 	}
-	return 0, 0, _d.New("\u0076\u0065\u0072\u0073\u0069\u006f\u006e\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
+	return 0, 0, _c.New("\u0076\u0065\u0072\u0073\u0069\u006f\u006e\u0020\u006e\u006f\u0074\u0020f\u006f\u0075\u006e\u0064")
 }
-
-// Load loads FDF form data from `r`.
-func Load(r _db.ReadSeeker) (*Data, error) {
-	_ga, _cc := _daeb(r)
-	if _cc != nil {
-		return nil, _cc
-	}
-	_cd, _cc := _ga.Root()
-	if _cc != nil {
-		return nil, _cc
-	}
-	_ag, _ca := _ff.GetArray(_cd.Get("\u0046\u0069\u0065\u006c\u0064\u0073"))
-	if !_ca {
-		return nil, _d.New("\u0066\u0069\u0065\u006c\u0064\u0073\u0020\u006d\u0069s\u0073\u0069\u006e\u0067")
-	}
-	return &Data{_ge: _ag, _bc: _cd}, nil
-}
-func (_gaa *fdfParser) parseArray() (*_ff.PdfObjectArray, error) {
-	_eadc := _ff.MakeArray()
-	_gaa._gec.ReadByte()
+func (_bdb *fdfParser) parseArray() (*_age.PdfObjectArray, error) {
+	_fcd := _age.MakeArray()
+	_bdb._dge.ReadByte()
 	for {
-		_gaa.skipSpaces()
-		_gca, _beab := _gaa._gec.Peek(1)
-		if _beab != nil {
-			return _eadc, _beab
+		_bdb.skipSpaces()
+		_eac, _aed := _bdb._dge.Peek(1)
+		if _aed != nil {
+			return _fcd, _aed
 		}
-		if _gca[0] == ']' {
-			_gaa._gec.ReadByte()
+		if _eac[0] == ']' {
+			_bdb._dge.ReadByte()
 			break
 		}
-		_ebb, _beab := _gaa.parseObject()
-		if _beab != nil {
-			return _eadc, _beab
+		_ccg, _aed := _bdb.parseObject()
+		if _aed != nil {
+			return _fcd, _aed
 		}
-		_eadc.Append(_ebb)
+		_fcd.Append(_ccg)
 	}
-	return _eadc, nil
+	return _fcd, nil
 }
-func (_dc *fdfParser) skipComments() error {
-	if _, _fce := _dc.skipSpaces(); _fce != nil {
-		return _fce
-	}
-	_gdb := true
+func (_gbgee *fdfParser) parseObject() (_age.PdfObject, error) {
+	_cd.Log.Trace("\u0052e\u0061d\u0020\u0064\u0069\u0072\u0065c\u0074\u0020o\u0062\u006a\u0065\u0063\u0074")
+	_gbgee.skipSpaces()
 	for {
-		_dge, _adf := _dc._gec.Peek(1)
-		if _adf != nil {
-			_c.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0025\u0073", _adf.Error())
-			return _adf
+		_abba, _gaab := _gbgee._dge.Peek(2)
+		if _gaab != nil {
+			return nil, _gaab
 		}
-		if _gdb && _dge[0] != '%' {
-			return nil
+		_cd.Log.Trace("\u0050e\u0065k\u0020\u0073\u0074\u0072\u0069\u006e\u0067\u003a\u0020\u0025\u0073", string(_abba))
+		if _abba[0] == '/' {
+			_egda, _fff := _gbgee.parseName()
+			_cd.Log.Trace("\u002d\u003e\u004ea\u006d\u0065\u003a\u0020\u0027\u0025\u0073\u0027", _egda)
+			return &_egda, _fff
+		} else if _abba[0] == '(' {
+			_cd.Log.Trace("\u002d>\u0053\u0074\u0072\u0069\u006e\u0067!")
+			return _gbgee.parseString()
+		} else if _abba[0] == '[' {
+			_cd.Log.Trace("\u002d\u003e\u0041\u0072\u0072\u0061\u0079\u0021")
+			return _gbgee.parseArray()
+		} else if (_abba[0] == '<') && (_abba[1] == '<') {
+			_cd.Log.Trace("\u002d>\u0044\u0069\u0063\u0074\u0021")
+			return _gbgee.parseDict()
+		} else if _abba[0] == '<' {
+			_cd.Log.Trace("\u002d\u003e\u0048\u0065\u0078\u0020\u0073\u0074\u0072\u0069\u006e\u0067\u0021")
+			return _gbgee.parseHexString()
+		} else if _abba[0] == '%' {
+			_gbgee.readComment()
+			_gbgee.skipSpaces()
+		} else {
+			_cd.Log.Trace("\u002d\u003eN\u0075\u006d\u0062e\u0072\u0020\u006f\u0072\u0020\u0072\u0065\u0066\u003f")
+			_abba, _ = _gbgee._dge.Peek(15)
+			_deba := string(_abba)
+			_cd.Log.Trace("\u0050\u0065\u0065k\u0020\u0073\u0074\u0072\u003a\u0020\u0025\u0073", _deba)
+			if (len(_deba) > 3) && (_deba[:4] == "\u006e\u0075\u006c\u006c") {
+				_ecd, _gad := _gbgee.parseNull()
+				return &_ecd, _gad
+			} else if (len(_deba) > 4) && (_deba[:5] == "\u0066\u0061\u006cs\u0065") {
+				_ef, _dgaa := _gbgee.parseBool()
+				return &_ef, _dgaa
+			} else if (len(_deba) > 3) && (_deba[:4] == "\u0074\u0072\u0075\u0065") {
+				_bae, _dde := _gbgee.parseBool()
+				return &_bae, _dde
+			}
+			_acda := _gaa.FindStringSubmatch(_deba)
+			if len(_acda) > 1 {
+				_abba, _ = _gbgee._dge.ReadBytes('R')
+				_cd.Log.Trace("\u002d\u003e\u0020\u0021\u0052\u0065\u0066\u003a\u0020\u0027\u0025\u0073\u0027", string(_abba[:]))
+				_ege, _dedb := _gdg(string(_abba))
+				return &_ege, _dedb
+			}
+			_fce := _bd.FindStringSubmatch(_deba)
+			if len(_fce) > 1 {
+				_cd.Log.Trace("\u002d\u003e\u0020\u004e\u0075\u006d\u0062\u0065\u0072\u0021")
+				return _gbgee.parseNumber()
+			}
+			_fce = _gg.FindStringSubmatch(_deba)
+			if len(_fce) > 1 {
+				_cd.Log.Trace("\u002d\u003e\u0020\u0045xp\u006f\u006e\u0065\u006e\u0074\u0069\u0061\u006c\u0020\u004e\u0075\u006d\u0062\u0065r\u0021")
+				_cd.Log.Trace("\u0025\u0020\u0073", _fce)
+				return _gbgee.parseNumber()
+			}
+			_cd.Log.Debug("\u0045R\u0052\u004f\u0052\u0020U\u006e\u006b\u006e\u006f\u0077n\u0020(\u0070e\u0065\u006b\u0020\u0022\u0025\u0073\u0022)", _deba)
+			return nil, _c.New("\u006f\u0062\u006a\u0065\u0063t\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0065\u0072\u0072\u006fr\u0020\u002d\u0020\u0075\u006e\u0065\u0078\u0070\u0065\u0063\u0074\u0065\u0064\u0020\u0070\u0061\u0074\u0074\u0065\u0072\u006e")
 		}
-		_gdb = false
-		if (_dge[0] != '\r') && (_dge[0] != '\n') {
-			_dc._gec.ReadByte()
+	}
+}
+func (_gdf *fdfParser) readTextLine() (string, error) {
+	var _geg _aa.Buffer
+	for {
+		_adg, _gbge := _gdf._dge.Peek(1)
+		if _gbge != nil {
+			_cd.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0025\u0073", _gbge.Error())
+			return _geg.String(), _gbge
+		}
+		if (_adg[0] != '\r') && (_adg[0] != '\n') {
+			_ged, _ := _gdf._dge.ReadByte()
+			_geg.WriteByte(_ged)
 		} else {
 			break
 		}
 	}
-	return _dc.skipComments()
+	return _geg.String(), nil
 }
-func (_dgc *fdfParser) parseName() (_ff.PdfObjectName, error) {
-	var _adg _ae.Buffer
-	_agfd := false
-	for {
-		_abe, _ecf := _dgc._gec.Peek(1)
-		if _ecf == _db.EOF {
-			break
-		}
-		if _ecf != nil {
-			return _ff.PdfObjectName(_adg.String()), _ecf
-		}
-		if !_agfd {
-			if _abe[0] == '/' {
-				_agfd = true
-				_dgc._gec.ReadByte()
-			} else if _abe[0] == '%' {
-				_dgc.readComment()
-				_dgc.skipSpaces()
-			} else {
-				_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u0020N\u0061\u006d\u0065\u0020\u0073\u0074\u0061\u0072\u0074\u0069\u006e\u0067\u0020w\u0069\u0074\u0068\u0020\u0025\u0073\u0020(\u0025\u0020\u0078\u0029", _abe, _abe)
-				return _ff.PdfObjectName(_adg.String()), _de.Errorf("\u0069n\u0076a\u006c\u0069\u0064\u0020\u006ea\u006d\u0065:\u0020\u0028\u0025\u0063\u0029", _abe[0])
-			}
-		} else {
-			if _ff.IsWhiteSpace(_abe[0]) {
-				break
-			} else if (_abe[0] == '/') || (_abe[0] == '[') || (_abe[0] == '(') || (_abe[0] == ']') || (_abe[0] == '<') || (_abe[0] == '>') {
-				break
-			} else if _abe[0] == '#' {
-				_adgb, _gga := _dgc._gec.Peek(3)
-				if _gga != nil {
-					return _ff.PdfObjectName(_adg.String()), _gga
-				}
-				_dgc._gec.Discard(3)
-				_bg, _gga := _a.DecodeString(string(_adgb[1:3]))
-				if _gga != nil {
-					return _ff.PdfObjectName(_adg.String()), _gga
-				}
-				_adg.Write(_bg)
-			} else {
-				_bfbd, _ := _dgc._gec.ReadByte()
-				_adg.WriteByte(_bfbd)
-			}
-		}
+func _gdg(_cac string) (_age.PdfObjectReference, error) {
+	_bcc := _age.PdfObjectReference{}
+	_ebc := _gaa.FindStringSubmatch(_cac)
+	if len(_ebc) < 3 {
+		_cd.Log.Debug("\u0045\u0072\u0072or\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0072\u0065\u0066\u0065\u0072\u0065\u006e\u0063\u0065")
+		return _bcc, _c.New("\u0075n\u0061\u0062\u006c\u0065 \u0074\u006f\u0020\u0070\u0061r\u0073e\u0020r\u0065\u0066\u0065\u0072\u0065\u006e\u0063e")
 	}
-	return _ff.PdfObjectName(_adg.String()), nil
+	_cag, _aec := _ag.Atoi(_ebc[1])
+	if _aec != nil {
+		_cd.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0070a\u0072\u0073\u0069n\u0067\u0020\u006fb\u006a\u0065c\u0074\u0020\u006e\u0075\u006d\u0062e\u0072 '\u0025\u0073\u0027\u0020\u002d\u0020\u0055\u0073\u0069\u006e\u0067\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u006e\u0075\u006d\u0020\u003d\u0020\u0030", _ebc[1])
+		return _bcc, nil
+	}
+	_bcc.ObjectNumber = int64(_cag)
+	_fcbc, _aec := _ag.Atoi(_ebc[2])
+	if _aec != nil {
+		_cd.Log.Debug("\u0045\u0072r\u006f\u0072\u0020\u0070\u0061r\u0073\u0069\u006e\u0067\u0020g\u0065\u006e\u0065\u0072\u0061\u0074\u0069\u006f\u006e\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0020\u0027\u0025\u0073\u0027\u0020\u002d\u0020\u0055\u0073\u0069\u006e\u0067\u0020\u0067\u0065\u006e\u0020\u003d\u0020\u0030", _ebc[2])
+		return _bcc, nil
+	}
+	_bcc.GenerationNumber = int64(_fcbc)
+	return _bcc, nil
 }
-func (_ggae *fdfParser) parseNull() (_ff.PdfObjectNull, error) {
-	_, _bga := _ggae._gec.Discard(4)
-	return _ff.PdfObjectNull{}, _bga
+func (_eacg *fdfParser) parseBool() (_age.PdfObjectBool, error) {
+	_ffa, _ccgf := _eacg._dge.Peek(4)
+	if _ccgf != nil {
+		return _age.PdfObjectBool(false), _ccgf
+	}
+	if (len(_ffa) >= 4) && (string(_ffa[:4]) == "\u0074\u0072\u0075\u0065") {
+		_eacg._dge.Discard(4)
+		return _age.PdfObjectBool(true), nil
+	}
+	_ffa, _ccgf = _eacg._dge.Peek(5)
+	if _ccgf != nil {
+		return _age.PdfObjectBool(false), _ccgf
+	}
+	if (len(_ffa) >= 5) && (string(_ffa[:5]) == "\u0066\u0061\u006cs\u0065") {
+		_eacg._dge.Discard(5)
+		return _age.PdfObjectBool(false), nil
+	}
+	return _age.PdfObjectBool(false), _c.New("\u0075n\u0065\u0078\u0070\u0065c\u0074\u0065\u0064\u0020\u0062o\u006fl\u0065a\u006e\u0020\u0073\u0074\u0072\u0069\u006eg")
 }
-func (_fec *fdfParser) parseString() (*_ff.PdfObjectString, error) {
-	_fec._gec.ReadByte()
-	var _eab _ae.Buffer
-	_abc := 1
-	for {
-		_afg, _caa := _fec._gec.Peek(1)
-		if _caa != nil {
-			return _ff.MakeString(_eab.String()), _caa
+func (_gcg *fdfParser) trace(_accd _age.PdfObject) _age.PdfObject {
+	switch _fgd := _accd.(type) {
+	case *_age.PdfObjectReference:
+		_cga, _bde := _gcg._agd[_fgd.ObjectNumber].(*_age.PdfIndirectObject)
+		if _bde {
+			return _cga.PdfObject
 		}
-		if _afg[0] == '\\' {
-			_fec._gec.ReadByte()
-			_cb, _aa := _fec._gec.ReadByte()
-			if _aa != nil {
-				return _ff.MakeString(_eab.String()), _aa
-			}
-			if _ff.IsOctalDigit(_cb) {
-				_aad, _ba := _fec._gec.Peek(2)
-				if _ba != nil {
-					return _ff.MakeString(_eab.String()), _ba
-				}
-				var _ada []byte
-				_ada = append(_ada, _cb)
-				for _, _fbbd := range _aad {
-					if _ff.IsOctalDigit(_fbbd) {
-						_ada = append(_ada, _fbbd)
-					} else {
-						break
-					}
-				}
-				_fec._gec.Discard(len(_ada) - 1)
-				_c.Log.Trace("\u004e\u0075\u006d\u0065ri\u0063\u0020\u0073\u0074\u0072\u0069\u006e\u0067\u0020\u0022\u0025\u0073\u0022", _ada)
-				_gdbg, _ba := _g.ParseUint(string(_ada), 8, 32)
-				if _ba != nil {
-					return _ff.MakeString(_eab.String()), _ba
-				}
-				_eab.WriteByte(byte(_gdbg))
-				continue
-			}
-			switch _cb {
-			case 'n':
-				_eab.WriteRune('\n')
-			case 'r':
-				_eab.WriteRune('\r')
-			case 't':
-				_eab.WriteRune('\t')
-			case 'b':
-				_eab.WriteRune('\b')
-			case 'f':
-				_eab.WriteRune('\f')
-			case '(':
-				_eab.WriteRune('(')
-			case ')':
-				_eab.WriteRune(')')
-			case '\\':
-				_eab.WriteRune('\\')
-			}
-			continue
-		} else if _afg[0] == '(' {
-			_abc++
-		} else if _afg[0] == ')' {
-			_abc--
-			if _abc == 0 {
-				_fec._gec.ReadByte()
-				break
-			}
-		}
-		_bec, _ := _fec._gec.ReadByte()
-		_eab.WriteByte(_bec)
-	}
-	return _ff.MakeString(_eab.String()), nil
-}
-
-var _eaf = _f.MustCompile("\u005e\u005b\u005c\u002b\u002d\u002e\u005d\u002a\u0028\u005b\u0030\u002d9\u002e\u005d\u002b\u0029")
-
-func (_fac *fdfParser) parseDict() (*_ff.PdfObjectDictionary, error) {
-	_c.Log.Trace("\u0052\u0065\u0061\u0064\u0069\u006e\u0067\u0020\u0046\u0044\u0046\u0020D\u0069\u0063\u0074\u0021")
-	_bbc := _ff.MakeDict()
-	_dfa, _ := _fac._gec.ReadByte()
-	if _dfa != '<' {
-		return nil, _d.New("\u0069\u006e\u0076a\u006c\u0069\u0064\u0020\u0064\u0069\u0063\u0074")
-	}
-	_dfa, _ = _fac._gec.ReadByte()
-	if _dfa != '<' {
-		return nil, _d.New("\u0069\u006e\u0076a\u006c\u0069\u0064\u0020\u0064\u0069\u0063\u0074")
-	}
-	for {
-		_fac.skipSpaces()
-		_fac.skipComments()
-		_cag, _efc := _fac._gec.Peek(2)
-		if _efc != nil {
-			return nil, _efc
-		}
-		_c.Log.Trace("D\u0069c\u0074\u0020\u0070\u0065\u0065\u006b\u003a\u0020%\u0073\u0020\u0028\u0025 x\u0029\u0021", string(_cag), string(_cag))
-		if (_cag[0] == '>') && (_cag[1] == '>') {
-			_c.Log.Trace("\u0045\u004f\u0046\u0020\u0064\u0069\u0063\u0074\u0069o\u006e\u0061\u0072\u0079")
-			_fac._gec.ReadByte()
-			_fac._gec.ReadByte()
-			break
-		}
-		_c.Log.Trace("\u0050a\u0072s\u0065\u0020\u0074\u0068\u0065\u0020\u006e\u0061\u006d\u0065\u0021")
-		_def, _efc := _fac.parseName()
-		_c.Log.Trace("\u004be\u0079\u003a\u0020\u0025\u0073", _def)
-		if _efc != nil {
-			_c.Log.Debug("E\u0052\u0052\u004f\u0052\u0020\u0052e\u0074\u0075\u0072\u006e\u0069\u006e\u0067\u0020\u006ea\u006d\u0065\u0020e\u0072r\u0020\u0025\u0073", _efc)
-			return nil, _efc
-		}
-		if len(_def) > 4 && _def[len(_def)-4:] == "\u006e\u0075\u006c\u006c" {
-			_bae := _def[0 : len(_def)-4]
-			_c.Log.Debug("\u0054\u0061\u006b\u0069n\u0067\u0020\u0063\u0061\u0072\u0065\u0020\u006f\u0066\u0020n\u0075l\u006c\u0020\u0062\u0075\u0067\u0020\u0028%\u0073\u0029", _def)
-			_c.Log.Debug("\u004e\u0065\u0077\u0020ke\u0079\u0020\u0022\u0025\u0073\u0022\u0020\u003d\u0020\u006e\u0075\u006c\u006c", _bae)
-			_fac.skipSpaces()
-			_bdf, _ := _fac._gec.Peek(1)
-			if _bdf[0] == '/' {
-				_bbc.Set(_bae, _ff.MakeNull())
-				continue
-			}
-		}
-		_fac.skipSpaces()
-		_gaab, _efc := _fac.parseObject()
-		if _efc != nil {
-			return nil, _efc
-		}
-		_bbc.Set(_def, _gaab)
-		_c.Log.Trace("\u0064\u0069\u0063\u0074\u005b\u0025\u0073\u005d\u0020\u003d\u0020\u0025\u0073", _def, _gaab.String())
-	}
-	_c.Log.Trace("\u0072\u0065\u0074\u0075rn\u0069\u006e\u0067\u0020\u0046\u0044\u0046\u0020\u0044\u0069\u0063\u0074\u0021")
-	return _bbc, nil
-}
-
-var _fb = _f.MustCompile("^\u005c\u0073\u002a\u0028\\d\u002b)\u005c\u0073\u002b\u0028\u005cd\u002b\u0029\u005c\u0073\u002b\u0052")
-
-func _aab(_afb string) (_ff.PdfObjectReference, error) {
-	_cf := _ff.PdfObjectReference{}
-	_gfg := _fb.FindStringSubmatch(_afb)
-	if len(_gfg) < 3 {
-		_c.Log.Debug("\u0045\u0072\u0072or\u0020\u0070\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0072\u0065\u0066\u0065\u0072\u0065\u006e\u0063\u0065")
-		return _cf, _d.New("\u0075n\u0061\u0062\u006c\u0065 \u0074\u006f\u0020\u0070\u0061r\u0073e\u0020r\u0065\u0066\u0065\u0072\u0065\u006e\u0063e")
-	}
-	_cdf, _fdg := _g.Atoi(_gfg[1])
-	if _fdg != nil {
-		_c.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0070a\u0072\u0073\u0069n\u0067\u0020\u006fb\u006a\u0065c\u0074\u0020\u006e\u0075\u006d\u0062e\u0072 '\u0025\u0073\u0027\u0020\u002d\u0020\u0055\u0073\u0069\u006e\u0067\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u006e\u0075\u006d\u0020\u003d\u0020\u0030", _gfg[1])
-		return _cf, nil
-	}
-	_cf.ObjectNumber = int64(_cdf)
-	_cda, _fdg := _g.Atoi(_gfg[2])
-	if _fdg != nil {
-		_c.Log.Debug("\u0045\u0072r\u006f\u0072\u0020\u0070\u0061r\u0073\u0069\u006e\u0067\u0020g\u0065\u006e\u0065\u0072\u0061\u0074\u0069\u006f\u006e\u0020\u006e\u0075\u006d\u0062\u0065\u0072\u0020\u0027\u0025\u0073\u0027\u0020\u002d\u0020\u0055\u0073\u0069\u006e\u0067\u0020\u0067\u0065\u006e\u0020\u003d\u0020\u0030", _gfg[2])
-		return _cf, nil
-	}
-	_cf.GenerationNumber = int64(_cda)
-	return _cf, nil
-}
-
-// FieldDictionaries returns a map of field names to field dictionaries.
-func (fdf *Data) FieldDictionaries() (map[string]*_ff.PdfObjectDictionary, error) {
-	_fgc := map[string]*_ff.PdfObjectDictionary{}
-	for _ad := 0; _ad < fdf._ge.Len(); _ad++ {
-		_fed, _gef := _ff.GetDict(fdf._ge.Get(_ad))
-		if _gef {
-			_ec, _ := _ff.GetString(_fed.Get("\u0054"))
-			if _ec != nil {
-				_fgc[_ec.Str()] = _fed
-			}
-		}
-	}
-	return _fgc, nil
-}
-func (_baa *fdfParser) seekToEOFMarker(_agdf int64) error {
-	_dcfc := int64(0)
-	_abcf := int64(1000)
-	for _dcfc < _agdf {
-		if _agdf <= (_abcf + _dcfc) {
-			_abcf = _agdf - _dcfc
-		}
-		_, _geg := _baa._bfb.Seek(-_dcfc-_abcf, _db.SeekEnd)
-		if _geg != nil {
-			return _geg
-		}
-		_gce := make([]byte, _abcf)
-		_baa._bfb.Read(_gce)
-		_c.Log.Trace("\u004c\u006f\u006f\u006bi\u006e\u0067\u0020\u0066\u006f\u0072\u0020\u0045\u004f\u0046 \u006da\u0072\u006b\u0065\u0072\u003a\u0020\u0022%\u0073\u0022", string(_gce))
-		_dee := _bb.FindAllStringIndex(string(_gce), -1)
-		if _dee != nil {
-			_cbf := _dee[len(_dee)-1]
-			_c.Log.Trace("\u0049\u006e\u0064\u003a\u0020\u0025\u0020\u0064", _dee)
-			_baa._bfb.Seek(-_dcfc-_abcf+int64(_cbf[0]), _db.SeekEnd)
-			return nil
-		}
-		_c.Log.Debug("\u0057\u0061\u0072\u006e\u0069\u006eg\u003a\u0020\u0045\u004f\u0046\u0020\u006d\u0061\u0072\u006b\u0065\u0072\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075n\u0064\u0021\u0020\u002d\u0020\u0063\u006f\u006e\u0074\u0069\u006e\u0075\u0065\u0020s\u0065e\u006b\u0069\u006e\u0067")
-		_dcfc += _abcf
-	}
-	_c.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u003a\u0020\u0045\u004f\u0046\u0020\u006d\u0061\u0072\u006be\u0072 \u0077\u0061\u0073\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u002e")
-	return _d.New("\u0045\u004f\u0046\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
-}
-
-// Data represents forms data format (FDF) file data.
-type Data struct {
-	_bc *_ff.PdfObjectDictionary
-	_ge *_ff.PdfObjectArray
-}
-
-func (_ce *fdfParser) getFileOffset() int64 {
-	_afc, _ := _ce._bfb.Seek(0, _db.SeekCurrent)
-	_afc -= int64(_ce._gec.Buffered())
-	return _afc
-}
-
-var _bb = _f.MustCompile("\u0025\u0025\u0045O\u0046")
-
-func (_aae *fdfParser) trace(_ecgf _ff.PdfObject) _ff.PdfObject {
-	switch _ecc := _ecgf.(type) {
-	case *_ff.PdfObjectReference:
-		_agdg, _fbbf := _aae._cg[_ecc.ObjectNumber].(*_ff.PdfIndirectObject)
-		if _fbbf {
-			return _agdg.PdfObject
-		}
-		_c.Log.Debug("\u0054\u0079\u0070\u0065\u0020\u0065\u0072\u0072\u006f\u0072")
+		_cd.Log.Debug("\u0054\u0079\u0070\u0065\u0020\u0065\u0072\u0072\u006f\u0072")
 		return nil
-	case *_ff.PdfIndirectObject:
-		return _ecc.PdfObject
+	case *_age.PdfIndirectObject:
+		return _fgd.PdfObject
 	}
-	return _ecgf
+	return _accd
 }
-func (_aba *fdfParser) parseHexString() (*_ff.PdfObjectString, error) {
-	_aba._gec.ReadByte()
-	var _fba _ae.Buffer
+func (_gfd *fdfParser) parseIndirectObject() (_age.PdfObject, error) {
+	_dbb := _age.PdfIndirectObject{}
+	_cd.Log.Trace("\u002dR\u0065a\u0064\u0020\u0069\u006e\u0064i\u0072\u0065c\u0074\u0020\u006f\u0062\u006a")
+	_bebd, _dbc := _gfd._dge.Peek(20)
+	if _dbc != nil {
+		_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0046\u0061\u0069\u006c\u0020\u0074\u006f\u0020r\u0065a\u0064\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a")
+		return &_dbb, _dbc
+	}
+	_cd.Log.Trace("\u0028\u0069\u006edi\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0020\u0070\u0065\u0065\u006b\u0020\u0022\u0025\u0073\u0022", string(_bebd))
+	_ffad := _eed.FindStringSubmatchIndex(string(_bebd))
+	if len(_ffad) < 6 {
+		_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020U\u006e\u0061\u0062l\u0065\u0020\u0074\u006f \u0066\u0069\u006e\u0064\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u0073\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065\u0020\u0028\u0025\u0073\u0029", string(_bebd))
+		return &_dbb, _c.New("\u0075\u006e\u0061b\u006c\u0065\u0020\u0074\u006f\u0020\u0064\u0065\u0074\u0065\u0063\u0074\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020s\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065")
+	}
+	_gfd._dge.Discard(_ffad[0])
+	_cd.Log.Trace("O\u0066\u0066\u0073\u0065\u0074\u0073\u0020\u0025\u0020\u0064", _ffad)
+	_agdg := _ffad[1] - _ffad[0]
+	_aaf := make([]byte, _agdg)
+	_, _dbc = _gfd.readAtLeast(_aaf, _agdg)
+	if _dbc != nil {
+		_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0075\u006e\u0061\u0062l\u0065\u0020\u0074\u006f\u0020\u0072\u0065\u0061\u0064\u0020-\u0020\u0025\u0073", _dbc)
+		return nil, _dbc
+	}
+	_cd.Log.Trace("\u0074\u0065\u0078t\u006c\u0069\u006e\u0065\u003a\u0020\u0025\u0073", _aaf)
+	_daee := _eed.FindStringSubmatch(string(_aaf))
+	if len(_daee) < 3 {
+		_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020U\u006e\u0061\u0062l\u0065\u0020\u0074\u006f \u0066\u0069\u006e\u0064\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u0073\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065\u0020\u0028\u0025\u0073\u0029", string(_aaf))
+		return &_dbb, _c.New("\u0075\u006e\u0061b\u006c\u0065\u0020\u0074\u006f\u0020\u0064\u0065\u0074\u0065\u0063\u0074\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020s\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065")
+	}
+	_gae, _ := _ag.Atoi(_daee[1])
+	_ddd, _ := _ag.Atoi(_daee[2])
+	_dbb.ObjectNumber = int64(_gae)
+	_dbb.GenerationNumber = int64(_ddd)
 	for {
-		_bea, _ddd := _aba._gec.Peek(1)
-		if _ddd != nil {
-			return _ff.MakeHexString(""), _ddd
+		_bcg, _aag := _gfd._dge.Peek(2)
+		if _aag != nil {
+			return &_dbb, _aag
 		}
-		if _bea[0] == '>' {
-			_aba._gec.ReadByte()
-			break
-		}
-		_ed, _ := _aba._gec.ReadByte()
-		if !_ff.IsWhiteSpace(_ed) {
-			_fba.WriteByte(_ed)
-		}
-	}
-	if _fba.Len()%2 == 1 {
-		_fba.WriteRune('0')
-	}
-	_fad, _dea := _a.DecodeString(_fba.String())
-	if _dea != nil {
-		_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u0020\u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0068\u0065\u0078\u0020\u0073\u0074r\u0069\u006e\u0067\u003a\u0020\u0027\u0025\u0073\u0027 \u002d\u0020\u0072\u0065\u0074\u0075\u0072\u006e\u0069\u006e\u0067\u0020\u0061n\u0020\u0065\u006d\u0070\u0074\u0079 \u0073\u0074\u0072i\u006e\u0067", _fba.String())
-		return _ff.MakeHexString(""), nil
-	}
-	return _ff.MakeHexString(string(_fad)), nil
-}
-func (_geff *fdfParser) parseBool() (_ff.PdfObjectBool, error) {
-	_fbd, _fef := _geff._gec.Peek(4)
-	if _fef != nil {
-		return _ff.PdfObjectBool(false), _fef
-	}
-	if (len(_fbd) >= 4) && (string(_fbd[:4]) == "\u0074\u0072\u0075\u0065") {
-		_geff._gec.Discard(4)
-		return _ff.PdfObjectBool(true), nil
-	}
-	_fbd, _fef = _geff._gec.Peek(5)
-	if _fef != nil {
-		return _ff.PdfObjectBool(false), _fef
-	}
-	if (len(_fbd) >= 5) && (string(_fbd[:5]) == "\u0066\u0061\u006cs\u0065") {
-		_geff._gec.Discard(5)
-		return _ff.PdfObjectBool(false), nil
-	}
-	return _ff.PdfObjectBool(false), _d.New("\u0075n\u0065\u0078\u0070\u0065c\u0074\u0065\u0064\u0020\u0062o\u006fl\u0065a\u006e\u0020\u0073\u0074\u0072\u0069\u006eg")
-}
-
-var _fab = _f.MustCompile("\u005e\u005b\u005c+-\u002e\u005d\u002a\u0028\u005b\u0030\u002d\u0039\u002e]\u002b)\u0065[\u005c+\u002d\u002e\u005d\u002a\u0028\u005b\u0030\u002d\u0039\u002e\u005d\u002b\u0029")
-
-func _fca(_cbfg string) (*fdfParser, error) {
-	_cac := fdfParser{}
-	_bfce := []byte(_cbfg)
-	_ecgg := _ae.NewReader(_bfce)
-	_cac._bfb = _ecgg
-	_cac._cg = map[int64]_ff.PdfObject{}
-	_afa := _e.NewReader(_ecgg)
-	_cac._gec = _afa
-	_cac._fc = int64(len(_cbfg))
-	return &_cac, _cac.parse()
-}
-func (_bdda *fdfParser) parseIndirectObject() (_ff.PdfObject, error) {
-	_ffda := _ff.PdfIndirectObject{}
-	_c.Log.Trace("\u002dR\u0065a\u0064\u0020\u0069\u006e\u0064i\u0072\u0065c\u0074\u0020\u006f\u0062\u006a")
-	_dfae, _gda := _bdda._gec.Peek(20)
-	if _gda != nil {
-		_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0046\u0061\u0069\u006c\u0020\u0074\u006f\u0020r\u0065a\u0064\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a")
-		return &_ffda, _gda
-	}
-	_c.Log.Trace("\u0028\u0069\u006edi\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0020\u0070\u0065\u0065\u006b\u0020\u0022\u0025\u0073\u0022", string(_dfae))
-	_cggg := _bf.FindStringSubmatchIndex(string(_dfae))
-	if len(_cggg) < 6 {
-		_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020U\u006e\u0061\u0062l\u0065\u0020\u0074\u006f \u0066\u0069\u006e\u0064\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u0073\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065\u0020\u0028\u0025\u0073\u0029", string(_dfae))
-		return &_ffda, _d.New("\u0075\u006e\u0061b\u006c\u0065\u0020\u0074\u006f\u0020\u0064\u0065\u0074\u0065\u0063\u0074\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020s\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065")
-	}
-	_bdda._gec.Discard(_cggg[0])
-	_c.Log.Trace("O\u0066\u0066\u0073\u0065\u0074\u0073\u0020\u0025\u0020\u0064", _cggg)
-	_bgc := _cggg[1] - _cggg[0]
-	_cdfc := make([]byte, _bgc)
-	_, _gda = _bdda.readAtLeast(_cdfc, _bgc)
-	if _gda != nil {
-		_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0075\u006e\u0061\u0062l\u0065\u0020\u0074\u006f\u0020\u0072\u0065\u0061\u0064\u0020-\u0020\u0025\u0073", _gda)
-		return nil, _gda
-	}
-	_c.Log.Trace("\u0074\u0065\u0078t\u006c\u0069\u006e\u0065\u003a\u0020\u0025\u0073", _cdfc)
-	_cgd := _bf.FindStringSubmatch(string(_cdfc))
-	if len(_cgd) < 3 {
-		_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020U\u006e\u0061\u0062l\u0065\u0020\u0074\u006f \u0066\u0069\u006e\u0064\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u0073\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065\u0020\u0028\u0025\u0073\u0029", string(_cdfc))
-		return &_ffda, _d.New("\u0075\u006e\u0061b\u006c\u0065\u0020\u0074\u006f\u0020\u0064\u0065\u0074\u0065\u0063\u0074\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020s\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065")
-	}
-	_aee, _ := _g.Atoi(_cgd[1])
-	_cfb, _ := _g.Atoi(_cgd[2])
-	_ffda.ObjectNumber = int64(_aee)
-	_ffda.GenerationNumber = int64(_cfb)
-	for {
-		_baed, _fee := _bdda._gec.Peek(2)
-		if _fee != nil {
-			return &_ffda, _fee
-		}
-		_c.Log.Trace("I\u006ed\u002e\u0020\u0070\u0065\u0065\u006b\u003a\u0020%\u0073\u0020\u0028\u0025 x\u0029\u0021", string(_baed), string(_baed))
-		if _ff.IsWhiteSpace(_baed[0]) {
-			_bdda.skipSpaces()
-		} else if _baed[0] == '%' {
-			_bdda.skipComments()
-		} else if (_baed[0] == '<') && (_baed[1] == '<') {
-			_c.Log.Trace("\u0043\u0061\u006c\u006c\u0020\u0050\u0061\u0072\u0073e\u0044\u0069\u0063\u0074")
-			_ffda.PdfObject, _fee = _bdda.parseDict()
-			_c.Log.Trace("\u0045\u004f\u0046\u0020Ca\u006c\u006c\u0020\u0050\u0061\u0072\u0073\u0065\u0044\u0069\u0063\u0074\u003a\u0020%\u0076", _fee)
-			if _fee != nil {
-				return &_ffda, _fee
+		_cd.Log.Trace("I\u006ed\u002e\u0020\u0070\u0065\u0065\u006b\u003a\u0020%\u0073\u0020\u0028\u0025 x\u0029\u0021", string(_bcg), string(_bcg))
+		if _age.IsWhiteSpace(_bcg[0]) {
+			_gfd.skipSpaces()
+		} else if _bcg[0] == '%' {
+			_gfd.skipComments()
+		} else if (_bcg[0] == '<') && (_bcg[1] == '<') {
+			_cd.Log.Trace("\u0043\u0061\u006c\u006c\u0020\u0050\u0061\u0072\u0073e\u0044\u0069\u0063\u0074")
+			_dbb.PdfObject, _aag = _gfd.parseDict()
+			_cd.Log.Trace("\u0045\u004f\u0046\u0020Ca\u006c\u006c\u0020\u0050\u0061\u0072\u0073\u0065\u0044\u0069\u0063\u0074\u003a\u0020%\u0076", _aag)
+			if _aag != nil {
+				return &_dbb, _aag
 			}
-			_c.Log.Trace("\u0050\u0061\u0072\u0073\u0065\u0064\u0020\u0064\u0069\u0063t\u0069\u006f\u006e\u0061\u0072\u0079\u002e.\u002e\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u002e")
-		} else if (_baed[0] == '/') || (_baed[0] == '(') || (_baed[0] == '[') || (_baed[0] == '<') {
-			_ffda.PdfObject, _fee = _bdda.parseObject()
-			if _fee != nil {
-				return &_ffda, _fee
+			_cd.Log.Trace("\u0050\u0061\u0072\u0073\u0065\u0064\u0020\u0064\u0069\u0063t\u0069\u006f\u006e\u0061\u0072\u0079\u002e.\u002e\u0020\u0066\u0069\u006e\u0069\u0073\u0068\u0065\u0064\u002e")
+		} else if (_bcg[0] == '/') || (_bcg[0] == '(') || (_bcg[0] == '[') || (_bcg[0] == '<') {
+			_dbb.PdfObject, _aag = _gfd.parseObject()
+			if _aag != nil {
+				return &_dbb, _aag
 			}
-			_c.Log.Trace("P\u0061\u0072\u0073\u0065\u0064\u0020o\u0062\u006a\u0065\u0063\u0074\u0020\u002e\u002e\u002e \u0066\u0069\u006ei\u0073h\u0065\u0064\u002e")
+			_cd.Log.Trace("P\u0061\u0072\u0073\u0065\u0064\u0020o\u0062\u006a\u0065\u0063\u0074\u0020\u002e\u002e\u002e \u0066\u0069\u006ei\u0073h\u0065\u0064\u002e")
 		} else {
-			if _baed[0] == 'e' {
-				_ddg, _feee := _bdda.readTextLine()
-				if _feee != nil {
-					return nil, _feee
+			if _bcg[0] == 'e' {
+				_cgbb, _dgbeb := _gfd.readTextLine()
+				if _dgbeb != nil {
+					return nil, _dgbeb
 				}
-				if len(_ddg) >= 6 && _ddg[0:6] == "\u0065\u006e\u0064\u006f\u0062\u006a" {
+				if len(_cgbb) >= 6 && _cgbb[0:6] == "\u0065\u006e\u0064\u006f\u0062\u006a" {
 					break
 				}
-			} else if _baed[0] == 's' {
-				_baed, _ = _bdda._gec.Peek(10)
-				if string(_baed[:6]) == "\u0073\u0074\u0072\u0065\u0061\u006d" {
-					_ded := 6
-					if len(_baed) > 6 {
-						if _ff.IsWhiteSpace(_baed[_ded]) && _baed[_ded] != '\r' && _baed[_ded] != '\n' {
-							_c.Log.Debug("\u004e\u006fn\u002d\u0063\u006f\u006e\u0066\u006f\u0072\u006d\u0061\u006e\u0074\u0020\u0046\u0044\u0046\u0020\u006e\u006f\u0074 \u0065\u006e\u0064\u0069\u006e\u0067 \u0073\u0074\u0072\u0065\u0061\u006d\u0020\u006c\u0069\u006e\u0065\u0020\u0070\u0072o\u0070\u0065r\u006c\u0079\u0020\u0077i\u0074\u0068\u0020\u0045\u004fL\u0020\u006d\u0061\u0072\u006b\u0065\u0072")
-							_ded++
+			} else if _bcg[0] == 's' {
+				_bcg, _ = _gfd._dge.Peek(10)
+				if string(_bcg[:6]) == "\u0073\u0074\u0072\u0065\u0061\u006d" {
+					_fggg := 6
+					if len(_bcg) > 6 {
+						if _age.IsWhiteSpace(_bcg[_fggg]) && _bcg[_fggg] != '\r' && _bcg[_fggg] != '\n' {
+							_cd.Log.Debug("\u004e\u006fn\u002d\u0063\u006f\u006e\u0066\u006f\u0072\u006d\u0061\u006e\u0074\u0020\u0046\u0044\u0046\u0020\u006e\u006f\u0074 \u0065\u006e\u0064\u0069\u006e\u0067 \u0073\u0074\u0072\u0065\u0061\u006d\u0020\u006c\u0069\u006e\u0065\u0020\u0070\u0072o\u0070\u0065r\u006c\u0079\u0020\u0077i\u0074\u0068\u0020\u0045\u004fL\u0020\u006d\u0061\u0072\u006b\u0065\u0072")
+							_fggg++
 						}
-						if _baed[_ded] == '\r' {
-							_ded++
-							if _baed[_ded] == '\n' {
-								_ded++
+						if _bcg[_fggg] == '\r' {
+							_fggg++
+							if _bcg[_fggg] == '\n' {
+								_fggg++
 							}
-						} else if _baed[_ded] == '\n' {
-							_ded++
+						} else if _bcg[_fggg] == '\n' {
+							_fggg++
 						}
 					}
-					_bdda._gec.Discard(_ded)
-					_facc, _acca := _ffda.PdfObject.(*_ff.PdfObjectDictionary)
-					if !_acca {
-						return nil, _d.New("\u0073\u0074\u0072\u0065\u0061\u006d\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u006di\u0073s\u0069\u006e\u0067\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
+					_gfd._dge.Discard(_fggg)
+					_bfbf, _dad := _dbb.PdfObject.(*_age.PdfObjectDictionary)
+					if !_dad {
+						return nil, _c.New("\u0073\u0074\u0072\u0065\u0061\u006d\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u006di\u0073s\u0069\u006e\u0067\u0020\u0064\u0069\u0063\u0074\u0069\u006f\u006e\u0061\u0072\u0079")
 					}
-					_c.Log.Trace("\u0053\u0074\u0072\u0065\u0061\u006d\u0020\u0064\u0069c\u0074\u0020\u0025\u0073", _facc)
-					_dbg, _acb := _facc.Get("\u004c\u0065\u006e\u0067\u0074\u0068").(*_ff.PdfObjectInteger)
-					if !_acb {
-						return nil, _d.New("\u0073\u0074re\u0061\u006d\u0020l\u0065\u006e\u0067\u0074h n\u0065ed\u0073\u0020\u0074\u006f\u0020\u0062\u0065 a\u006e\u0020\u0069\u006e\u0074\u0065\u0067e\u0072")
+					_cd.Log.Trace("\u0053\u0074\u0072\u0065\u0061\u006d\u0020\u0064\u0069c\u0074\u0020\u0025\u0073", _bfbf)
+					_ade, _cdg := _bfbf.Get("\u004c\u0065\u006e\u0067\u0074\u0068").(*_age.PdfObjectInteger)
+					if !_cdg {
+						return nil, _c.New("\u0073\u0074re\u0061\u006d\u0020l\u0065\u006e\u0067\u0074h n\u0065ed\u0073\u0020\u0074\u006f\u0020\u0062\u0065 a\u006e\u0020\u0069\u006e\u0074\u0065\u0067e\u0072")
 					}
-					_daf := *_dbg
-					if _daf < 0 {
-						return nil, _d.New("\u0073\u0074\u0072\u0065\u0061\u006d\u0020\u006e\u0065\u0065\u0064\u0073\u0020\u0074\u006f \u0062e\u0020\u006c\u006f\u006e\u0067\u0065\u0072\u0020\u0074\u0068\u0061\u006e\u0020\u0030")
+					_dca := *_ade
+					if _dca < 0 {
+						return nil, _c.New("\u0073\u0074\u0072\u0065\u0061\u006d\u0020\u006e\u0065\u0065\u0064\u0073\u0020\u0074\u006f \u0062e\u0020\u006c\u006f\u006e\u0067\u0065\u0072\u0020\u0074\u0068\u0061\u006e\u0020\u0030")
 					}
-					if int64(_daf) > _bdda._fc {
-						_c.Log.Debug("\u0045\u0052R\u004f\u0052\u003a\u0020\u0053t\u0072\u0065\u0061\u006d\u0020l\u0065\u006e\u0067\u0074\u0068\u0020\u0063\u0061\u006e\u006e\u006f\u0074\u0020\u0062\u0065\u0020\u006c\u0061\u0072\u0067\u0065\u0072\u0020\u0074\u0068\u0061\u006e\u0020\u0066\u0069\u006c\u0065\u0020\u0073\u0069\u007a\u0065")
-						return nil, _d.New("\u0069n\u0076\u0061l\u0069\u0064\u0020\u0073t\u0072\u0065\u0061m\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u002c\u0020la\u0072\u0067\u0065r\u0020\u0074h\u0061\u006e\u0020\u0066\u0069\u006ce\u0020\u0073i\u007a\u0065")
+					if int64(_dca) > _gfd._cbb {
+						_cd.Log.Debug("\u0045\u0052R\u004f\u0052\u003a\u0020\u0053t\u0072\u0065\u0061\u006d\u0020l\u0065\u006e\u0067\u0074\u0068\u0020\u0063\u0061\u006e\u006e\u006f\u0074\u0020\u0062\u0065\u0020\u006c\u0061\u0072\u0067\u0065\u0072\u0020\u0074\u0068\u0061\u006e\u0020\u0066\u0069\u006c\u0065\u0020\u0073\u0069\u007a\u0065")
+						return nil, _c.New("\u0069n\u0076\u0061l\u0069\u0064\u0020\u0073t\u0072\u0065\u0061m\u0020\u006c\u0065\u006e\u0067\u0074\u0068\u002c\u0020la\u0072\u0067\u0065r\u0020\u0074h\u0061\u006e\u0020\u0066\u0069\u006ce\u0020\u0073i\u007a\u0065")
 					}
-					_bbcg := make([]byte, _daf)
-					_, _fee = _bdda.readAtLeast(_bbcg, int(_daf))
-					if _fee != nil {
-						_c.Log.Debug("E\u0052\u0052\u004f\u0052 s\u0074r\u0065\u0061\u006d\u0020\u0028%\u0064\u0029\u003a\u0020\u0025\u0058", len(_bbcg), _bbcg)
-						_c.Log.Debug("\u0045R\u0052\u004f\u0052\u003a\u0020\u0025v", _fee)
-						return nil, _fee
+					_fgb := make([]byte, _dca)
+					_, _aag = _gfd.readAtLeast(_fgb, int(_dca))
+					if _aag != nil {
+						_cd.Log.Debug("E\u0052\u0052\u004f\u0052 s\u0074r\u0065\u0061\u006d\u0020\u0028%\u0064\u0029\u003a\u0020\u0025\u0058", len(_fgb), _fgb)
+						_cd.Log.Debug("\u0045R\u0052\u004f\u0052\u003a\u0020\u0025v", _aag)
+						return nil, _aag
 					}
-					_gefa := _ff.PdfObjectStream{}
-					_gefa.Stream = _bbcg
-					_gefa.PdfObjectDictionary = _ffda.PdfObject.(*_ff.PdfObjectDictionary)
-					_gefa.ObjectNumber = _ffda.ObjectNumber
-					_gefa.GenerationNumber = _ffda.GenerationNumber
-					_bdda.skipSpaces()
-					_bdda._gec.Discard(9)
-					_bdda.skipSpaces()
-					return &_gefa, nil
+					_fffd := _age.PdfObjectStream{}
+					_fffd.Stream = _fgb
+					_fffd.PdfObjectDictionary = _dbb.PdfObject.(*_age.PdfObjectDictionary)
+					_fffd.ObjectNumber = _dbb.ObjectNumber
+					_fffd.GenerationNumber = _dbb.GenerationNumber
+					_gfd.skipSpaces()
+					_gfd._dge.Discard(9)
+					_gfd.skipSpaces()
+					return &_fffd, nil
 				}
 			}
-			_ffda.PdfObject, _fee = _bdda.parseObject()
-			return &_ffda, _fee
+			_dbb.PdfObject, _aag = _gfd.parseObject()
+			return &_dbb, _aag
 		}
 	}
-	_c.Log.Trace("\u0052\u0065\u0074\u0075rn\u0069\u006e\u0067\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0021")
-	return &_ffda, nil
+	_cd.Log.Trace("\u0052\u0065\u0074\u0075rn\u0069\u006e\u0067\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0021")
+	return &_dbb, nil
+}
+func (_daa *fdfParser) skipSpaces() (int, error) {
+	_ec := 0
+	for {
+		_eb, _gd := _daa._dge.ReadByte()
+		if _gd != nil {
+			return 0, _gd
+		}
+		if _age.IsWhiteSpace(_eb) {
+			_ec++
+		} else {
+			_daa._dge.UnreadByte()
+			break
+		}
+	}
+	return _ec, nil
 }
 
 // FieldValues implements interface model.FieldValueProvider.
 // Returns a map of field names to values (PdfObjects).
-func (fdf *Data) FieldValues() (map[string]_ff.PdfObject, error) {
-	_bcb, _dec := fdf.FieldDictionaries()
-	if _dec != nil {
-		return nil, _dec
+func (fdf *Data) FieldValues() (map[string]_age.PdfObject, error) {
+	_bb, _cce := fdf.FieldDictionaries()
+	if _cce != nil {
+		return nil, _cce
 	}
-	var _caf []string
-	for _feg := range _bcb {
-		_caf = append(_caf, _feg)
+	var _cb []string
+	for _gbc := range _bb {
+		_cb = append(_cb, _gbc)
 	}
-	_fe.Strings(_caf)
-	_ab := map[string]_ff.PdfObject{}
-	for _, _ea := range _caf {
-		_fa := _bcb[_ea]
-		_dd := _ff.TraceToDirectObject(_fa.Get("\u0056"))
-		_ab[_ea] = _dd
+	_d.Strings(_cb)
+	_egc := map[string]_age.PdfObject{}
+	for _, _fe := range _cb {
+		_ede := _bb[_fe]
+		_bec := _age.TraceToDirectObject(_ede.Get("\u0056"))
+		_egc[_fe] = _bec
 	}
-	return _ab, nil
+	return _egc, nil
+}
+func (_fd *fdfParser) parseName() (_age.PdfObjectName, error) {
+	var _dga _aa.Buffer
+	_abb := false
+	for {
+		_df, _acg := _fd._dge.Peek(1)
+		if _acg == _e.EOF {
+			break
+		}
+		if _acg != nil {
+			return _age.PdfObjectName(_dga.String()), _acg
+		}
+		if !_abb {
+			if _df[0] == '/' {
+				_abb = true
+				_fd._dge.ReadByte()
+			} else if _df[0] == '%' {
+				_fd.readComment()
+				_fd.skipSpaces()
+			} else {
+				_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u0020N\u0061\u006d\u0065\u0020\u0073\u0074\u0061\u0072\u0074\u0069\u006e\u0067\u0020w\u0069\u0074\u0068\u0020\u0025\u0073\u0020(\u0025\u0020\u0078\u0029", _df, _df)
+				return _age.PdfObjectName(_dga.String()), _be.Errorf("\u0069n\u0076a\u006c\u0069\u0064\u0020\u006ea\u006d\u0065:\u0020\u0028\u0025\u0063\u0029", _df[0])
+			}
+		} else {
+			if _age.IsWhiteSpace(_df[0]) {
+				break
+			} else if (_df[0] == '/') || (_df[0] == '[') || (_df[0] == '(') || (_df[0] == ']') || (_df[0] == '<') || (_df[0] == '>') {
+				break
+			} else if _df[0] == '#' {
+				_dcg, _fgf := _fd._dge.Peek(3)
+				if _fgf != nil {
+					return _age.PdfObjectName(_dga.String()), _fgf
+				}
+				_fd._dge.Discard(3)
+				_daab, _fgf := _f.DecodeString(string(_dcg[1:3]))
+				if _fgf != nil {
+					return _age.PdfObjectName(_dga.String()), _fgf
+				}
+				_dga.Write(_daab)
+			} else {
+				_dab, _ := _fd._dge.ReadByte()
+				_dga.WriteByte(_dab)
+			}
+		}
+	}
+	return _age.PdfObjectName(_dga.String()), nil
 }
 
 // Root returns the Root of the FDF document.
-func (_eca *fdfParser) Root() (*_ff.PdfObjectDictionary, error) {
-	if _eca._ac != nil {
-		if _gfd, _ccd := _eca.trace(_eca._ac.Get("\u0052\u006f\u006f\u0074")).(*_ff.PdfObjectDictionary); _ccd {
-			if _bac, _fea := _eca.trace(_gfd.Get("\u0046\u0044\u0046")).(*_ff.PdfObjectDictionary); _fea {
-				return _bac, nil
+func (_bega *fdfParser) Root() (*_age.PdfObjectDictionary, error) {
+	if _bega._ae != nil {
+		if _gafc, _acc := _bega.trace(_bega._ae.Get("\u0052\u006f\u006f\u0074")).(*_age.PdfObjectDictionary); _acc {
+			if _eae, _afa := _bega.trace(_gafc.Get("\u0046\u0044\u0046")).(*_age.PdfObjectDictionary); _afa {
+				return _eae, nil
 			}
 		}
 	}
-	var _eec []int64
-	for _deeb := range _eca._cg {
-		_eec = append(_eec, _deeb)
+	var _agb []int64
+	for _cbaa := range _bega._agd {
+		_agb = append(_agb, _cbaa)
 	}
-	_fe.Slice(_eec, func(_bbcb, _fcac int) bool { return _eec[_bbcb] < _eec[_fcac] })
-	for _, _dag := range _eec {
-		_edb := _eca._cg[_dag]
-		if _faf, _abec := _eca.trace(_edb).(*_ff.PdfObjectDictionary); _abec {
-			if _fcg, _fdf := _eca.trace(_faf.Get("\u0046\u0044\u0046")).(*_ff.PdfObjectDictionary); _fdf {
-				return _fcg, nil
+	_d.Slice(_agb, func(_dbe, _edb int) bool { return _agb[_dbe] < _agb[_edb] })
+	for _, _cf := range _agb {
+		_bbd := _bega._agd[_cf]
+		if _cdad, _bgaa := _bega.trace(_bbd).(*_age.PdfObjectDictionary); _bgaa {
+			if _cbdf, _fcda := _bega.trace(_cdad.Get("\u0046\u0044\u0046")).(*_age.PdfObjectDictionary); _fcda {
+				return _cbdf, nil
 			}
 		}
 	}
-	return nil, _d.New("\u0046\u0044\u0046\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
+	return nil, _c.New("\u0046\u0044\u0046\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
 }
-func (_agd *fdfParser) readAtLeast(_fd []byte, _agf int) (int, error) {
-	_faa := _agf
-	_cca := 0
-	_df := 0
-	for _faa > 0 {
-		_gcg, _ead := _agd._gec.Read(_fd[_cca:])
-		if _ead != nil {
-			_c.Log.Debug("\u0045\u0052\u0052O\u0052\u0020\u0046\u0061i\u006c\u0065\u0064\u0020\u0072\u0065\u0061d\u0069\u006e\u0067\u0020\u0028\u0025\u0064\u003b\u0025\u0064\u0029\u0020\u0025\u0073", _gcg, _df, _ead.Error())
-			return _cca, _d.New("\u0066\u0061\u0069\u006c\u0065\u0064\u0020\u0072\u0065a\u0064\u0069\u006e\u0067")
-		}
-		_df++
-		_cca += _gcg
-		_faa -= _gcg
+
+// Load loads FDF form data from `r`.
+func Load(r _e.ReadSeeker) (*Data, error) {
+	_ea, _cc := _bed(r)
+	if _cc != nil {
+		return nil, _cc
 	}
-	return _cca, nil
+	_ab, _cc := _ea.Root()
+	if _cc != nil {
+		return nil, _cc
+	}
+	_abe, _gb := _age.GetArray(_ab.Get("\u0046\u0069\u0065\u006c\u0064\u0073"))
+	if !_gb {
+		return nil, _c.New("\u0066\u0069\u0065\u006c\u0064\u0073\u0020\u006d\u0069s\u0073\u0069\u006e\u0067")
+	}
+	return &Data{_ed: _abe, _cda: _ab}, nil
 }
-func (_cdb *fdfParser) parse() error {
-	_cdb._bfb.Seek(0, _db.SeekStart)
-	_cdb._gec = _e.NewReader(_cdb._bfb)
+
+var _gg = _b.MustCompile("\u005e\u005b\u005c+-\u002e\u005d\u002a\u0028\u005b\u0030\u002d\u0039\u002e]\u002b)\u0065[\u005c+\u002d\u002e\u005d\u002a\u0028\u005b\u0030\u002d\u0039\u002e\u005d\u002b\u0029")
+
+func (_gfb *fdfParser) parseHexString() (*_age.PdfObjectString, error) {
+	_gfb._dge.ReadByte()
+	var _cdec _aa.Buffer
 	for {
-		_cdb.skipComments()
-		_cgga, _cbg := _cdb._gec.Peek(20)
-		if _cbg != nil {
-			_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0046\u0061\u0069\u006c\u0020\u0074\u006f\u0020r\u0065a\u0064\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a")
-			return _cbg
+		_afg, _ded := _gfb._dge.Peek(1)
+		if _ded != nil {
+			return _age.MakeHexString(""), _ded
 		}
-		if _dg.HasPrefix(string(_cgga), "\u0074r\u0061\u0069\u006c\u0065\u0072") {
-			_cdb._gec.Discard(7)
-			_cdb.skipSpaces()
-			_cdb.skipComments()
-			_eabb, _ := _cdb.parseDict()
-			_cdb._ac = _eabb
+		if _afg[0] == '>' {
+			_gfb._dge.ReadByte()
 			break
 		}
-		_ddb := _bf.FindStringSubmatchIndex(string(_cgga))
-		if len(_ddb) < 6 {
-			_c.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020U\u006e\u0061\u0062l\u0065\u0020\u0074\u006f \u0066\u0069\u006e\u0064\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u0073\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065\u0020\u0028\u0025\u0073\u0029", string(_cgga))
-			return _d.New("\u0075\u006e\u0061b\u006c\u0065\u0020\u0074\u006f\u0020\u0064\u0065\u0074\u0065\u0063\u0074\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020s\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065")
+		_bdf, _ := _gfb._dge.ReadByte()
+		if !_age.IsWhiteSpace(_bdf) {
+			_cdec.WriteByte(_bdf)
 		}
-		_dab, _cbg := _cdb.parseIndirectObject()
-		if _cbg != nil {
-			return _cbg
+	}
+	if _cdec.Len()%2 == 1 {
+		_cdec.WriteRune('0')
+	}
+	_dae, _bac := _f.DecodeString(_cdec.String())
+	if _bac != nil {
+		_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u0020\u0050\u0061\u0072\u0073\u0069\u006e\u0067\u0020\u0068\u0065\u0078\u0020\u0073\u0074r\u0069\u006e\u0067\u003a\u0020\u0027\u0025\u0073\u0027 \u002d\u0020\u0072\u0065\u0074\u0075\u0072\u006e\u0069\u006e\u0067\u0020\u0061n\u0020\u0065\u006d\u0070\u0074\u0079 \u0073\u0074\u0072i\u006e\u0067", _cdec.String())
+		return _age.MakeHexString(""), nil
+	}
+	return _age.MakeHexString(string(_dae)), nil
+}
+func (_bbf *fdfParser) parseString() (*_age.PdfObjectString, error) {
+	_bbf._dge.ReadByte()
+	var _ead _aa.Buffer
+	_ceg := 1
+	for {
+		_agc, _gf := _bbf._dge.Peek(1)
+		if _gf != nil {
+			return _age.MakeString(_ead.String()), _gf
 		}
-		switch _bba := _dab.(type) {
-		case *_ff.PdfIndirectObject:
-			_cdb._cg[_bba.ObjectNumber] = _bba
-		case *_ff.PdfObjectStream:
-			_cdb._cg[_bba.ObjectNumber] = _bba
+		if _agc[0] == '\\' {
+			_bbf._dge.ReadByte()
+			_adgd, _acd := _bbf._dge.ReadByte()
+			if _acd != nil {
+				return _age.MakeString(_ead.String()), _acd
+			}
+			if _age.IsOctalDigit(_adgd) {
+				_gge, _bga := _bbf._dge.Peek(2)
+				if _bga != nil {
+					return _age.MakeString(_ead.String()), _bga
+				}
+				var _af []byte
+				_af = append(_af, _adgd)
+				for _, _eca := range _gge {
+					if _age.IsOctalDigit(_eca) {
+						_af = append(_af, _eca)
+					} else {
+						break
+					}
+				}
+				_bbf._dge.Discard(len(_af) - 1)
+				_cd.Log.Trace("\u004e\u0075\u006d\u0065ri\u0063\u0020\u0073\u0074\u0072\u0069\u006e\u0067\u0020\u0022\u0025\u0073\u0022", _af)
+				_ffb, _bga := _ag.ParseUint(string(_af), 8, 32)
+				if _bga != nil {
+					return _age.MakeString(_ead.String()), _bga
+				}
+				_ead.WriteByte(byte(_ffb))
+				continue
+			}
+			switch _adgd {
+			case 'n':
+				_ead.WriteRune('\n')
+			case 'r':
+				_ead.WriteRune('\r')
+			case 't':
+				_ead.WriteRune('\t')
+			case 'b':
+				_ead.WriteRune('\b')
+			case 'f':
+				_ead.WriteRune('\f')
+			case '(':
+				_ead.WriteRune('(')
+			case ')':
+				_ead.WriteRune(')')
+			case '\\':
+				_ead.WriteRune('\\')
+			}
+			continue
+		} else if _agc[0] == '(' {
+			_ceg++
+		} else if _agc[0] == ')' {
+			_ceg--
+			if _ceg == 0 {
+				_bbf._dge.ReadByte()
+				break
+			}
+		}
+		_ccd, _ := _bbf._dge.ReadByte()
+		_ead.WriteByte(_ccd)
+	}
+	return _age.MakeString(_ead.String()), nil
+}
+
+// Data represents forms data format (FDF) file data.
+type Data struct {
+	_cda *_age.PdfObjectDictionary
+	_ed  *_age.PdfObjectArray
+}
+
+func (_deb *fdfParser) skipComments() error {
+	if _, _eba := _deb.skipSpaces(); _eba != nil {
+		return _eba
+	}
+	_ff := true
+	for {
+		_egd, _bg := _deb._dge.Peek(1)
+		if _bg != nil {
+			_cd.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0025\u0073", _bg.Error())
+			return _bg
+		}
+		if _ff && _egd[0] != '%' {
+			return nil
+		}
+		_ff = false
+		if (_egd[0] != '\r') && (_egd[0] != '\n') {
+			_deb._dge.ReadByte()
+		} else {
+			break
+		}
+	}
+	return _deb.skipComments()
+}
+func (_gag *fdfParser) setFileOffset(_ge int64) {
+	_gag._gaf.Seek(_ge, _e.SeekStart)
+	_gag._dge = _ca.NewReader(_gag._gaf)
+}
+
+var _bd = _b.MustCompile("\u005e\u005b\u005c\u002b\u002d\u002e\u005d\u002a\u0028\u005b\u0030\u002d9\u002e\u005d\u002b\u0029")
+var _eed = _b.MustCompile("\u0028\u005c\u0064\u002b)\\\u0073\u002b\u0028\u005c\u0064\u002b\u0029\u005c\u0073\u002b\u006f\u0062\u006a")
+
+func (_bcf *fdfParser) parseDict() (*_age.PdfObjectDictionary, error) {
+	_cd.Log.Trace("\u0052\u0065\u0061\u0064\u0069\u006e\u0067\u0020\u0046\u0044\u0046\u0020D\u0069\u0063\u0074\u0021")
+	_fgg := _age.MakeDict()
+	_ecc, _ := _bcf._dge.ReadByte()
+	if _ecc != '<' {
+		return nil, _c.New("\u0069\u006e\u0076a\u006c\u0069\u0064\u0020\u0064\u0069\u0063\u0074")
+	}
+	_ecc, _ = _bcf._dge.ReadByte()
+	if _ecc != '<' {
+		return nil, _c.New("\u0069\u006e\u0076a\u006c\u0069\u0064\u0020\u0064\u0069\u0063\u0074")
+	}
+	for {
+		_bcf.skipSpaces()
+		_bcf.skipComments()
+		_fa, _gdgb := _bcf._dge.Peek(2)
+		if _gdgb != nil {
+			return nil, _gdgb
+		}
+		_cd.Log.Trace("D\u0069c\u0074\u0020\u0070\u0065\u0065\u006b\u003a\u0020%\u0073\u0020\u0028\u0025 x\u0029\u0021", string(_fa), string(_fa))
+		if (_fa[0] == '>') && (_fa[1] == '>') {
+			_cd.Log.Trace("\u0045\u004f\u0046\u0020\u0064\u0069\u0063\u0074\u0069o\u006e\u0061\u0072\u0079")
+			_bcf._dge.ReadByte()
+			_bcf._dge.ReadByte()
+			break
+		}
+		_cd.Log.Trace("\u0050a\u0072s\u0065\u0020\u0074\u0068\u0065\u0020\u006e\u0061\u006d\u0065\u0021")
+		_dec, _gdgb := _bcf.parseName()
+		_cd.Log.Trace("\u004be\u0079\u003a\u0020\u0025\u0073", _dec)
+		if _gdgb != nil {
+			_cd.Log.Debug("E\u0052\u0052\u004f\u0052\u0020\u0052e\u0074\u0075\u0072\u006e\u0069\u006e\u0067\u0020\u006ea\u006d\u0065\u0020e\u0072r\u0020\u0025\u0073", _gdgb)
+			return nil, _gdgb
+		}
+		if len(_dec) > 4 && _dec[len(_dec)-4:] == "\u006e\u0075\u006c\u006c" {
+			_cadb := _dec[0 : len(_dec)-4]
+			_cd.Log.Debug("\u0054\u0061\u006b\u0069n\u0067\u0020\u0063\u0061\u0072\u0065\u0020\u006f\u0066\u0020n\u0075l\u006c\u0020\u0062\u0075\u0067\u0020\u0028%\u0073\u0029", _dec)
+			_cd.Log.Debug("\u004e\u0065\u0077\u0020ke\u0079\u0020\u0022\u0025\u0073\u0022\u0020\u003d\u0020\u006e\u0075\u006c\u006c", _cadb)
+			_bcf.skipSpaces()
+			_dfa, _ := _bcf._dge.Peek(1)
+			if _dfa[0] == '/' {
+				_fgg.Set(_cadb, _age.MakeNull())
+				continue
+			}
+		}
+		_bcf.skipSpaces()
+		_egf, _gdgb := _bcf.parseObject()
+		if _gdgb != nil {
+			return nil, _gdgb
+		}
+		_fgg.Set(_dec, _egf)
+		_cd.Log.Trace("\u0064\u0069\u0063\u0074\u005b\u0025\u0073\u005d\u0020\u003d\u0020\u0025\u0073", _dec, _egf.String())
+	}
+	_cd.Log.Trace("\u0072\u0065\u0074\u0075rn\u0069\u006e\u0067\u0020\u0046\u0044\u0046\u0020\u0044\u0069\u0063\u0074\u0021")
+	return _fgg, nil
+}
+func (_cgd *fdfParser) seekToEOFMarker(_ffg int64) error {
+	_fga := int64(0)
+	_dee := int64(1000)
+	for _fga < _ffg {
+		if _ffg <= (_dee + _fga) {
+			_dee = _ffg - _fga
+		}
+		_, _ccdd := _cgd._gaf.Seek(-_fga-_dee, _e.SeekEnd)
+		if _ccdd != nil {
+			return _ccdd
+		}
+		_edef := make([]byte, _dee)
+		_cgd._gaf.Read(_edef)
+		_cd.Log.Trace("\u004c\u006f\u006f\u006bi\u006e\u0067\u0020\u0066\u006f\u0072\u0020\u0045\u004f\u0046 \u006da\u0072\u006b\u0065\u0072\u003a\u0020\u0022%\u0073\u0022", string(_edef))
+		_fdg := _bc.FindAllStringIndex(string(_edef), -1)
+		if _fdg != nil {
+			_dfaf := _fdg[len(_fdg)-1]
+			_cd.Log.Trace("\u0049\u006e\u0064\u003a\u0020\u0025\u0020\u0064", _fdg)
+			_cgd._gaf.Seek(-_fga-_dee+int64(_dfaf[0]), _e.SeekEnd)
+			return nil
+		}
+		_cd.Log.Debug("\u0057\u0061\u0072\u006e\u0069\u006eg\u003a\u0020\u0045\u004f\u0046\u0020\u006d\u0061\u0072\u006b\u0065\u0072\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075n\u0064\u0021\u0020\u002d\u0020\u0063\u006f\u006e\u0074\u0069\u006e\u0075\u0065\u0020s\u0065e\u006b\u0069\u006e\u0067")
+		_fga += _dee
+	}
+	_cd.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u003a\u0020\u0045\u004f\u0046\u0020\u006d\u0061\u0072\u006be\u0072 \u0077\u0061\u0073\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064\u002e")
+	return _c.New("\u0045\u004f\u0046\u0020\u006e\u006f\u0074\u0020\u0066\u006f\u0075\u006e\u0064")
+}
+
+var _gaa = _b.MustCompile("^\u005c\u0073\u002a\u0028\\d\u002b)\u005c\u0073\u002b\u0028\u005cd\u002b\u0029\u005c\u0073\u002b\u0052")
+
+func (_ccf *fdfParser) getFileOffset() int64 {
+	_de, _ := _ccf._gaf.Seek(0, _e.SeekCurrent)
+	_de -= int64(_ccf._dge.Buffered())
+	return _de
+}
+func (_acb *fdfParser) parse() error {
+	_acb._gaf.Seek(0, _e.SeekStart)
+	_acb._dge = _ca.NewReader(_acb._gaf)
+	for {
+		_acb.skipComments()
+		_fdga, _ccb := _acb._dge.Peek(20)
+		if _ccb != nil {
+			_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020\u0046\u0061\u0069\u006c\u0020\u0074\u006f\u0020r\u0065a\u0064\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a")
+			return _ccb
+		}
+		if _a.HasPrefix(string(_fdga), "\u0074r\u0061\u0069\u006c\u0065\u0072") {
+			_acb._dge.Discard(7)
+			_acb.skipSpaces()
+			_acb.skipComments()
+			_fdeb, _ := _acb.parseDict()
+			_acb._ae = _fdeb
+			break
+		}
+		_bfc := _eed.FindStringSubmatchIndex(string(_fdga))
+		if len(_bfc) < 6 {
+			_cd.Log.Debug("\u0045\u0052\u0052\u004f\u0052\u003a\u0020U\u006e\u0061\u0062l\u0065\u0020\u0074\u006f \u0066\u0069\u006e\u0064\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020\u0073\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065\u0020\u0028\u0025\u0073\u0029", string(_fdga))
+			return _c.New("\u0075\u006e\u0061b\u006c\u0065\u0020\u0074\u006f\u0020\u0064\u0065\u0074\u0065\u0063\u0074\u0020\u0069\u006e\u0064\u0069\u0072\u0065\u0063\u0074\u0020\u006f\u0062\u006a\u0065\u0063\u0074\u0020s\u0069\u0067\u006e\u0061\u0074\u0075\u0072\u0065")
+		}
+		_eecc, _ccb := _acb.parseIndirectObject()
+		if _ccb != nil {
+			return _ccb
+		}
+		switch _aecd := _eecc.(type) {
+		case *_age.PdfIndirectObject:
+			_acb._agd[_aecd.ObjectNumber] = _aecd
+		case *_age.PdfObjectStream:
+			_acb._agd[_aecd.ObjectNumber] = _aecd
 		default:
-			return _d.New("\u0074\u0079\u0070\u0065\u0020\u0065\u0072\u0072\u006f\u0072")
+			return _c.New("\u0074\u0079\u0070\u0065\u0020\u0065\u0072\u0072\u006f\u0072")
 		}
 	}
 	return nil
 }
-func (_da *fdfParser) parseNumber() (_ff.PdfObject, error) { return _ff.ParseNumber(_da._gec) }
+func (_fg *fdfParser) readComment() (string, error) {
+	var _aaa _aa.Buffer
+	_, _bdg := _fg.skipSpaces()
+	if _bdg != nil {
+		return _aaa.String(), _bdg
+	}
+	_bad := true
+	for {
+		_cgf, _beb := _fg._dge.Peek(1)
+		if _beb != nil {
+			_cd.Log.Debug("\u0045\u0072\u0072\u006f\u0072\u0020\u0025\u0073", _beb.Error())
+			return _aaa.String(), _beb
+		}
+		if _bad && _cgf[0] != '%' {
+			return _aaa.String(), _c.New("c\u006f\u006d\u006d\u0065\u006e\u0074 \u0073\u0068\u006f\u0075\u006c\u0064\u0020\u0073\u0074a\u0072\u0074\u0020w\u0069t\u0068\u0020\u0025")
+		}
+		_bad = false
+		if (_cgf[0] != '\r') && (_cgf[0] != '\n') {
+			_caf, _ := _fg._dge.ReadByte()
+			_aaa.WriteByte(_caf)
+		} else {
+			break
+		}
+	}
+	return _aaa.String(), nil
+}
+func (_fcb *fdfParser) readAtLeast(_ad []byte, _aga int) (int, error) {
+	_ce := _aga
+	_cg := 0
+	_adf := 0
+	for _ce > 0 {
+		_egb, _cgb := _fcb._dge.Read(_ad[_cg:])
+		if _cgb != nil {
+			_cd.Log.Debug("\u0045\u0052\u0052O\u0052\u0020\u0046\u0061i\u006c\u0065\u0064\u0020\u0072\u0065\u0061d\u0069\u006e\u0067\u0020\u0028\u0025\u0064\u003b\u0025\u0064\u0029\u0020\u0025\u0073", _egb, _adf, _cgb.Error())
+			return _cg, _c.New("\u0066\u0061\u0069\u006c\u0065\u0064\u0020\u0072\u0065a\u0064\u0069\u006e\u0067")
+		}
+		_adf++
+		_cg += _egb
+		_ce -= _egb
+	}
+	return _cg, nil
+}
+func _cee(_ffbb string) (*fdfParser, error) {
+	_fdf := fdfParser{}
+	_bdgd := []byte(_ffbb)
+	_bce := _aa.NewReader(_bdgd)
+	_fdf._gaf = _bce
+	_fdf._agd = map[int64]_age.PdfObject{}
+	_decd := _ca.NewReader(_bce)
+	_fdf._dge = _decd
+	_fdf._cbb = int64(len(_ffbb))
+	return &_fdf, _fdf.parse()
+}
+func (_dd *fdfParser) parseNull() (_age.PdfObjectNull, error) {
+	_, _bf := _dd._dge.Discard(4)
+	return _age.PdfObjectNull{}, _bf
+}
+func (_beg *fdfParser) parseNumber() (_age.PdfObject, error) { return _age.ParseNumber(_beg._dge) }
+func (_bfb *fdfParser) parseFdfVersion() (int, int, error) {
+	_bfb._gaf.Seek(0, _e.SeekStart)
+	_aca := 20
+	_fb := make([]byte, _aca)
+	_bfb._gaf.Read(_fb)
+	_aef := _dc.FindStringSubmatch(string(_fb))
+	if len(_aef) < 3 {
+		_ebcf, _fde, _dag := _bfb.seekFdfVersionTopDown()
+		if _dag != nil {
+			_cd.Log.Debug("F\u0061\u0069\u006c\u0065\u0064\u0020\u0072\u0065\u0063\u006f\u0076\u0065\u0072\u0079\u0020\u002d\u0020\u0075n\u0061\u0062\u006c\u0065\u0020\u0074\u006f\u0020\u0066\u0069nd\u0020\u0076\u0065r\u0073i\u006f\u006e")
+			return 0, 0, _dag
+		}
+		return _ebcf, _fde, nil
+	}
+	_gc, _edg := _ag.Atoi(_aef[1])
+	if _edg != nil {
+		return 0, 0, _edg
+	}
+	_becc, _edg := _ag.Atoi(_aef[2])
+	if _edg != nil {
+		return 0, 0, _edg
+	}
+	_cd.Log.Debug("\u0046\u0064\u0066\u0020\u0076\u0065\u0072\u0073\u0069\u006f\u006e\u0020%\u0064\u002e\u0025\u0064", _gc, _becc)
+	return _gc, _becc, nil
+}
+
+// FieldDictionaries returns a map of field names to field dictionaries.
+func (fdf *Data) FieldDictionaries() (map[string]*_age.PdfObjectDictionary, error) {
+	_fc := map[string]*_age.PdfObjectDictionary{}
+	for _fcc := 0; _fcc < fdf._ed.Len(); _fcc++ {
+		_cad, _dg := _age.GetDict(fdf._ed.Get(_fcc))
+		if _dg {
+			_ee, _ := _age.GetString(_cad.Get("\u0054"))
+			if _ee != nil {
+				_fc[_ee.Str()] = _cad
+			}
+		}
+	}
+	return _fc, nil
+}
+
+type fdfParser struct {
+	_cef int
+	_db  int
+	_agd map[int64]_age.PdfObject
+	_gaf _e.ReadSeeker
+	_dge *_ca.Reader
+	_cbb int64
+	_ae  *_age.PdfObjectDictionary
+}
+
+func _bed(_bfe _e.ReadSeeker) (*fdfParser, error) {
+	_feb := &fdfParser{}
+	_feb._gaf = _bfe
+	_feb._agd = map[int64]_age.PdfObject{}
+	_caga, _bcd, _fbb := _feb.parseFdfVersion()
+	if _fbb != nil {
+		_cd.Log.Error("U\u006e\u0061\u0062\u006c\u0065\u0020t\u006f\u0020\u0070\u0061\u0072\u0073\u0065\u0020\u0076e\u0072\u0073\u0069o\u006e:\u0020\u0025\u0076", _fbb)
+		return nil, _fbb
+	}
+	_feb._cef = _caga
+	_feb._db = _bcd
+	_fbb = _feb.parse()
+	return _feb, _fbb
+}
+
+var _dc = _b.MustCompile("\u0025F\u0044F\u002d\u0028\u005c\u0064\u0029\u005c\u002e\u0028\u005c\u0064\u0029")

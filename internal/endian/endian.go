@@ -1,25 +1,25 @@
 package endian
 
 import (
-	_d "encoding/binary"
+	_g "encoding/binary"
 	_e "unsafe"
 )
 
-func IsBig() bool { return _g }
+var (
+	ByteOrder _g.ByteOrder
+	_gf       bool
+)
+
 func init() {
-	const _ea = int(_e.Sizeof(0))
-	_a := 1
-	_f := (*[_ea]byte)(_e.Pointer(&_a))
-	if _f[0] == 0 {
-		_g = true
-		ByteOrder = _d.BigEndian
+	const _b = int(_e.Sizeof(0))
+	_ea := 1
+	_fc := (*[_b]byte)(_e.Pointer(&_ea))
+	if _fc[0] == 0 {
+		_gf = true
+		ByteOrder = _g.BigEndian
 	} else {
-		ByteOrder = _d.LittleEndian
+		ByteOrder = _g.LittleEndian
 	}
 }
-func IsLittle() bool { return !_g }
-
-var (
-	ByteOrder _d.ByteOrder
-	_g        bool
-)
+func IsBig() bool    { return _gf }
+func IsLittle() bool { return !_gf }

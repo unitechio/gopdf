@@ -1,36 +1,36 @@
 package textshaping
 
 import (
-	_b "strings"
+	_c "strings"
 
-	_g "github.com/unidoc/garabic"
-	_a "golang.org/x/text/unicode/bidi"
+	_e "github.com/unidoc/garabic"
+	_b "golang.org/x/text/unicode/bidi"
 )
 
 // ArabicShape returns shaped arabic glyphs string.
 func ArabicShape(text string) (string, error) {
-	_cf := _a.Paragraph{}
-	_cf.SetString(text)
-	_ac, _bg := _cf.Order()
-	if _bg != nil {
-		return "", _bg
+	_eg := _b.Paragraph{}
+	_eg.SetString(text)
+	_bb, _bd := _eg.Order()
+	if _bd != nil {
+		return "", _bd
 	}
-	for _gg := 0; _gg < _ac.NumRuns(); _gg++ {
-		_d := _ac.Run(_gg)
-		_bc := _d.String()
-		if _d.Direction() == _a.RightToLeft {
+	for _aa := 0; _aa < _bb.NumRuns(); _aa++ {
+		_g := _bb.Run(_aa)
+		_d := _g.String()
+		if _g.Direction() == _b.RightToLeft {
 			var (
-				_ggg = _g.Shape(_bc)
-				_af  = []rune(_ggg)
-				_bb  = make([]rune, len(_af))
+				_gg = _e.Shape(_d)
+				_ga = []rune(_gg)
+				_de = make([]rune, len(_ga))
 			)
-			_bbf := 0
-			for _f := len(_af) - 1; _f >= 0; _f-- {
-				_bb[_bbf] = _af[_f]
-				_bbf++
+			_ed := 0
+			for _cc := len(_ga) - 1; _cc >= 0; _cc-- {
+				_de[_ed] = _ga[_cc]
+				_ed++
 			}
-			_bc = string(_bb)
-			text = _b.Replace(text, _b.TrimSpace(_d.String()), _bc, 1)
+			_d = string(_de)
+			text = _c.Replace(text, _c.TrimSpace(_g.String()), _d, 1)
 		}
 	}
 	return text, nil
