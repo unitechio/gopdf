@@ -1,52 +1,54 @@
 package jbig2
 
 import (
-	_a "sort"
+	_c "sort"
 
-	_c "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_b "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder"
-	_fa "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document"
+	_ae "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_g "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder"
+	_e "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document"
 	_aa "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document/segments"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_ag "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
 )
 
 type Globals map[int]*_aa.Header
 
-func DecodeBytes(encoded []byte, parameters _b.Parameters, globals ...Globals) ([]byte, error) {
-	var _fb Globals
-	if len(globals) > 0 {
-		_fb = globals[0]
+func DecodeGlobals(encoded []byte) (Globals, error) {
+	const _b = "\u0044\u0065\u0063\u006f\u0064\u0065\u0047\u006c\u006f\u0062\u0061\u006c\u0073"
+	_ee := _ae.NewReader(encoded)
+	_ab, _f := _e.DecodeDocument(_ee, nil)
+	if _f != nil {
+		return nil, _ag.Wrap(_f, _b, "")
 	}
-	_gf, _ba := _b.Decode(encoded, parameters, _fb.ToDocumentGlobals())
-	if _ba != nil {
-		return nil, _ba
+	if _ab.GlobalSegments == nil || (_ab.GlobalSegments.Segments == nil) {
+		return nil, _ag.Error(_b, "\u006eo\u0020\u0067\u006c\u006f\u0062\u0061\u006c\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u0073\u0020\u0066\u006f\u0075\u006e\u0064")
 	}
-	return _gf.DecodeNextPage()
+	_ef := Globals{}
+	for _, _ad := range _ab.GlobalSegments.Segments {
+		_ef[int(_ad.SegmentNumber)] = _ad
+	}
+	return _ef, nil
 }
-func (_gc Globals) ToDocumentGlobals() *_fa.Globals {
-	if _gc == nil {
+
+func (_fg Globals) ToDocumentGlobals() *_e.Globals {
+	if _fg == nil {
 		return nil
 	}
-	_d := []*_aa.Header{}
-	for _, _ab := range _gc {
-		_d = append(_d, _ab)
+	_agc := []*_aa.Header{}
+	for _, _ba := range _fg {
+		_agc = append(_agc, _ba)
 	}
-	_a.Slice(_d, func(_cf, _bc int) bool { return _d[_cf].SegmentNumber < _d[_bc].SegmentNumber })
-	return &_fa.Globals{Segments: _d}
+	_c.Slice(_agc, func(_fgf, _fd int) bool { return _agc[_fgf].SegmentNumber < _agc[_fd].SegmentNumber })
+	return &_e.Globals{Segments: _agc}
 }
-func DecodeGlobals(encoded []byte) (Globals, error) {
-	const _fg = "\u0044\u0065\u0063\u006f\u0064\u0065\u0047\u006c\u006f\u0062\u0061\u006c\u0073"
-	_e := _c.NewReader(encoded)
-	_bb, _fe := _fa.DecodeDocument(_e, nil)
-	if _fe != nil {
-		return nil, _g.Wrap(_fe, _fg, "")
+
+func DecodeBytes(encoded []byte, parameters _g.Parameters, globals ...Globals) ([]byte, error) {
+	var _d Globals
+	if len(globals) > 0 {
+		_d = globals[0]
 	}
-	if _bb.GlobalSegments == nil || (_bb.GlobalSegments.Segments == nil) {
-		return nil, _g.Error(_fg, "\u006eo\u0020\u0067\u006c\u006f\u0062\u0061\u006c\u0020\u0073\u0065\u0067m\u0065\u006e\u0074\u0073\u0020\u0066\u006f\u0075\u006e\u0064")
+	_eb, _gb := _g.Decode(encoded, parameters, _d.ToDocumentGlobals())
+	if _gb != nil {
+		return nil, _gb
 	}
-	_ca := Globals{}
-	for _, _ga := range _bb.GlobalSegments.Segments {
-		_ca[int(_ga.SegmentNumber)] = _ga
-	}
-	return _ca, nil
+	return _eb.DecodeNextPage()
 }

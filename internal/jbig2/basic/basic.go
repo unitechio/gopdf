@@ -1,23 +1,57 @@
 package basic
 
-import _be "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+import _d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
 
-func (_dbe IntSlice) Size() int { return len(_dbe) }
-func (_g NumSlice) GetIntSlice() []int {
-	_aa := make([]int, len(_g))
-	for _cc, _fc := range _g {
-		_aa[_cc] = int(_fc)
+func (_bgc *NumSlice) Add(v float32) { *_bgc = append(*_bgc, v) }
+func (_a IntsMap) Get(key uint64) (int, bool) {
+	_eg, _ege := _a[key]
+	if !_ege {
+		return 0, false
 	}
-	return _aa
+	if len(_eg) == 0 {
+		return 0, false
+	}
+	return _eg[0], true
 }
-func (_cfc *NumSlice) AddInt(v int) { *_cfc = append(*_cfc, float32(v)) }
-func (_ab *IntSlice) Add(v int) error {
-	if _ab == nil {
-		return _be.Error("\u0049\u006e\u0074S\u006c\u0069\u0063\u0065\u002e\u0041\u0064\u0064", "\u0073\u006c\u0069\u0063\u0065\u0020\u006e\u006f\u0074\u0020\u0064\u0065f\u0069\u006e\u0065\u0064")
+
+func (_be IntsMap) GetSlice(key uint64) ([]int, bool) {
+	_g, _f := _be[key]
+	if !_f {
+		return nil, false
 	}
-	*_ab = append(*_ab, v)
+	return _g, true
+}
+func (_gb *Stack) Len() int    { return len(_gb.Data) }
+func (_bb IntSlice) Size() int { return len(_bb) }
+func (_ae *IntSlice) Add(v int) error {
+	if _ae == nil {
+		return _d.Error("\u0049\u006e\u0074S\u006c\u0069\u0063\u0065\u002e\u0041\u0064\u0064", "\u0073\u006c\u0069\u0063\u0065\u0020\u006e\u006f\u0074\u0020\u0064\u0065f\u0069\u006e\u0065\u0064")
+	}
+	*_ae = append(*_ae, v)
 	return nil
 }
+
+func (_bg *IntSlice) Copy() *IntSlice {
+	_ge := IntSlice(make([]int, len(*_bg)))
+	copy(_ge, *_bg)
+	return &_ge
+}
+func (_cb *Stack) top() int                           { return len(_cb.Data) - 1 }
+func (_ca *Stack) Push(v interface{})                 { _ca.Data = append(_ca.Data, v) }
+func (_aa IntsMap) Delete(key uint64)                 { delete(_aa, key) }
+func (_e IntsMap) Add(key uint64, value int)          { _e[key] = append(_e[key], value) }
+func (_fbe *Stack) Peek() (_fg interface{}, _da bool) { return _fbe.peek() }
+func (_bba *Stack) Pop() (_de interface{}, _ad bool) {
+	_de, _ad = _bba.peek()
+	if !_ad {
+		return nil, _ad
+	}
+	_bba.Data = _bba.Data[:_bba.top()]
+	return _de, true
+}
+func NewIntSlice(i int) *IntSlice  { _ea := IntSlice(make([]int, i)); return &_ea }
+func NewNumSlice(i int) *NumSlice  { _cg := NumSlice(make([]float32, i)); return &_cg }
+func (_fe *NumSlice) AddInt(v int) { *_fe = append(*_fe, float32(v)) }
 func Max(x, y int) int {
 	if x > y {
 		return x
@@ -25,83 +59,62 @@ func Max(x, y int) int {
 	return y
 }
 
-type IntSlice []int
+type IntsMap map[uint64][]int
 
-func NewNumSlice(i int) *NumSlice { _ce := NumSlice(make([]float32, i)); return &_ce }
-func Min(x, y int) int {
-	if x < y {
-		return x
+func (_cf NumSlice) GetIntSlice() []int {
+	_aeb := make([]int, len(_cf))
+	for _ef, _gg := range _cf {
+		_aeb[_ef] = int(_gg)
 	}
-	return y
+	return _aeb
 }
-func Sign(v float32) float32 {
-	if v >= 0.0 {
-		return 1.0
+
+func (_dc NumSlice) Get(i int) (float32, error) {
+	if i < 0 || i > len(_dc)-1 {
+		return 0, _d.Errorf("\u004e\u0075\u006dS\u006c\u0069\u0063\u0065\u002e\u0047\u0065\u0074", "\u0069n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006fu\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006e\u0067\u0065", i)
 	}
-	return -1.0
+	return _dc[i], nil
 }
-func (_c IntsMap) Add(key uint64, value int) { _c[key] = append(_c[key], value) }
-func Ceil(numerator, denominator int) int {
-	if numerator%denominator == 0 {
-		return numerator / denominator
-	}
-	return (numerator / denominator) + 1
-}
-func (_bf *Stack) top() int                             { return len(_bf.Data) - 1 }
-func (_bgba *Stack) Peek() (_ffe interface{}, _df bool) { return _bgba.peek() }
-func (_ge *Stack) Pop() (_ee interface{}, _cef bool) {
-	_ee, _cef = _ge.peek()
-	if !_cef {
-		return nil, _cef
-	}
-	_ge.Data = _ge.Data[:_ge.top()]
-	return _ee, true
-}
+
+type NumSlice []float32
+
 func Abs(v int) int {
 	if v > 0 {
 		return v
 	}
 	return -v
 }
-func (_e IntsMap) Get(key uint64) (int, bool) {
-	_f, _d := _e[key]
-	if !_d {
-		return 0, false
+
+type IntSlice []int
+
+func (_fb NumSlice) GetInt(i int) (int, error) {
+	const _ec = "\u0047\u0065\u0074\u0049\u006e\u0074"
+	if i < 0 || i > len(_fb)-1 {
+		return 0, _d.Errorf(_ec, "\u0069n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006fu\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006e\u0067\u0065", i)
 	}
-	if len(_f) == 0 {
-		return 0, false
-	}
-	return _f[0], true
+	_ff := _fb[i]
+	return int(_ff + Sign(_ff)*0.5), nil
 }
-func (_dg *Stack) Push(v interface{}) { _dg.Data = append(_dg.Data, v) }
-func NewIntSlice(i int) *IntSlice     { _cf := IntSlice(make([]int, i)); return &_cf }
-func (_ff *Stack) Len() int           { return len(_ff.Data) }
-func (_ea NumSlice) GetInt(i int) (int, error) {
-	const _bed = "\u0047\u0065\u0074\u0049\u006e\u0074"
-	if i < 0 || i > len(_ea)-1 {
-		return 0, _be.Errorf(_bed, "\u0069n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006fu\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006e\u0067\u0065", i)
+
+func Sign(v float32) float32 {
+	if v >= 0.0 {
+		return 1.0
 	}
-	_bgb := _ea[i]
-	return int(_bgb + Sign(_bgb)*0.5), nil
+	return -1.0
 }
-func (_fd *IntSlice) Copy() *IntSlice {
-	_fb := IntSlice(make([]int, len(*_fd)))
-	copy(_fb, *_fd)
-	return &_fb
-}
-func (_db IntsMap) Delete(key uint64) { delete(_db, key) }
-func (_a IntsMap) GetSlice(key uint64) ([]int, bool) {
-	_ef, _bb := _a[key]
-	if !_bb {
-		return nil, false
+
+func Min(x, y int) int {
+	if x < y {
+		return x
 	}
-	return _ef, true
+	return y
 }
-func (_ed NumSlice) Get(i int) (float32, error) {
-	if i < 0 || i > len(_ed)-1 {
-		return 0, _be.Errorf("\u004e\u0075\u006dS\u006c\u0069\u0063\u0065\u002e\u0047\u0065\u0074", "\u0069n\u0064\u0065\u0078\u003a\u0020\u0027\u0025\u0064\u0027\u0020\u006fu\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006e\u0067\u0065", i)
+
+func (_c IntSlice) Get(index int) (int, error) {
+	if index > len(_c)-1 {
+		return 0, _d.Errorf("\u0049\u006e\u0074S\u006c\u0069\u0063\u0065\u002e\u0047\u0065\u0074", "\u0069\u006e\u0064\u0065x:\u0020\u0025\u0064\u0020\u006f\u0075\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006eg\u0065", index)
 	}
-	return _ed[i], nil
+	return _c[index], nil
 }
 
 type Stack struct {
@@ -109,21 +122,17 @@ type Stack struct {
 	Aux  *Stack
 }
 
-func (_cff IntSlice) Get(index int) (int, error) {
-	if index > len(_cff)-1 {
-		return 0, _be.Errorf("\u0049\u006e\u0074S\u006c\u0069\u0063\u0065\u002e\u0047\u0065\u0074", "\u0069\u006e\u0064\u0065x:\u0020\u0025\u0064\u0020\u006f\u0075\u0074\u0020\u006f\u0066\u0020\u0072\u0061\u006eg\u0065", index)
+func Ceil(numerator, denominator int) int {
+	if numerator%denominator == 0 {
+		return numerator / denominator
 	}
-	return _cff[index], nil
+	return (numerator / denominator) + 1
 }
-func (_gf *Stack) peek() (interface{}, bool) {
-	_dfd := _gf.top()
-	if _dfd == -1 {
+
+func (_gd *Stack) peek() (interface{}, bool) {
+	_dae := _gd.top()
+	if _dae == -1 {
 		return nil, false
 	}
-	return _gf.Data[_dfd], true
+	return _gd.Data[_dae], true
 }
-
-type NumSlice []float32
-type IntsMap map[uint64][]int
-
-func (_bg *NumSlice) Add(v float32) { *_bg = append(*_bg, v) }
