@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # One-time PDF tools setup
+  pdf-tools-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+      target: pdf-tools-builder
+    container_name: pdf-tools-init
+    volumes:
+      - pdf-tools:/output
+    command: |
+      sh -c "
+        echo 'Copying PDF tools to volume...' &&
+        cp -r /pdf-tools/* /output/ &&
+        echo 'PDF tools setup complete!'
+      "
+    profiles:
+      - init
+
+  # Main application
+  gopdf-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+    container_name: gopdf-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - pdf-tools:/pdf-tools:ro
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+    environment:
+      - PATH=/pdf-tools/bin:$PATH
+      - LD_LIBRARY_PATH=/pdf-tools/lib
+      - FONTCONFIG_PATH=/pdf-tools/share/fonts
+    depends_on:
+      - pdf-tools-init
+    healthcheck:
+      test: ["CMD", "/app", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  pdf-tools:
+    driver: local
