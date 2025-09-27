@@ -13,11 +13,11 @@ import (
 	_c "unicode"
 	_b "unicode/utf8"
 
-	_bf "bitbucket.org/shenghui0779/gopdf/common"
-	_af "bitbucket.org/shenghui0779/gopdf/core"
-	_ab "bitbucket.org/shenghui0779/gopdf/internal/cmap"
-	_ed "bitbucket.org/shenghui0779/gopdf/internal/strutils"
-	_bb "bitbucket.org/shenghui0779/gopdf/internal/textencoding/internal/syncmap"
+	_bf "unitechio/gopdf/gopdf/common"
+	_af "unitechio/gopdf/gopdf/core"
+	_ab "unitechio/gopdf/gopdf/internal/cmap"
+	_ed "unitechio/gopdf/gopdf/internal/strutils"
+	_bb "unitechio/gopdf/gopdf/internal/textencoding/internal/syncmap"
 	_ec "golang.org/x/text/encoding"
 	_bc "golang.org/x/text/transform"
 )

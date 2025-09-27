@@ -10,10 +10,10 @@ import (
 	_a "strings"
 	_d "unicode"
 
-	_be "bitbucket.org/shenghui0779/gopdf/common"
-	_fc "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_gf "bitbucket.org/shenghui0779/gopdf/contentstream/draw"
-	_gd "bitbucket.org/shenghui0779/gopdf/internal/graphic2d"
+	_be "unitechio/gopdf/gopdf/common"
+	_fc "unitechio/gopdf/gopdf/contentstream"
+	_gf "unitechio/gopdf/gopdf/contentstream/draw"
+	_gd "unitechio/gopdf/gopdf/internal/graphic2d"
 	_ab "golang.org/x/net/html/charset"
 )
 

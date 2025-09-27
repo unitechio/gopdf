@@ -5,9 +5,9 @@ import (
 	_a "io"
 	_g "os"
 
-	_de "bitbucket.org/shenghui0779/gopdf/common"
-	_bf "bitbucket.org/shenghui0779/gopdf/core"
-	_c "bitbucket.org/shenghui0779/gopdf/model"
+	_de "unitechio/gopdf/gopdf/common"
+	_bf "unitechio/gopdf/gopdf/core"
+	_c "unitechio/gopdf/gopdf/model"
 )
 
 // FieldData represents form field data loaded from JSON file.

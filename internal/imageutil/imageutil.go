@@ -9,8 +9,8 @@ import (
 	_f "image/draw"
 	_ef "math"
 
-	_af "bitbucket.org/shenghui0779/gopdf/common"
-	_ab "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_af "unitechio/gopdf/gopdf/common"
+	_ab "unitechio/gopdf/gopdf/internal/bitwise"
 )
 
 func (_fdeb *Gray8) Base() *ImageBase { return &_fdeb.ImageBase }

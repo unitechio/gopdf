@@ -3,7 +3,7 @@ package pdfaid
 import (
 	_g "fmt"
 
-	_ga "bitbucket.org/shenghui0779/gopdf/model/xmputil/pdfaextension"
+	_ga "unitechio/gopdf/gopdf/model/xmputil/pdfaextension"
 	_e "github.com/trimmer-io/go-xmp/xmp"
 )
 

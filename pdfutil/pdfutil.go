@@ -1,11 +1,11 @@
 package pdfutil
 
 import (
-	_c "bitbucket.org/shenghui0779/gopdf/common"
-	_d "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_a "bitbucket.org/shenghui0779/gopdf/contentstream/draw"
-	_ce "bitbucket.org/shenghui0779/gopdf/core"
-	_ge "bitbucket.org/shenghui0779/gopdf/model"
+	_c "unitechio/gopdf/gopdf/common"
+	_d "unitechio/gopdf/gopdf/contentstream"
+	_a "unitechio/gopdf/gopdf/contentstream/draw"
+	_ce "unitechio/gopdf/gopdf/core"
+	_ge "unitechio/gopdf/gopdf/model"
 )
 
 // NormalizePage performs the following operations on the passed in page:

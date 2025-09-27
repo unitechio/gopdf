@@ -13,8 +13,8 @@ import (
 	_af "strconv"
 	_ec "strings"
 
-	_gf "bitbucket.org/shenghui0779/gopdf/common"
-	_be "bitbucket.org/shenghui0779/gopdf/core"
+	_gf "unitechio/gopdf/gopdf/common"
+	_be "unitechio/gopdf/gopdf/core"
 )
 
 // Load loads FDF form data from `r`.

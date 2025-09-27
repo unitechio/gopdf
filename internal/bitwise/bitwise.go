@@ -6,8 +6,8 @@ import (
 	_aa "fmt"
 	_ag "io"
 
-	_ae "bitbucket.org/shenghui0779/gopdf/common"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_ae "unitechio/gopdf/gopdf/common"
+	_d "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 var _ _ag.ByteWriter = &BufferedWriter{}

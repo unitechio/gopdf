@@ -5,9 +5,9 @@ import (
 	_fd "fmt"
 	_c "io"
 
-	_fc "bitbucket.org/shenghui0779/gopdf/common"
-	_b "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_bf "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
+	_fc "unitechio/gopdf/gopdf/common"
+	_b "unitechio/gopdf/gopdf/internal/bitwise"
+	_bf "unitechio/gopdf/gopdf/internal/jbig2/bitmap"
 )
 
 const (

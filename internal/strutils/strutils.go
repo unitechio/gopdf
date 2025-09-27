@@ -4,7 +4,7 @@ import (
 	_a "bytes"
 	_cb "unicode/utf16"
 
-	_d "bitbucket.org/shenghui0779/gopdf/common"
+	_d "unitechio/gopdf/gopdf/common"
 )
 
 func StringToPDFDocEncoding(s string) []byte {

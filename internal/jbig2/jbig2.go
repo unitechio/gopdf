@@ -3,11 +3,11 @@ package jbig2
 import (
 	_c "sort"
 
-	_ae "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/jbig2/decoder"
-	_e "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document"
-	_aa "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document/segments"
-	_ag "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_ae "unitechio/gopdf/gopdf/internal/bitwise"
+	_g "unitechio/gopdf/gopdf/internal/jbig2/decoder"
+	_e "unitechio/gopdf/gopdf/internal/jbig2/document"
+	_aa "unitechio/gopdf/gopdf/internal/jbig2/document/segments"
+	_ag "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 type Globals map[int]*_aa.Header

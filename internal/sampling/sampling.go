@@ -3,8 +3,8 @@ package sampling
 import (
 	_a "io"
 
-	_e "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_c "bitbucket.org/shenghui0779/gopdf/internal/imageutil"
+	_e "unitechio/gopdf/gopdf/internal/bitwise"
+	_c "unitechio/gopdf/gopdf/internal/imageutil"
 )
 
 func ResampleUint32(data []uint32, bitsPerInputSample int, bitsPerOutputSample int) []uint32 {

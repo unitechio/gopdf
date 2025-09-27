@@ -8,8 +8,8 @@ import (
 	_g "io"
 	_gf "math"
 
-	_a "bitbucket.org/shenghui0779/gopdf/common"
-	_af "bitbucket.org/shenghui0779/gopdf/core"
+	_a "unitechio/gopdf/gopdf/common"
+	_af "unitechio/gopdf/gopdf/core"
 )
 
 func (_agdf *PSOperand) gt(_bga *PSStack) error {

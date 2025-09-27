@@ -1,8 +1,8 @@
 package sanitize
 
 import (
-	_e "bitbucket.org/shenghui0779/gopdf/common"
-	_g "bitbucket.org/shenghui0779/gopdf/core"
+	_e "unitechio/gopdf/gopdf/common"
+	_g "unitechio/gopdf/gopdf/core"
 )
 
 // SanitizationOpts specifies the objects to be removed during sanitization.

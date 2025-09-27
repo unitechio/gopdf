@@ -7,11 +7,11 @@ import (
 	_fb "io"
 	_d "math"
 
-	_ca "bitbucket.org/shenghui0779/gopdf/common"
-	_dgd "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_dg "bitbucket.org/shenghui0779/gopdf/contentstream/draw"
-	_ff "bitbucket.org/shenghui0779/gopdf/core"
-	_e "bitbucket.org/shenghui0779/gopdf/model"
+	_ca "unitechio/gopdf/gopdf/common"
+	_dgd "unitechio/gopdf/gopdf/contentstream"
+	_dg "unitechio/gopdf/gopdf/contentstream/draw"
+	_ff "unitechio/gopdf/gopdf/core"
+	_e "unitechio/gopdf/gopdf/model"
 	_a "github.com/unidoc/unichart/render"
 )
 

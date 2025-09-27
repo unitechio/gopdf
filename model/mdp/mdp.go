@@ -4,7 +4,7 @@ import (
 	_ae "errors"
 	_e "fmt"
 
-	_g "bitbucket.org/shenghui0779/gopdf/core"
+	_g "unitechio/gopdf/gopdf/core"
 )
 
 func (_gbg *DiffResults) addWarningWithDescription(_cec int, _fdea string) {

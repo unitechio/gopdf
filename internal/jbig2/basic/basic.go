@@ -1,6 +1,6 @@
 package basic
 
-import _d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+import _d "unitechio/gopdf/gopdf/internal/jbig2/errors"
 
 func (_bgc *NumSlice) Add(v float32) { *_bgc = append(*_bgc, v) }
 func (_a IntsMap) Get(key uint64) (int, bool) {

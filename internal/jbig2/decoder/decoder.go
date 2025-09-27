@@ -3,10 +3,10 @@ package decoder
 import (
 	_b "image"
 
-	_a "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
-	_gd "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_a "unitechio/gopdf/gopdf/internal/bitwise"
+	_d "unitechio/gopdf/gopdf/internal/jbig2/bitmap"
+	_gd "unitechio/gopdf/gopdf/internal/jbig2/document"
+	_g "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 type Parameters struct {

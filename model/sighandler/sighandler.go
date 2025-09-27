@@ -16,11 +16,11 @@ import (
 	_a "strings"
 	_cd "time"
 
-	_dd "bitbucket.org/shenghui0779/gopdf/common"
-	_da "bitbucket.org/shenghui0779/gopdf/core"
-	_fe "bitbucket.org/shenghui0779/gopdf/model"
-	_dg "bitbucket.org/shenghui0779/gopdf/model/mdp"
-	_e "bitbucket.org/shenghui0779/gopdf/model/sigutil"
+	_dd "unitechio/gopdf/gopdf/common"
+	_da "unitechio/gopdf/gopdf/core"
+	_fe "unitechio/gopdf/gopdf/model"
+	_dg "unitechio/gopdf/gopdf/model/mdp"
+	_e "unitechio/gopdf/gopdf/model/sigutil"
 	_ga "github.com/unidoc/pkcs7"
 	_dfa "github.com/unidoc/timestamp"
 )

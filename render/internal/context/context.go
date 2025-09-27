@@ -6,11 +6,11 @@ import (
 	_a "image/color"
 	_f "strings"
 
-	_d "bitbucket.org/shenghui0779/gopdf/core"
-	_af "bitbucket.org/shenghui0779/gopdf/internal/cmap"
-	_ef "bitbucket.org/shenghui0779/gopdf/internal/textencoding"
-	_e "bitbucket.org/shenghui0779/gopdf/internal/transform"
-	_cb "bitbucket.org/shenghui0779/gopdf/model"
+	_d "unitechio/gopdf/gopdf/core"
+	_af "unitechio/gopdf/gopdf/internal/cmap"
+	_ef "unitechio/gopdf/gopdf/internal/textencoding"
+	_e "unitechio/gopdf/gopdf/internal/transform"
+	_cb "unitechio/gopdf/gopdf/model"
 	_g "github.com/unidoc/freetype/truetype"
 	_fg "golang.org/x/image/font"
 )

@@ -5,7 +5,7 @@ import (
 	_b "io"
 	_g "math"
 
-	_fa "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
+	_fa "unitechio/gopdf/gopdf/internal/bitwise"
 )
 
 func (_baec *Decoder) fetch() error {

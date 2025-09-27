@@ -4,8 +4,8 @@ import (
 	_f "errors"
 	_d "fmt"
 
-	_db "bitbucket.org/shenghui0779/gopdf/common"
-	_b "bitbucket.org/shenghui0779/gopdf/core"
+	_db "unitechio/gopdf/gopdf/common"
+	_b "unitechio/gopdf/gopdf/core"
 )
 
 func (_fac *Catalog) SetMarkInfo(mi _b.PdfObject) {

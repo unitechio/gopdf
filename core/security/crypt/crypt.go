@@ -9,8 +9,8 @@ import (
 	_g "fmt"
 	_e "io"
 
-	_dg "bitbucket.org/shenghui0779/gopdf/common"
-	_dc "bitbucket.org/shenghui0779/gopdf/core/security"
+	_dg "unitechio/gopdf/gopdf/common"
+	_dc "unitechio/gopdf/gopdf/core/security"
 )
 
 func init() { _gf("\u0041\u0045\u0053V\u0032", _fc) }

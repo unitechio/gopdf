@@ -4,9 +4,9 @@ import (
 	_f "bytes"
 	_fa "io"
 
-	_bc "bitbucket.org/shenghui0779/gopdf/common"
-	_ba "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
-	_fe "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_bc "unitechio/gopdf/gopdf/common"
+	_ba "unitechio/gopdf/gopdf/internal/jbig2/bitmap"
+	_fe "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 type Encoder struct {

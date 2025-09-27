@@ -13,11 +13,11 @@ import (
 	_f "regexp"
 	_a "strconv"
 
-	_fb "bitbucket.org/shenghui0779/gopdf/common"
-	_ed "bitbucket.org/shenghui0779/gopdf/core"
-	_ac "bitbucket.org/shenghui0779/gopdf/internal/imageutil"
-	_de "bitbucket.org/shenghui0779/gopdf/internal/transform"
-	_gb "bitbucket.org/shenghui0779/gopdf/model"
+	_fb "unitechio/gopdf/gopdf/common"
+	_ed "unitechio/gopdf/gopdf/core"
+	_ac "unitechio/gopdf/gopdf/internal/imageutil"
+	_de "unitechio/gopdf/gopdf/internal/transform"
+	_gb "unitechio/gopdf/gopdf/model"
 )
 
 // Add_B_starred appends 'B*' operand to the content stream:

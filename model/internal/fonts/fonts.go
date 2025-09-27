@@ -12,10 +12,10 @@ import (
 	_a "strings"
 	_eb "sync"
 
-	_fe "bitbucket.org/shenghui0779/gopdf/common"
-	_c "bitbucket.org/shenghui0779/gopdf/core"
-	_be "bitbucket.org/shenghui0779/gopdf/internal/cmap"
-	_bfg "bitbucket.org/shenghui0779/gopdf/internal/textencoding"
+	_fe "unitechio/gopdf/gopdf/common"
+	_c "unitechio/gopdf/gopdf/core"
+	_be "unitechio/gopdf/gopdf/internal/cmap"
+	_bfg "unitechio/gopdf/gopdf/internal/textencoding"
 )
 
 func (_de *RuneCharSafeMap) Copy() *RuneCharSafeMap {

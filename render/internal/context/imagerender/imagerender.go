@@ -10,9 +10,9 @@ import (
 	_af "sort"
 	_c "strings"
 
-	_ec "bitbucket.org/shenghui0779/gopdf/common"
-	_e "bitbucket.org/shenghui0779/gopdf/internal/transform"
-	_adf "bitbucket.org/shenghui0779/gopdf/render/internal/context"
+	_ec "unitechio/gopdf/gopdf/common"
+	_e "unitechio/gopdf/gopdf/internal/transform"
+	_adf "unitechio/gopdf/gopdf/render/internal/context"
 	_ed "github.com/unidoc/freetype/raster"
 	_f "golang.org/x/image/draw"
 	_ga "golang.org/x/image/font"

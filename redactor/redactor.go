@@ -8,12 +8,12 @@ import (
 	_b "sort"
 	_g "strings"
 
-	_e "bitbucket.org/shenghui0779/gopdf/common"
-	_dd "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_cb "bitbucket.org/shenghui0779/gopdf/core"
-	_d "bitbucket.org/shenghui0779/gopdf/creator"
-	_aa "bitbucket.org/shenghui0779/gopdf/extractor"
-	_bb "bitbucket.org/shenghui0779/gopdf/model"
+	_e "unitechio/gopdf/gopdf/common"
+	_dd "unitechio/gopdf/gopdf/contentstream"
+	_cb "unitechio/gopdf/gopdf/core"
+	_d "unitechio/gopdf/gopdf/creator"
+	_aa "unitechio/gopdf/gopdf/extractor"
+	_bb "unitechio/gopdf/gopdf/model"
 )
 
 // Redact executes the redact operation on a pdf file and updates the content streams of all pages of the file.

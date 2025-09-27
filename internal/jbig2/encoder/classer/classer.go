@@ -4,10 +4,10 @@ import (
 	_e "image"
 	_ec "math"
 
-	_d "bitbucket.org/shenghui0779/gopdf/common"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
-	_ad "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
-	_eb "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_d "unitechio/gopdf/gopdf/common"
+	_g "unitechio/gopdf/gopdf/internal/jbig2/basic"
+	_ad "unitechio/gopdf/gopdf/internal/jbig2/bitmap"
+	_eb "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 const (

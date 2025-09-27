@@ -7,13 +7,13 @@ import (
 	_f "math"
 	_c "runtime/debug"
 
-	_cb "bitbucket.org/shenghui0779/gopdf/common"
-	_a "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_eg "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
-	_ff "bitbucket.org/shenghui0779/gopdf/internal/jbig2/bitmap"
-	_ca "bitbucket.org/shenghui0779/gopdf/internal/jbig2/document/segments"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/jbig2/encoder/classer"
-	_gd "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_cb "unitechio/gopdf/gopdf/common"
+	_a "unitechio/gopdf/gopdf/internal/bitwise"
+	_eg "unitechio/gopdf/gopdf/internal/jbig2/basic"
+	_ff "unitechio/gopdf/gopdf/internal/jbig2/bitmap"
+	_ca "unitechio/gopdf/gopdf/internal/jbig2/document/segments"
+	_d "unitechio/gopdf/gopdf/internal/jbig2/encoder/classer"
+	_gd "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 func _gad(_dee *Document, _fde int) *Page {

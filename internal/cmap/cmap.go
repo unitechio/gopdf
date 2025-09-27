@@ -12,9 +12,9 @@ import (
 	_eg "strings"
 	_bg "unicode/utf16"
 
-	_da "bitbucket.org/shenghui0779/gopdf/common"
-	_bce "bitbucket.org/shenghui0779/gopdf/core"
-	_g "bitbucket.org/shenghui0779/gopdf/internal/cmap/bcmaps"
+	_da "unitechio/gopdf/gopdf/common"
+	_bce "unitechio/gopdf/gopdf/core"
+	_g "unitechio/gopdf/gopdf/internal/cmap/bcmaps"
 )
 
 func LoadPredefinedCMap(name string) (*CMap, error) {

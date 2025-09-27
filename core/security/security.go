@@ -16,7 +16,7 @@ import (
 	_d "io"
 	_fb "math"
 
-	_ab "bitbucket.org/shenghui0779/gopdf/common"
+	_ab "unitechio/gopdf/gopdf/common"
 )
 
 type ecbDecrypter ecb

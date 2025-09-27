@@ -4,10 +4,10 @@ import (
 	_gf "fmt"
 	_g "math"
 
-	_gg "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_c "bitbucket.org/shenghui0779/gopdf/core"
-	_e "bitbucket.org/shenghui0779/gopdf/internal/transform"
-	_gfc "bitbucket.org/shenghui0779/gopdf/model"
+	_gg "unitechio/gopdf/gopdf/contentstream"
+	_c "unitechio/gopdf/gopdf/core"
+	_e "unitechio/gopdf/gopdf/internal/transform"
+	_gfc "unitechio/gopdf/gopdf/model"
 )
 
 // DrawPathWithCreator makes the path with the content creator.

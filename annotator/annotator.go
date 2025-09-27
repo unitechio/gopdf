@@ -8,12 +8,12 @@ import (
 	_ge "strings"
 	_g "unicode"
 
-	_a "bitbucket.org/shenghui0779/gopdf/common"
-	_b "bitbucket.org/shenghui0779/gopdf/contentstream"
-	_af "bitbucket.org/shenghui0779/gopdf/contentstream/draw"
-	_dd "bitbucket.org/shenghui0779/gopdf/core"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/textencoding"
-	_fa "bitbucket.org/shenghui0779/gopdf/model"
+	_a "unitechio/gopdf/gopdf/common"
+	_b "unitechio/gopdf/gopdf/contentstream"
+	_af "unitechio/gopdf/gopdf/contentstream/draw"
+	_dd "unitechio/gopdf/gopdf/core"
+	_d "unitechio/gopdf/gopdf/internal/textencoding"
+	_fa "unitechio/gopdf/gopdf/model"
 )
 
 func _dace(_egd []*SignatureLine, _bffd *SignatureFieldOpts) (*_dd.PdfObjectDictionary, error) {

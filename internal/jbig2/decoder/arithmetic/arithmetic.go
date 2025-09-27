@@ -5,9 +5,9 @@ import (
 	_f "io"
 	_g "strings"
 
-	_gc "bitbucket.org/shenghui0779/gopdf/common"
-	_d "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_b "bitbucket.org/shenghui0779/gopdf/internal/jbig2/internal"
+	_gc "unitechio/gopdf/gopdf/common"
+	_d "unitechio/gopdf/gopdf/internal/bitwise"
+	_b "unitechio/gopdf/gopdf/internal/jbig2/internal"
 )
 
 func (_bf *Decoder) readByte() error {

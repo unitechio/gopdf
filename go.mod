@@ -1,4 +1,4 @@
-module bitbucket.org/shenghui0779/gopdf
+module unitechio/gopdf/gopdf
 
 go 1.18
 

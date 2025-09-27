@@ -6,8 +6,8 @@ import (
 	_ffg "math"
 	_ff "strings"
 
-	_f "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_a "bitbucket.org/shenghui0779/gopdf/internal/jbig2/internal"
+	_f "unitechio/gopdf/gopdf/internal/bitwise"
+	_a "unitechio/gopdf/gopdf/internal/jbig2/internal"
 )
 
 type InternalNode struct {

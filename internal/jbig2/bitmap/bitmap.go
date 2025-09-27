@@ -7,11 +7,11 @@ import (
 	_cc "sort"
 	_ef "strings"
 
-	_fce "bitbucket.org/shenghui0779/gopdf/common"
-	_b "bitbucket.org/shenghui0779/gopdf/internal/bitwise"
-	_fg "bitbucket.org/shenghui0779/gopdf/internal/imageutil"
-	_fa "bitbucket.org/shenghui0779/gopdf/internal/jbig2/basic"
-	_c "bitbucket.org/shenghui0779/gopdf/internal/jbig2/errors"
+	_fce "unitechio/gopdf/gopdf/common"
+	_b "unitechio/gopdf/gopdf/internal/bitwise"
+	_fg "unitechio/gopdf/gopdf/internal/imageutil"
+	_fa "unitechio/gopdf/gopdf/internal/jbig2/basic"
+	_c "unitechio/gopdf/gopdf/internal/jbig2/errors"
 )
 
 func _gbfb(_defd, _bfcf *Bitmap, _fafe, _aedd int) (*Bitmap, error) {
