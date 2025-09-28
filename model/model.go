@@ -29,6 +29,8 @@ import (
 	_gg "unicode"
 	_bc "unicode/utf8"
 
+	_eb "github.com/unidoc/pkcs7"
+	_ab "github.com/unidoc/unitype"
 	_acd "github.com/unitechio/gopdf/common"
 	_abf "github.com/unitechio/gopdf/core"
 	_bga "github.com/unitechio/gopdf/core/security"
@@ -44,8 +46,6 @@ import (
 	_df "github.com/unitechio/gopdf/model/mdp"
 	_fe "github.com/unitechio/gopdf/model/sigutil"
 	_ae "github.com/unitechio/gopdf/ps"
-	_eb "github.com/unidoc/pkcs7"
-	_ab "github.com/unidoc/unitype"
 	_ddd "golang.org/x/xerrors"
 )
 
@@ -57,6 +57,130 @@ type PdfModel interface {
 	ToPdfObject() _abf.PdfObject
 	GetContainingPdfObject() _abf.PdfObject
 }
+
+// KDict represents a K dictionary object.
+type KDict struct {
+
+	// The structure type, a name object identifying the nature of the
+	// structure element and its role within the document,
+	// such as a chapter, paragraph, or footnote
+	S _abf.PdfObject
+
+	// The structure element that is the immediate parent of this one
+	// in the structure hierarchy.
+	P _abf.PdfObject
+
+	// The element identifier, a byte string designating this structure element.
+	ID *_abf.PdfObjectString
+
+	// A page object representing a page on which some or all of the content
+	// items designated by the K entry shall be rendered.
+	Pg _abf.PdfObject
+
+	// The children of this structure element.
+	K _abf.PdfObject
+
+	// A single attribute object or array of attribute objects associated
+	// with this structure element.
+	A _abf.PdfObject
+
+	// An attribute class name or array of class names associated with
+	// this structure element.
+	C _abf.PdfObject
+
+	// The current revision number of this structure element
+	R *_abf.PdfObjectInteger
+
+	// The title of the structure element, a text string representing
+	// it in human-readable form.
+	T *_abf.PdfObjectString
+
+	// A language identifier specifying the natural language for all text
+	// in the structure element except where overridden by
+	// language specifications for nested structure elements or marked content.
+	Lang *_abf.PdfObjectString
+
+	// An alternate description of the structure element and its
+	// children in human-readable form, which is useful when extracting
+	// the document’s contents in support of accessibility to users with
+	// disabilities or for other purposes.
+	Alt *_abf.PdfObjectString
+
+	// The expanded form of an abbreviation.
+	E *_abf.PdfObjectString
+
+	// Text that is an exact replacement for the structure element and its children.
+	ActualText *_abf.PdfObjectString
+	_fabbb     []*KValue
+	_eddd      int64
+	_febg      *PdfRectangle
+}
+
+type KValue struct {
+	_fgcbd *KDict
+	_bcdd  _abf.PdfObject
+	_ecdf  *int
+}
+type StructureType string
+
+var (
+	StructureTypeSpan               StructureType = "\u0053\u0070\u0061\u006e"
+	StructureTypeQuote              StructureType = "\u0051\u0075\u006ft\u0065"
+	StructureTypeNote               StructureType = "\u004e\u006f\u0074\u0065"
+	StructureTypeReference          StructureType = "\u0052e\u0066\u0065\u0072\u0065\u006e\u0063e"
+	StructureTypeBibliography       StructureType = "\u0042\u0069\u0062\u0045\u006e\u0074\u0072\u0079"
+	StructureTypeCode               StructureType = "\u0043\u006f\u0064\u0065"
+	StructureTypeLink               StructureType = "\u004c\u0069\u006e\u006b"
+	StructureTypeAnnot              StructureType = "\u0041\u006e\u006eo\u0074"
+	StructureTypeRuby               StructureType = "\u0052\u0075\u0062\u0079"
+	StructureTypeWarichu            StructureType = "\u0057a\u0072\u0069\u0063\u0068\u0075"
+	StructureTypeRubyBase           StructureType = "\u0052\u0042"
+	StructureTypeRubyText           StructureType = "\u0052\u0054"
+	StructureTypeRubyPunctuation    StructureType = "\u0052\u0050"
+	StructureTypeWarichuText        StructureType = "\u0057\u0054"
+	StructureTypeWarichuPunctuation StructureType = "\u0057\u0050"
+	StructureTypeFigure             StructureType = "\u0046\u0069\u0067\u0075\u0072\u0065"
+	StructureTypeFormula            StructureType = "\u0046o\u0072\u006d\u0075\u006c\u0061"
+	StructureTypeForm               StructureType = "\u0046\u006f\u0072\u006d"
+)
+
+var (
+	StructureTypeParagraph       StructureType = "\u0050"
+	StructureTypeHeader          StructureType = "\u0048"
+	StructureTypeHeading1        StructureType = "\u0048\u0031"
+	StructureTypeHeading2        StructureType = "\u0048\u0032"
+	StructureTypeHeading3        StructureType = "\u0048\u0033"
+	StructureTypeHeading4        StructureType = "\u0048\u0034"
+	StructureTypeHeading5        StructureType = "\u0048\u0035"
+	StructureTypeHeading6        StructureType = "\u0048\u0036"
+	StructureTypeList            StructureType = "\u004c"
+	StructureTypeListItem        StructureType = "\u004c\u0049"
+	StructureTypeLabel           StructureType = "\u004c\u0062\u006c"
+	StructureTypeListBody        StructureType = "\u004c\u0042\u006fd\u0079"
+	StructureTypeTable           StructureType = "\u0054\u0061\u0062l\u0065"
+	StructureTypeTableRow        StructureType = "\u0054\u0052"
+	StructureTypeTableHeaderCell StructureType = "\u0054\u0048"
+	StructureTypeTableData       StructureType = "\u0054\u0044"
+	StructureTypeTableHead       StructureType = "\u0054\u0048\u0065a\u0064"
+	StructureTypeTableBody       StructureType = "\u0054\u0042\u006fd\u0079"
+	StructureTypeTableFooter     StructureType = "\u0054\u0046\u006fo\u0074"
+)
+
+var (
+	StructureTypeUnknown       StructureType = ""
+	StructureTypeDocument      StructureType = "\u0044\u006f\u0063\u0075\u006d\u0065\u006e\u0074"
+	StructureTypePart          StructureType = "\u0050\u0061\u0072\u0074"
+	StructureTypeArticle       StructureType = "\u0041\u0072\u0074"
+	StructureTypeSection       StructureType = "\u0053\u0065\u0063\u0074"
+	StructureTypeDivision      StructureType = "\u0044\u0069\u0076"
+	StructureTypeBlockQuote    StructureType = "\u0042\u006c\u006f\u0063\u006b\u0051\u0075\u006f\u0074\u0065"
+	StructureTypeCaption       StructureType = "\u0043a\u0070\u0074\u0069\u006f\u006e"
+	StructureTypeTOC           StructureType = "\u0054\u004f\u0043"
+	StructureTypeTOCI          StructureType = "\u0054\u004f\u0043\u0049"
+	StructureTypeIndex         StructureType = "\u0049\u006e\u0064e\u0078"
+	StructureTypeNonStructural StructureType = "\u004eo\u006e\u0053\u0074\u0072\u0075\u0063t"
+	StructureTypePrivate       StructureType = "\u0050r\u0069\u0076\u0061\u0074\u0065"
+)
 
 // GetContext returns the context of the outline tree node, which is either a
 // *PdfOutline or a *PdfOutlineItem. The method returns nil for uninitialized
